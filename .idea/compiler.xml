@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="com" />
+        <module name="CoraText" />
+        <module name="bus" />
+        <module name="ctrl" />
+        <module name="session" />
+        <module name="conf" />
+        <module name="CoraControlBasic" />
+        <module name="CoraControl" />
+        <module name="dir" />
+        <module name="type" />
+        <module name="CoraDir" />
+        <module name="text-basic" />
+        <module name="type-basic" />
+        <module name="CoraComBasic" />
+        <module name="dir-basic" />
+        <module name="CoraCom" />
+        <module name="CoraBus" />
+        <module name="CoraTypeBasic" />
+        <module name="int-test" />
+        <module name="text" />
+        <module name="CoraType" />
+        <module name="CoraSession" />
+        <module name="CoraDirBasic" />
+        <module name="com-basic" />
+        <module name="ctrl-basic" />
+        <module name="conf-basic" />
+        <module name="IT" />
+        <module name="core" />
+        <module name="CoraTextBasic" />
+        <module name="CoraCore" />
+        <module name="CoraConfBasic" />
+        <module name="CoraConf" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel target="1.8">
+      <module name="CoraMod" target="11" />
+      <module name="CoraService" target="11" />
+    </bytecodeTargetLevel>
+  </component>
+</project>

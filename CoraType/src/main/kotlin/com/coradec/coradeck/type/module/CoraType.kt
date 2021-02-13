@@ -1,0 +1,18 @@
+/*
+ * Copyright © 2020 by Coradec LLC.  All rights reserved.
+ */
+
+package com.coradec.coradeck.type.module
+
+import com.coradec.coradeck.dir.model.module.CoraModule
+import kotlin.reflect.KClass
+import kotlin.reflect.KType
+
+object CoraType: CoraModule<CoraTypeAPI>() {
+    /** Creates a type from the specified class with the help of the specified type parameters, if necessary. */
+    fun <T: Any> typeOf(klass: KClass<out T>, parameters: Map<String, KClass<*>>): KType = impl.typeOf(klass, parameters)
+    /** Casts the specified value to the specified type, if possible, preserving `null` values. */
+    fun <P> castTo(value: Any?, type: KType): P? = impl.castTo(value, type)
+    /** Casts the specified value to the specified type, if possible, preserving `null` values. */
+    fun <P: Any> castTo(value: Any?, type: KClass<P>): P? = impl.castTo(value, type)
+}

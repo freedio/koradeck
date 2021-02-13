@@ -1,0 +1,5 @@
+---
+QueueSize: 4096
+LowWaterMark: 2
+HighWaterMark: 16
+Patience: 3s

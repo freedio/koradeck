@@ -1,0 +1,8 @@
+---
+configurationReaders: # configuration reads by file extension
+  # the order is relevant: the first reader will be tried first
+  .yaml: com.coradec.coradeck.conf.ctrl.impl.YamlConfigurationReader
+  .json: com.coradec.coradeck.conf.ctrl.impl.JsonConfigurationReader
+  .properties: com.coradec.coradeck.conf.ctrl.impl.PropConfigurationReader
+  .conf: com.coradec.coradeck.conf.ctrl.impl.UnixConfigurationReader
+  .xml: com.coradec.coradeck.conf.ctrl.impl.XmlConfigurationReader

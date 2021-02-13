@@ -1,0 +1,11 @@
+{
+  "TextProperty": "String Value",
+  "BooleanProperty": true,
+  "NullProperty": null,
+  "IntProperty": -100000,
+  "LongProperty": 1234567890123456789,
+  "FloatProperty": 12.5,
+  "DoubleProperty": 1.2E+100,
+  "DecimalProperty": 1234567890.12345678901234567890123456789012345678901234567890,
+  "BigIntegerProperty": 34587326450827059813745091837540193847102934861085610834761092384710875610823471092384710965
+}

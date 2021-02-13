@@ -1,0 +1,14 @@
+/*
+ * Copyright ⓒ 2017−2020 by Coradec GmbH. All rights reserved.
+ */
+
+package com.coradec.coradeck.com.model
+
+interface LogEntry: Event {
+    val level: LogLevel
+    val worker: Thread
+    val severe: Boolean get() = level.severity.severe
+
+    /** Formats the log entry as a string with the specified Formatter format. */
+    infix fun formattedWith(format: String): String
+}

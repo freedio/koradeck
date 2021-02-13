@@ -1,0 +1,17 @@
+# Project exclude paths
+/CoraBus/target/
+/CoraCom/target/
+/CoraComBasic/target/
+/CoraConf/target/
+/CoraConfBasic/target/
+/CoraControl/target/
+/CoraControlBasic/target/
+/CoraCore/target/
+/CoraDir/target/
+/CoraDirBasic/target/
+/CoraSession/target/
+/CoraText/target/
+/CoraTextBasic/target/
+/CoraType/target/
+/CoraTypeBasic/target/
+/IT/target/

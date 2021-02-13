@@ -1,0 +1,3 @@
+# Textbase for default locale of class JacksonConfigurationReader
+ConfigurationAbsent1: Configuration «%s» not found!
+InvalidConfiguration1: Configuration «%s» is not valid!
