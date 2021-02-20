@@ -33,7 +33,6 @@ object Configurations : Logger() {
         for ((type, reader) in readersByType) {
             if (ClassPathResource("$ctxt$type").ifExists {
                     allProperties.putAll(reader.read(location).mapKeys { (key, _) -> "$context.$key" })
-                    loadedContexts += context
                 }
             ) return
         }

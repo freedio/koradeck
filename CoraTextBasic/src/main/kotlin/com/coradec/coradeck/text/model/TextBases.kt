@@ -3,49 +3,62 @@ package com.coradec.coradeck.text.model
 import com.coradec.coradeck.com.ctrl.impl.Logger
 import com.coradec.coradeck.core.model.ClassPathResource
 import com.coradec.coradeck.text.ctrl.TextbaseReader
-import com.coradec.coradeck.text.model.impl.StandardTextBase
-import com.coradec.coradeck.text.model.impl.StandardNamedText
-import com.coradec.coradeck.text.trouble.ConTextBaseNotFoundException
+import com.coradec.coradeck.text.model.impl.GeneralTextBase
+import com.coradec.coradeck.text.model.impl.LocalizedTextBase
+import com.coradec.coradeck.text.model.impl.TextElement
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 
 object TextBases : Logger() {
-    private val allTexts = ConcurrentHashMap<String, Text>()
+    private val allTexts = ConcurrentHashMap<String, TextElement>()
     private val loadedBases = CopyOnWriteArraySet<String>()
+    private val bases = ConcurrentHashMap<String, Map<String, String>>()
 
-    fun byContext(context: String, locale: Locale): TextBase {
-        val contag = "$context.${locale.toLanguageTag()}"
-        if (loadedBases.add(contag)) try {
-            loadTextBase(context, locale)
-        } catch (e: RuntimeException) {
-            loadedBases.remove(contag)
-            throw e
-        }
+    fun byContext(context: String): TextBase {
+        if (loadedBases.add(context)) loadTextBase(context)
         return allTexts
             .filter { it.key.startsWith(context) }
+            .mapKeys { (key, _) -> key.substring(context.length + 1) }
             .toTextBase()
     }
 
-    private fun loadTextBase(context: String, locale: Locale) {
-        debug("Loading text base «%s»", context)
+    private fun loadTextBase(context: String) {
         val base = context.replace('.', '/')
-        val locales = listOf("_${locale.language}_${locale.country}", "_${locale.language}", "")
-        for (loc in locales) {
-            val resourceName = "${base}$loc.text"
-            debug("Trying classpath resource «%s» ...", resourceName)
-            if (ClassPathResource(resourceName).ifExists {
-                    allTexts.putAll(TextbaseReader.read(location)
-                        .map { (key, value) ->
-                            val name = "$context.$key"
-                            Pair(name, StandardNamedText(name, value.toString()))
-                        })
-                    loadedBases += context
-                }
-            ) return
+        val resourceName = "$base.text"
+        ClassPathResource(resourceName).ifExists {
+            allTexts.putAll(TextbaseReader.read(location).map { (key, value) ->
+                val name = "$context.$key"
+                Pair(name, TextElement(base, context, name, value)) })
         }
-        throw ConTextBaseNotFoundException(context)
+    }
+
+    fun loadLocalizedTextBase(context: String, locale: Locale) = "$context:${locale.toLanguageTag()}".let { basekey ->
+        bases.computeIfAbsent(basekey) {
+            val base = context.replace('.', '/')
+            val resourceNameTemplate = "$base%s.text"
+            val locales = listOf(
+                "_${locale.language}_${locale.script}_${locale.country}_${locale.variant}",
+                "_${locale.language}_${locale.script}_${locale.country}",
+                "_${locale.language}_${locale.script}",
+                "_${locale.language}_${locale.country}_${locale.variant}",
+                "_${locale.language}_${locale.country}",
+                "_${locale.language}",
+                ""
+            )
+            val tbase = HashMap<String, String>()
+            for (loc in locales) {
+                val resourceName = resourceNameTemplate.format(loc)
+                if (ClassPathResource(resourceName).ifExists {
+                        tbase.putAll(TextbaseReader.read(location).map { (key, value) ->
+                            val name = "$context.$key"
+                            Pair(name, value)
+                        }.toMap())
+                    }) break
+            }
+            tbase
+        }
     }
 }
 
-private fun Map<String, Text>.toTextBase(): TextBase = StandardTextBase(this)
+private fun Map<String, TextElement>.toTextBase(): TextBase = GeneralTextBase(this)

@@ -12,7 +12,7 @@ object TextbaseReader {
         beginquotes = "\"'",
         endquotes = "\"'"
     )
-    fun read(location: URL): Map<String, Any> {
+    fun read(location: URL): Map<String, String> {
         return parser.parse(location.lines)
     }
 }
