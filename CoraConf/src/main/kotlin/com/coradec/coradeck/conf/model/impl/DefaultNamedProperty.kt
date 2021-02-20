@@ -5,7 +5,7 @@ import kotlin.reflect.KType
 open class DefaultNamedProperty<P: Any>(
         name: String,
         type: KType,
-        private val default: P
+        default: P
 ): NamedProperty<P>(name, type) {
     override val value: P = default
 }
