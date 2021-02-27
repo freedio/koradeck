@@ -28,7 +28,7 @@ object Configurations : Logger() {
     }
 
     private fun loadContext(context: String) {
-        debug("Loading context «%s»", context)
+        debug("Loading configuration context «%s»", context)
         val ctxt = context.replace('.', '/')
         for ((type, reader) in readersByType) {
             if (ClassPathResource("$ctxt$type").ifExists {

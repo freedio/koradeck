@@ -38,6 +38,7 @@
         <module name="CoraCore" />
         <module name="CoraConfBasic" />
         <module name="CoraConf" />
+        <module name="db" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel target="1.8">
