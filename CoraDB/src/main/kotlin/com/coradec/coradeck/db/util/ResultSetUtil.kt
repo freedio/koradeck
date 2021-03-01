@@ -52,7 +52,7 @@ fun <T : Any> ResultSet.listOf(klass: KClass<T>): List<T> {
 }
 
 class ResultSetSpliterator<T: Any>(private val dataset: ResultSet, private val klass: KClass<T>) : Spliterator<T> {
-    override fun tryAdvance(action: Consumer<in T>): Boolean = dataset.next().also { if (it) action.accept(dataset.singleOf(klass)) }
+    override fun tryAdvance(action: Consumer<in T>): Boolean = dataset.next().also { if (it) action.accept(dataset.encode(klass)) }
     override fun trySplit(): Spliterator<T>? = null
     override fun estimateSize(): Long = Long.MAX_VALUE
     override fun characteristics(): Int = Spliterator.ORDERED or Spliterator.IMMUTABLE

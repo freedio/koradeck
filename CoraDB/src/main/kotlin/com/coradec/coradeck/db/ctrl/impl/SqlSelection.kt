@@ -3,7 +3,7 @@ package com.coradec.coradeck.db.ctrl.impl
 import com.coradec.coradeck.db.ctrl.Selection
 import com.coradec.coradeck.db.util.toSqlObjectName
 
-data class SqlSelection(val expr: String) : Selection {
+open class SqlSelection(val expr: String) : Selection {
     private val offsetNum: Int by lazy { OFFSET.find(expr)?.groupValues?.let { if (it.size > 2) it[2].toInt() else 0 } ?: 0 }
     private val limitNum: Int by lazy { LIMIT.find(expr)?.groupValues?.let { if (it.size > 2) it[2].toInt() else 0 } ?: 0 }
     private val whereList: List<String> by lazy {
@@ -41,8 +41,6 @@ data class SqlSelection(val expr: String) : Selection {
     override val order: String get() = orderList.let { list ->
         if (list.isEmpty()) "" else list.joinToString(", ", " order by ") { it }
     }
-    override val filter: String get() = "$slice$where"
-    override val select: String get() = "$filter$order"
 
     companion object {
         val OFFSET = Regex("(OFFSET|Offset|offset):(\\d+)")

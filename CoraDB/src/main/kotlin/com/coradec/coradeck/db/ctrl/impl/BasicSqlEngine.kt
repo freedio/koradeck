@@ -33,7 +33,7 @@ import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.full.valueParameters
 
-class BasicSqlEngine<T: Any>(val klass: KClass<out T>) : Logger(), SqlEngine<T>, AutoCloseable {
+class BasicSqlEngine<T : Any>(val klass: KClass<out T>) : Logger(), SqlEngine<T>, AutoCloseable {
     private val connection = DriverManager.getConnection(dbUrlProperty.value, usernameProperty.value, passwordProperty.value)
     override val tableName: String = klass.simpleName?.toSqlObjectName()
         ?: throw IllegalArgumentException("Unsupported class: $klass")
@@ -47,14 +47,16 @@ class BasicSqlEngine<T: Any>(val klass: KClass<out T>) : Logger(), SqlEngine<T>,
         get() = connection.metaData
             .getTables(null, null, tableName, listOf("TABLE").toTypedArray())
             .listOf(TableMetadata::class).map { it.tableName }
-    internal val columnDefinitions: List<Pair<String, String>> get() = connection.metaData
-        .getColumns(null, null, tableName, null)
-        .listOf(ColumnMetadata::class).map { Pair(it.columnName, it.typeName.withSize(it.columnSize)) }.ifEmpty {
-            fields.map { Pair(it.key.toSqlObjectName(), it.value.toSqlType()) }
-        }
-    internal val fields: Map<String, Pair<KClass<*>, List<Annotation>>> get() = klass.members
-        .filter { it.name in fieldNames }
-        .map { Pair(it.name, Pair(it.returnType.classifier as KClass<*>, it.returnType.annotations)) }.toMap()
+    internal val columnDefinitions: List<Pair<String, String>>
+        get() = connection.metaData
+            .getColumns(null, null, tableName, null)
+            .listOf(ColumnMetadata::class).map { Pair(it.columnName, it.typeName.withSize(it.columnSize)) }.ifEmpty {
+                fields.map { Pair(it.key.toSqlObjectName(), it.value.toSqlType()) }
+            }
+    internal val fields: Map<String, Pair<KClass<*>, List<Annotation>>>
+        get() = klass.members
+            .filter { it.name in fieldNames }
+            .map { Pair(it.name, Pair(it.returnType.classifier as KClass<*>, it.returnType.annotations)) }.toMap()
     internal val fieldNames: List<String> get() = klass.memberProperties.map { it.name }
     private val statement = connection.createStatement()
 
@@ -63,12 +65,14 @@ class BasicSqlEngine<T: Any>(val klass: KClass<out T>) : Logger(), SqlEngine<T>,
         debug("Executing query «$stmt»")
         return statement.executeQuery(stmt).checkedSingleOf(Int::class)
     }
+
     override fun query(selector: Selection): Stream<T> {
         val stmt = "select * from $tableName${selector.select}"
         debug("Executing query «$stmt»")
         @Suppress("UNCHECKED_CAST")
         return statement.executeQuery(stmt).streamOf(klass) as Stream<T>
     }
+
     override fun insert(entry: T): Int {
         val record = entry::class.members.filter { it.name in fieldNames }.map { Pair(it.name, it.call(entry)) }.toMap()
         val stmt = "insert into $tableName (${record.keys.joinToString { it.toSqlObjectName() }}) " +
@@ -76,11 +80,13 @@ class BasicSqlEngine<T: Any>(val klass: KClass<out T>) : Logger(), SqlEngine<T>,
         debug("Executing command «$stmt»")
         return statement.executeUpdate(stmt)
     }
+
     override fun delete(selector: Selection): Int {
         @Suppress("SqlWithoutWhere") val stmt = "delete from $tableName${selector.filter}"
         debug("Executing command «$stmt»")
         return statement.executeUpdate(stmt)
     }
+
     override fun assertTable() {
         val stmt = "create table if not exists $tableName (${columnDefinitions.joinToString { "${it.first} ${it.second}" }})"
         debug("Executing command «$stmt»")
@@ -99,7 +105,7 @@ class BasicSqlEngine<T: Any>(val klass: KClass<out T>) : Logger(), SqlEngine<T>,
         connection.close()
     }
 
-    private fun String.withSize(columnSize: Int?): String = if (columnSize == null) this else when(this) {
+    private fun String.withSize(columnSize: Int?): String = if (columnSize == null) this else when (this) {
         "VARCHAR", "CHAR", "LONGVARCHAR" -> "$this($columnSize)"
         "VARBINARY", "BINARY" -> "#this($columnSize)"
         else -> this
@@ -121,7 +127,8 @@ private fun Any?.toSqlValueRepr() = when (this) {
 
 private fun Pair<KClass<*>, List<Annotation>>.toSqlType(): String = first.toSqlType(second)
 private fun KClass<*>.toSqlType(annotations: List<Annotation>): String = when (this) {
-    String::class -> "VARCHAR(%d)".format((annotations.single { it is Size } as Size).value)
+    String::class -> "VARCHAR(%d)".format((annotations.singleOrNull { it is Size } as? Size)?.value
+        ?: throw IllegalArgumentException("Missing String @Size for ${this.java.name}"))
     Boolean::class -> "BIT"
     Byte::class -> "TINYINT"
     Short::class -> "SMALLINT"
