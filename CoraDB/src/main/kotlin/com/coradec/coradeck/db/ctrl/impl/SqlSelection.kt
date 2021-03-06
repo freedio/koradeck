@@ -1,5 +1,6 @@
 package com.coradec.coradeck.db.ctrl.impl
 
+import com.coradec.coradeck.core.util.trimIfBlank
 import com.coradec.coradeck.db.ctrl.Selection
 import com.coradec.coradeck.db.util.toSqlObjectName
 
@@ -32,8 +33,8 @@ open class SqlSelection(private val expr: String) : Selection {
         resultList.toList()
     }
 
-    val offset: String = offsetNum.let { if (it == 0) "" else " offset $it" }
-    val limit: String = limitNum.let { if (it == 0) "" else " limit $it" }
+    val offset: String get() = offsetNum.let { if (it == 0) "" else " offset $it" }
+    val limit: String get() = limitNum.let { if (it == 0) "" else " limit $it" }
     override val slice: String get() = "$offset$limit"
     override val where: String get() = whereList.let { map ->
         if (map.isEmpty()) "" else map.joinToString(" and ", " where ") { it }

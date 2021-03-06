@@ -41,9 +41,6 @@
         <module name="db" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel target="1.8">
-      <module name="CoraMod" target="11" />
-      <module name="CoraService" target="11" />
-    </bytecodeTargetLevel>
+    <bytecodeTargetLevel target="1.8" />
   </component>
 </project>

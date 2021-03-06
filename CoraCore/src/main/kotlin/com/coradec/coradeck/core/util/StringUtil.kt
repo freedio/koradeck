@@ -19,3 +19,4 @@ val Any?.formatted: String
     }
 
 operator fun Regex.contains(x: String): Boolean = x.matches(this)
+fun String.trimIfBlank() = if (isBlank()) "" else this

@@ -1,5 +1,7 @@
 package com.coradec.coradeck.db.ctrl
 
+import com.coradec.coradeck.core.util.trimIfBlank
+
 interface Selection {
     /** The limits: OFFSET, LIMIT. */
     val slice: String
