@@ -14,3 +14,12 @@ val KClass<*>.classname: String
             .removePrefix("java.lang.")
 operator fun KClass<*>.contains(other: KClass<*>) = isSubclassOf(other)
 operator fun KClass<*>.contains(instance: Any) = isInstance(instance)
+
+fun genericToString(klass: KClass<*>, vararg fields: Pair<String, Any>): String {
+    val collector = StringBuffer()
+    collector.append('<').append(klass.classname)
+    fields.forEach { (name, value) ->
+        collector.append(' ').append(name).append('=').append(value.formatted)
+    }
+    return collector.toString()
+}
