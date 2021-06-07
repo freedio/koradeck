@@ -1,5 +1,6 @@
 package com.coradec.coradeck.ctrl.ctrl.impl
 
+import com.coradec.coradeck.com.ctrl.impl.Logger
 import com.coradec.coradeck.com.model.Command
 import com.coradec.coradeck.com.model.Information
 import com.coradec.coradeck.com.model.Recipient
@@ -16,9 +17,7 @@ import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.Semaphore
 
 @Suppress("UNCHECKED_CAST")
-open class BasicAgent : Agent {
-    val routeLock = Semaphore(1)
-    val approLock = Semaphore(1)
+open class BasicAgent : Logger(), Agent {
     private val routes = ConcurrentHashMap<Class<*>, (Any) -> Unit>()
     private val approvedCommands = CopyOnWriteArraySet(INTERNAL_COMMANDS)
     private val queue = LinkedBlockingDeque<Information>()
@@ -29,7 +28,6 @@ open class BasicAgent : Agent {
     }
 
     override fun trigger() = onMessage(queue.take())
-
     override fun onMessage(message: Information) {
         TODO("Not yet implemented")
     }

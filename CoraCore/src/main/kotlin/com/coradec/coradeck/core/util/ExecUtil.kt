@@ -17,7 +17,8 @@ val caller3: StackFrame get() = getStackFrame(base+2)
 val callerStack: StackTrace get() = StackTrace(Thread.currentThread().stackTrace.map { StackFrame(it) })
 val here: StackFrame = caller
 
-fun getStackFrame(index: Int): StackFrame = StackFrame(Thread.currentThread().stackTrace[index])
+fun getStackFrame(index: Int): StackFrame =
+        StackFrame(Thread.currentThread().stackTrace.filter { !it.methodName.startsWith("access$") }[index])
 fun callerStackFrame(after: String): StackFrame =
         StackFrame(Thread.currentThread().stackTrace.dropWhile { after !in it.className }.dropWhile { after in it.className }.first())
 fun relax() {}
