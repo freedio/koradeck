@@ -17,8 +17,8 @@ fun <T : Any> ResultSet.encode(klass: KClass<T>): T {
     if (klass == Int::class) return getInt(1) as T
     if (klass == String::class) return getString(1) as T
     val sqlValues: Map<String, Any?> = klass.fields
-        .mapKeys { (name, _) -> name.toSqlObjectName() }
-        .map { Pair(it.value.name, getObjectOrNull(it.key).toSqlFieldValue()) }.toMap()
+            .mapKeys { (name, _) -> name.toSqlObjectName() }
+            .map { Pair(it.value.name, getObjectOrNull(it.key).toSqlFieldValue()) }.toMap()
     val pcon = klass.primaryConstructor ?: throw IllegalArgumentException("$klass has no primary constructor!")
     val args = pcon.valueParameters.map { Pair(it, it.name) }.toMap().mapValues { sqlValues[it.value] }
     CoraCom.log.debug("Calling ${pcon.name}(${args.entries.joinToString { "${it.key.name}:${it.key.type} = ${it.value.formatted}:${it.value?.javaClass?.name}" }})")
@@ -51,7 +51,20 @@ fun <T : Any> ResultSet.listOf(klass: KClass<T>): List<T> {
     return result.toList()
 }
 
-class ResultSetSpliterator<T: Any>(private val dataset: ResultSet, private val klass: KClass<T>) : Spliterator<T> {
+fun ResultSet.forEach(action: (ResultSet) -> Unit) {
+    while (next()) action.invoke(this)
+}
+
+fun <T> ResultSet.map(transform: (ResultSet) -> T): Sequence<T> = Sequence {
+    object : Iterator<T> {
+        override fun hasNext(): Boolean = this@map.next()
+        override fun next(): T = transform(this@map)
+    }
+}
+
+operator fun ResultSet.get(columnName: String): Any = getObject(columnName)
+
+class ResultSetSpliterator<T : Any>(private val dataset: ResultSet, private val klass: KClass<T>) : Spliterator<T> {
     override fun tryAdvance(action: Consumer<in T>): Boolean = dataset.next().also { if (it) action.accept(dataset.encode(klass)) }
     override fun trySplit(): Spliterator<T>? = null
     override fun estimateSize(): Long = Long.MAX_VALUE

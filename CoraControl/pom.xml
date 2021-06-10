@@ -15,7 +15,16 @@
         <dependency>
             <groupId>com.coradec.coradeck</groupId>
             <artifactId>com</artifactId>
-            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.coradec.coradeck</groupId>
+            <artifactId>text-basic</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.coradec.coradeck</groupId>
+            <artifactId>com-basic</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

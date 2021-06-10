@@ -3,18 +3,20 @@ package com.coradec.coradeck.ctrl.ctrl.impl
 import com.coradec.coradeck.com.ctrl.impl.Logger
 import com.coradec.coradeck.com.model.Command
 import com.coradec.coradeck.com.model.Information
+import com.coradec.coradeck.com.model.MultiRequest
 import com.coradec.coradeck.com.model.Recipient
+import com.coradec.coradeck.com.model.impl.ActionCommand
 import com.coradec.coradeck.com.model.impl.BasicCommand
+import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.util.caller
+import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.ctrl.ctrl.Agent
-import com.coradec.coradeck.ctrl.module.CoraControl
-import java.util.*
+import com.coradec.coradeck.ctrl.module.CoraControl.EMS
+import com.coradec.coradeck.text.model.LocalText
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.LinkedBlockingDeque
-import java.util.concurrent.Semaphore
 
 @Suppress("UNCHECKED_CAST")
 open class BasicAgent : Logger(), Agent {
@@ -22,14 +24,28 @@ open class BasicAgent : Logger(), Agent {
     private val approvedCommands = CopyOnWriteArraySet(INTERNAL_COMMANDS)
     private val queue = LinkedBlockingDeque<Information>()
 
-    override fun <I : Information> inject(info: I): I = info.also {
-        if (info.urgent) queue.addFirst(info) else queue.addLast(info)
-        CoraControl.EMS.execute(this)
+    override fun <I : Information> inject(message: I): I = message.also {
+        if (message.urgent) queue.addFirst(message) else queue.addLast(message)
+        EMS.execute(this)
+    }
+
+    fun inject(action: () -> Unit): ActionCommand = ActionCommand(caller, this, action).also {
+        queue.addLast(it)
+        EMS.execute(this)
     }
 
     override fun trigger() = onMessage(queue.take())
-    override fun onMessage(message: Information) {
-        TODO("Not yet implemented")
+    override fun synchronize() {
+        inject(Synchronization()).standBy()
+    }
+
+    override fun onMessage(message: Information) = when (message) {
+        is Command -> if (approvedCommands.any { it.isInstance(message) }) message.execute() else error(TEXT_MESSAGE_NOT_APPROVED, message)
+        is Synchronization -> {
+            debug("Synchronization point «%s» reached", message)
+            message.succeed()
+        }
+        else -> error(TEXT_MESSAGE_NOT_UNDERSTOOD, message)
     }
 
     protected fun <T : Information> addRoute(type: Class<out T>, processor: (T) -> Unit) {
@@ -40,7 +56,7 @@ open class BasicAgent : Logger(), Agent {
         inject(RemoveRouteCommand(caller, this, type))
     }
 
-    inner class AddRouteCommand<T>(
+    private inner class AddRouteCommand<T>(
             origin: Origin,
             recipient: Recipient,
             private val type: Class<out Any>,
@@ -52,7 +68,7 @@ open class BasicAgent : Logger(), Agent {
 
     }
 
-    inner class RemoveRouteCommand(
+    private inner class RemoveRouteCommand(
             origin: Origin,
             recipient: Recipient,
             private val type: Class<out Any>
@@ -63,15 +79,15 @@ open class BasicAgent : Logger(), Agent {
 
     }
 
+    private inner class Synchronization : BasicRequest(here, this@BasicAgent)
+
     companion object {
-        private val INTERNAL_COMMANDS = listOf<Class<out Command>>(
-                AddRouteCommand::class.java,
-                RemoveRouteCommand::class.java,
-//                MultiRequest::class.java,
-//                ExecuteCapturedCommand::class.java,
-//                AwaitReleaseTrigger::class.java,
-//                DummyRequest::class.java,
-//                LambdaCommand::class.java
+        private val TEXT_MESSAGE_NOT_UNDERSTOOD = LocalText("MessageNotUnderstood")
+        private val TEXT_MESSAGE_NOT_APPROVED = LocalText("MessageNotApproved")
+        private val INTERNAL_COMMANDS = listOf(
+                AddRouteCommand::class,
+                RemoveRouteCommand::class,
+                MultiRequest::class
         )
     }
 }

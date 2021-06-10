@@ -21,14 +21,15 @@ import java.util.concurrent.TimeUnit.SECONDS
 
 object CEMS: Logger(), EMS {
     private val TEXT_INVALID_OBJECT_TYPE = LocalText("InvalidObjectType")
+    private val TEXT_BROADCAST_NOT_IMPLEMENTED = LocalText("BroadcastNotImplemented")
     private val PROP_QUEUE_SIZE = LocalProperty("QueueSize", 4096)
     private val PROP_LOW_WATER_MARK = LocalProperty("LowWaterMark", 3)
     private val PROP_HIGH_WATER_MARK = LocalProperty("HighWaterMark", 12)
     private val PROP_PATIENCE = LocalProperty("Patience", Timespan(2, SECONDS))
 
     private val queue = LinkedBlockingDeque<Any>(PROP_QUEUE_SIZE.value)
-    private val qhist = CacheQueue<Information>()
     private val queueEmptyTriggers = ConcurrentLinkedQueue<() -> Unit>()
+    private var enabled = true
 
     private val MP_ID_GEN = BitSet(999)
     private val NEXT_ID: Int get() = MP_ID_GEN.nextClearBit(0).also { MP_ID_GEN.set(it) }
@@ -55,10 +56,8 @@ object CEMS: Logger(), EMS {
     override fun inject(message: Information) {
         if (message.urgent) {
             queue.putFirst(message)
-            qhist.add(-queue.size, message)
         } else {
             queue.putLast(message)
-            qhist.add(message)
         }
     }
 
@@ -76,9 +75,10 @@ object CEMS: Logger(), EMS {
             debug("Worker %d starting, patience = %s", number, patience.representation)
             while (!interrupted()) {
                 when (val item = queue.poll(patience.amount, patience.unit)) {
+                    null -> break
                     is Information -> broadcast(item)
                     is Agent -> item.trigger()
-                    else -> error(TEXT_INVALID_OBJECT_TYPE, item::class.java, item ?: Null)
+                    else -> error(TEXT_INVALID_OBJECT_TYPE, item::class.java, item)
                 }
             }
             MP_ID_GEN.clear(number)
@@ -87,6 +87,6 @@ object CEMS: Logger(), EMS {
     }
 
     private fun broadcast(item: Information) {
-        debug("Would broadcast item %s", item.formatted)
+        warn(TEXT_BROADCAST_NOT_IMPLEMENTED, item.formatted)
     }
 }

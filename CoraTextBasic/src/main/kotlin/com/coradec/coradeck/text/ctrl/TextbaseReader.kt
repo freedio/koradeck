@@ -8,7 +8,7 @@ object TextbaseReader {
     val parser = AdvancedLineParser(
         delimiters = "=:",
         escape = '\\',
-        comments = "#!",
+        comments = "#",
         beginquotes = "\"'",
         endquotes = "\"'"
     )

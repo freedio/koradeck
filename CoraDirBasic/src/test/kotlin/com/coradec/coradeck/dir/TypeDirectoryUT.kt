@@ -21,8 +21,7 @@ class TypeDirectoryUT {
         @BeforeAll
         @JvmStatic
         fun setup() {
-            CoraModules.register(CoraDirImpl())
-            CoraModules.register(CoraTypeImpl())
+            CoraModules.register(CoraDirImpl(), CoraTypeImpl())
         }
 
         @AfterAll

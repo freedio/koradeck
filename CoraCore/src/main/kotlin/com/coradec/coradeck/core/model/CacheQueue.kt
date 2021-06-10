@@ -11,7 +11,7 @@ import kotlin.NoSuchElementException
 
 class CacheQueue<E> : Queue<E> {
     val softcache = LinkedList<SoftReference<E>>()
-    val refQ = ReferenceQueue<E>()
+    private val refQ = ReferenceQueue<E>()
     override val size: Int get() = cleanup().let { softcache.size }
 
     private fun cleanup() {

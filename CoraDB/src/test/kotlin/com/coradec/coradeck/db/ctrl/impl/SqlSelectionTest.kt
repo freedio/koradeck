@@ -93,11 +93,11 @@ internal class SqlSelectionTest {
         val r4 = t4.where
         val r5 = t5.where
         // then:
-        assertThat(r1).isEqualTo(" where f1 = 3 and f2 = 'hello' and f3 = \"sym\"")
-        assertThat(r2).isEqualTo(" where f1 = 3 and f2 = 'hello' and f3 = \"sym\"")
-        assertThat(r3).isEqualTo(" where f1 <= 3 and f2 like 'hello' and f3 not between \"sym\" And \"zoom\"")
-        assertThat(r4).isEqualTo(" where f1 <> 1 and f2 not in ('hello', 'yallo') and f3 > 21")
-        assertThat(r5).isEqualTo(" where f2 not in ('hello', 'yallo') and f1 exists and f3 is not null")
+        assertThat(r1).isEqualTo(" where F1 = 3 and F2 = 'hello' and F3 = \"sym\"")
+        assertThat(r2).isEqualTo(" where F1 = 3 and F2 = 'hello' and F3 = \"sym\"")
+        assertThat(r3).isEqualTo(" where F1 <= 3 and F2 like 'hello' and F3 not between \"sym\" And \"zoom\"")
+        assertThat(r4).isEqualTo(" where F1 <> 1 and F2 not in ('hello', 'yallo') and F3 > 21")
+        assertThat(r5).isEqualTo(" where F2 not in ('hello', 'yallo') and F1 exists and F3 is not null")
     }
 
     @Test fun testOrder() {
@@ -108,8 +108,8 @@ internal class SqlSelectionTest {
         val r1 = t1.order
         val r2 = t2.order
         // then:
-        assertThat(r1).isEqualTo(" order by f1 asc, f2 desc, f3 asc, f4 desc, f5 asc, f6 desc")
-        assertThat(r2).isEqualTo(" order by limit asc, offset desc, f1 asc, f2 desc")
+        assertThat(r1).isEqualToIgnoringCase(" order by f1 asc, f2 desc, f3 asc, f4 desc, f5 asc, f6 desc")
+        assertThat(r2).isEqualToIgnoringCase(" order by limit asc, offset desc, f1 asc, f2 desc")
     }
 
     @Test fun testFilter() {
@@ -122,9 +122,9 @@ internal class SqlSelectionTest {
         val r2 = t2.filter
         val r3 = t3.filter
         // then:
-        assertThat(r1).isEqualTo(" limit 3 where limit < 24")
-        assertThat(r2).isEqualTo(" limit 3 where limit < 24")
-        assertThat(r3).isEqualTo(" offset 3 where offset not like 'picasso' and limit is not null")
+        assertThat(r1).isEqualToIgnoringCase(" where limit < 24 limit 3")
+        assertThat(r2).isEqualToIgnoringCase(" where limit < 24 limit 3")
+        assertThat(r3).isEqualToIgnoringCase(" where offset not like 'picasso' and limit is not null offset 3")
     }
 
     @Test fun testSelect() {
@@ -137,8 +137,8 @@ internal class SqlSelectionTest {
         val r2 = t2.select
         val r3 = t3.select
         // then:
-        assertThat(r1).isEqualTo(" limit 3 where limit < 24 order by limit asc")
-        assertThat(r2).isEqualTo(" limit 3 where limit < 24 order by limit asc")
-        assertThat(r3).isEqualTo(" offset 3 where offset not like 'picasso' and limit is not null order by offset desc")
+        assertThat(r1).isEqualToIgnoringCase(" where limit < 24 order by limit asc limit 3")
+        assertThat(r2).isEqualToIgnoringCase(" where limit < 24 order by limit asc limit 3")
+        assertThat(r3).isEqualToIgnoringCase(" where offset not like 'picasso' and limit is not null order by offset desc offset 3")
     }
 }
