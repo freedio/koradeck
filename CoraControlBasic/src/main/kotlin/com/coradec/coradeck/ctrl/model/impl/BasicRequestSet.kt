@@ -20,6 +20,7 @@ class BasicRequestSet(origin: Origin, recipient: Recipient, private val requests
     var outstanding = 0
 
     override fun execute() {
+        if (requests.none()) succeed()
         requests.forEach { request ->
             if (!complete) {
                 if (request.enregister(this)) ++outstanding

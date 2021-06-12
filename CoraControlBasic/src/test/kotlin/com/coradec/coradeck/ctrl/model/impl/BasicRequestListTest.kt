@@ -31,6 +31,19 @@ internal class BasicRequestListTest {
         }
     }
 
+    @Test fun testEmptyList() {
+        // given
+        val agent = TestAgent()
+        val testee = BasicRequestList(here, agent, listOf())
+        // when
+        agent.inject(testee).standBy()
+        // then
+        assertThat(testee.successful).isTrue()
+        assertThat(testee.failed).isFalse()
+        assertThat(testee.cancelled).isFalse()
+        assertThat(agent.sum).isEqualTo(0)
+    }
+
     @Test
     fun testSuccessfulList() {
         // given:
