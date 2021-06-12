@@ -1,25 +1,29 @@
 package com.coradec.coradeck.ctrl.model.impl
 
 import com.coradec.coradeck.com.model.*
-import com.coradec.coradeck.com.model.State.Companion.FINISHED
+import com.coradec.coradeck.com.model.State.*
 import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.com.model.impl.StateChangedEvent
 import com.coradec.coradeck.core.model.Origin
+import com.coradec.coradeck.core.model.StackFrame
 import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.ctrl.model.RequestList
 import com.coradec.coradeck.text.model.LocalText
-import java.util.concurrent.ConcurrentLinkedQueue
 
-class BasicRequestList(origin: Origin, recipient: Recipient, requests: List<Request>) :
+class BasicRequestList(origin: Origin, recipient: Recipient, private val requests: Iterator<Request>) :
         BasicRequest(origin, recipient), RequestList {
-    private val tracking = ConcurrentLinkedQueue(requests)
+    constructor(origin: Origin, recipient: Recipient, requests: Sequence<Request>) : this(origin, recipient, requests.iterator())
+    constructor(origin: Origin, recipient: Recipient, requests: List<Request>) : this(origin, recipient, requests.iterator())
 
-    override fun execute() {
-        when {
-            complete -> relax()
-            tracking.isEmpty() -> succeed()
-            else -> recipient.inject(tracking.remove().enregister(this))
+    override fun execute(): Unit = when {
+        complete -> relax()
+        requests.hasNext() -> requests.next().let { request ->
+            request.enregister(this)
+            if (!request.complete) {
+                if (!request.enqueued) recipient.inject(request)
+            } else process(request, request.state)
         }
+        else -> succeed()
     }
 
     override fun notify(event: Event): Boolean = when {
@@ -27,15 +31,18 @@ class BasicRequestList(origin: Origin, recipient: Recipient, requests: List<Requ
         event is StateChangedEvent -> {
             val element: Information = event.source
             debug("State Changed: %s %s→%s", element, event.previous, event.current)
-            when (event.current) {
-                State.SUCCESSFUL -> execute()
-                State.FAILED -> this@BasicRequestList.fail(if (element is Request) element.problem else null)
-                State.CANCELLED -> this@BasicRequestList.cancel().also { tracking.map { it.cancel() }; tracking.clear() }
-                else -> relax()
-            }
+            val newState = event.current
+            process(element, newState)
         }
         else -> warn(TEXT_EVENT_NOT_UNDERSTOOD, event)
     }.let { true }
+
+    private fun process(element: Information, state: State) = when (state) {
+        SUCCESSFUL -> execute()
+        FAILED -> fail(if (element is Request) element.problem else null)
+        CANCELLED -> cancel()
+        else -> relax()
+    }
 
     companion object {
         private val TEXT_EVENT_NOT_UNDERSTOOD = LocalText("EventNotUnderstood")

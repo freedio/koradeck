@@ -36,6 +36,6 @@ open class BasicInformation(
             }
         }
 
-    override fun <I : Information> enregister(observer: Observer): I = also { stateRegistry+= observer } as I
-    override fun <I : Information> deregister(observer: Observer): I = also { stateRegistry -= observer } as I
+    override fun enregister(observer: Observer) = stateRegistry.add(observer)
+    override fun deregister(observer: Observer) = stateRegistry.remove(observer)
 }

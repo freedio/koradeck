@@ -14,8 +14,8 @@ class CoraControlImpl : CoraControlAPI {
     override val EMS: EMS get() = CEMS
 
     override fun createRequestSet(origin: Origin, recipient: Recipient, vararg requests: Request): RequestSet =
-            BasicRequestSet(origin, recipient, requests.toList())
+            BasicRequestSet(origin, recipient, Sequence { requests.iterator() })
 
     override fun createRequestList(origin: Origin, recipient: Recipient, vararg requests: Request): RequestList =
-            BasicRequestList(origin, recipient, requests.toList())
+            BasicRequestList(origin, recipient, Sequence { requests.iterator() })
 }

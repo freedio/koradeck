@@ -5,6 +5,7 @@ import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.util.here
+import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
@@ -21,12 +22,14 @@ internal class BasicRequestSetTest {
 
     companion object {
         @BeforeAll
-        @JvmStatic fun setup() {
+        @JvmStatic
+        fun setup() {
             CoraModules.register(CoraConfImpl(), CoraTextImpl(), CoraTypeImpl(), CoraComImpl(), CoraControlImpl())
         }
 
         @AfterAll
-        @JvmStatic fun teardown() {
+        @JvmStatic
+        fun teardown() {
             CoraModules.initialize()
         }
     }
@@ -45,7 +48,11 @@ internal class BasicRequestSetTest {
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
+        Thread.sleep(100)
         assertThat(agent.sum).isEqualTo(111)
+        assertThat(req1.observerCount).isEqualTo(0)
+        assertThat(req2.observerCount).isEqualTo(0)
+        assertThat(req3.observerCount).isEqualTo(0)
     }
 
     @Test
@@ -67,11 +74,12 @@ internal class BasicRequestSetTest {
         assertThat(testee.successful).isFalse()
         assertThat(testee.failed).isTrue()
         assertThat(testee.cancelled).isFalse()
-        assertThat(agent.sum).isNotEqualTo(111)
+        assertThat(agent.sum).isEqualTo(101)
         assertThat(trouble).isNotNull()
+        Thread.sleep(100)
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
-//        assertThat(req3.observerCount).isEqualTo(0)  // doesn't work with Maven test execution
+        assertThat(req3.observerCount).isEqualTo(0)
     }
 
 
@@ -94,10 +102,11 @@ internal class BasicRequestSetTest {
         assertThat(testee.successful).isFalse()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isTrue()
-        assertThat(agent.sum).isNotEqualTo(111)
+        assertThat(agent.sum).isBetween(100, 101)
         assertThat(trouble).isNotNull()
-//        assertThat(req1.observerCount).isEqualTo(0)  // doesn't work with Maven sometimes
-//        assertThat(req2.observerCount).isEqualTo(0)  // doesn't work with Maven sometimes
+        Thread.sleep(100)
+        assertThat(req1.observerCount).isEqualTo(0)
+        assertThat(req2.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)
     }
 
@@ -123,6 +132,7 @@ internal class BasicRequestSetTest {
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
         assertThat(agent.value).isEqualTo("abcdefghi")
+        Thread.sleep(100)
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)
@@ -134,18 +144,18 @@ internal class BasicRequestSetTest {
         assertThat(req9.observerCount).isEqualTo(0)
     }
 
-    class TestRequest(agent: Agent, val value: Int): BasicRequest(here, agent)
-    class FailingRequest(agent: Agent, val value: Int): BasicRequest(here, agent)
-    class CancellingRequest(agent: Agent, val value: Int): BasicRequest(here, agent)
+    class TestRequest(agent: Agent, val value: Int) : BasicRequest(here, agent)
+    class FailingRequest(agent: Agent, val value: Int) : BasicRequest(here, agent)
+    class CancellingRequest(agent: Agent, val value: Int) : BasicRequest(here, agent)
 
     class TestAgent : BasicAgent() {
         var sum = 0
 
         override fun onMessage(message: Information) = when (message) {
-            is TestRequest -> {
+            is TestRequest -> if (!message.cancelled) {
                 sum += message.value
                 message.succeed()
-            }
+            } else relax()
             is CancellingRequest -> message.cancel()
             is FailingRequest -> message.fail(RuntimeException("This was to be expected!"))
             else -> super.onMessage(message)
@@ -153,14 +163,14 @@ internal class BasicRequestSetTest {
     }
 
     class TestAgent2 : BasicAgent() {
-        private var collector= StringBuilder()
+        private var collector = StringBuilder()
         val value get() = collector.toString()
 
         override fun onMessage(message: Information) = when (message) {
-            is TestRequest -> {
+            is TestRequest -> if (!message.cancelled) {
                 collector.append(message.value.toChar())
                 message.succeed()
-            }
+            } else relax()
             is CancellingRequest -> message.cancel()
             is FailingRequest -> message.fail(RuntimeException("This was to be expected!"))
             else -> super.onMessage(message)

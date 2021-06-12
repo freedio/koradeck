@@ -87,7 +87,8 @@ open class BasicAgent : Logger(), Agent {
         private val INTERNAL_COMMANDS = listOf(
                 AddRouteCommand::class,
                 RemoveRouteCommand::class,
-                MultiRequest::class
+                MultiRequest::class,
+                ActionCommand::class
         )
     }
 }

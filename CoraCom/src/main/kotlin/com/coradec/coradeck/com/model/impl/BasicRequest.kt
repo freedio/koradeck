@@ -1,5 +1,6 @@
 package com.coradec.coradeck.com.model.impl
 
+import com.coradec.coradeck.com.ctrl.Observer
 import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.com.model.Request
 import com.coradec.coradeck.com.model.State
@@ -10,7 +11,7 @@ import com.coradec.coradeck.core.model.Origin
 import java.util.concurrent.CountDownLatch
 
 open class BasicRequest(origin: Origin, recipient: Recipient) : BasicMessage(origin, recipient), Request {
-    protected var myProblem: Throwable? = null
+    private var myProblem: Throwable? = null
     private val unfinished = CountDownLatch(1)
     override val problem: Throwable? get() = myProblem
     override val successful: Boolean get() = state == SUCCESSFUL
@@ -40,6 +41,8 @@ open class BasicRequest(origin: Origin, recipient: Recipient) : BasicMessage(ori
         if (failed) throw RequestFailedException()
         if (cancelled) throw RequestCancelledException()
     }
+
+    override fun enregister(observer: Observer) = !complete && super.enregister(observer)
 
     companion object {
         private val COMPLETION_STATES = setOf(SUCCESSFUL, FAILED, CANCELLED)
