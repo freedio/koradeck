@@ -5,6 +5,7 @@
 package com.coradec.coradeck.core.util
 
 import java.time.Duration
+import java.time.LocalDate
 
 val Duration.pretty: CharSequence
     get() {
@@ -25,4 +26,5 @@ val Duration.pretty: CharSequence
         return collector.trim()
     }
 
-private operator fun StringBuilder.plusAssign(s: String) { append(s) }
+operator fun StringBuilder.plusAssign(s: String) { append(s) }
+fun String.asLocalDate(): LocalDate = LocalDate.parse(this)

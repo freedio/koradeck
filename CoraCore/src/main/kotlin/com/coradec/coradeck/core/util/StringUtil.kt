@@ -6,7 +6,6 @@ package com.coradec.coradeck.core.util
 
 import com.coradec.coradeck.core.model.Null
 
-val NEWLINE = System.getProperty("line.separator")
 val Any?.formatted: String
     get() {
         val repr = toString()
@@ -19,4 +18,7 @@ val Any?.formatted: String
     }
 
 operator fun Regex.contains(x: String): Boolean = x.matches(this)
-fun String.trimIfBlank() = if (isBlank()) "" else this
+fun String.trimIfBlank() = ifBlank { "" }
+operator fun StringBuilder.plusAssign(c: Char) {
+    append(c)
+}

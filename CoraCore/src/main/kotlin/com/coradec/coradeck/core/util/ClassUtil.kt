@@ -12,6 +12,7 @@ val KClass<*>.classname: String
     get() = (qualifiedName ?: throw IllegalStateException("Class $this has no qualified name!"))
             .removePrefix("kotlin.")
             .removePrefix("java.lang.")
+            .removePrefix("collections.")
 operator fun KClass<*>.contains(other: KClass<*>) = isSubclassOf(other)
 operator fun KClass<*>.contains(instance: Any) = isInstance(instance)
 

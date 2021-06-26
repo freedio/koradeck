@@ -8,12 +8,12 @@ import com.coradec.coradeck.core.util.formatted
 import com.coradec.coradeck.core.util.pretty
 import java.time.Duration
 
-open class BasicException(message: String?, problem: Throwable?) : RuntimeException(message, problem) {
+open class BasicException(message: String?, problem: Throwable?) : Exception(message, problem) {
     constructor(message: String?) : this(message, null)
     constructor(problem: Throwable?) : this(null, problem)
     constructor() : this(null, null)
 
-    protected val superMessage: String? = super.message
+    private val superMessage: String? = super.message
     override val message: String
         get() {
             val properties = listProperties().map { "${it.key}: ${it.value.formatted}"}.joinToString()
@@ -23,7 +23,7 @@ open class BasicException(message: String?, problem: Throwable?) : RuntimeExcept
             return result.toString()
         }
 
-    protected fun listProperties(): Map<String, Any> = javaClass.methods
+    private fun listProperties(): Map<String, Any> = javaClass.methods
             .filterNot { method -> method.name in IRRELEVANT_METHODS }
             .filter { method -> method.name.matches(PROPERTY_METHOD_PREFIX) }
             .filter { method -> method.parameterCount == 0 && !Void.TYPE.isAssignableFrom(method.returnType) }
