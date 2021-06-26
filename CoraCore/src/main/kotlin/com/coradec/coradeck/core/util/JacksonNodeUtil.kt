@@ -39,5 +39,5 @@ fun JsonNode?.asTextNode(): TextNode = when(this) {
 val JsonNode?.text: String get() = when(this) {
     null -> throw IllegalStateException("Node not found!")
     is TextNode -> textValue()
-    else -> throw IllegalArgumentException("Node is not a text node!")
+    else -> toPrettyString()
 }
