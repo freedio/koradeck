@@ -35,7 +35,7 @@ class BasicRequestSet(origin: Origin, recipient: Recipient, private val requests
         complete -> relax()
         event is StateChangedEvent -> {
             val element: Information = event.source
-            debug("State Changed: %s %s→%s", element, event.previous, event.current)
+            trace("State Changed: %s %s→%s", element, event.previous, event.current)
             val newState = event.current
             process(element, newState)
         }

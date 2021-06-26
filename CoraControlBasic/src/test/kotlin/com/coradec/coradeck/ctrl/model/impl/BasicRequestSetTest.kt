@@ -34,7 +34,7 @@ internal class BasicRequestSetTest {
         }
     }
 
-    @Test fun testEmptyList() {
+    @Test fun testEmptySet() {
         // given
         val agent = TestAgent()
         val testee = BasicRequestSet(here, agent, listOf())
@@ -61,7 +61,7 @@ internal class BasicRequestSetTest {
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
-        Thread.sleep(100)
+        Thread.sleep(1000)
         assertThat(agent.sum).isEqualTo(111)
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
