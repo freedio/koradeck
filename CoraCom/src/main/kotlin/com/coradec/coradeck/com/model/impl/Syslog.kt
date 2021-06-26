@@ -19,6 +19,7 @@ object Syslog : Log {
             LogLevel.DEBUG
         }
     }
+    val level: LogLevel get() = THRESHOLD
     override fun log(entry: LogEntry) {
         if (entry.level atLeast THRESHOLD)
         with (if (entry.severe) channel2 else channel1) {
