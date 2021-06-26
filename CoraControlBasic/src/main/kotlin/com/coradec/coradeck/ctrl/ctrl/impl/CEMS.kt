@@ -15,7 +15,9 @@ import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.ctrl.EMS
 import com.coradec.coradeck.text.model.LocalText
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit.SECONDS
 
@@ -33,7 +35,7 @@ object CEMS: Logger(), EMS {
 
     private val MP_ID_GEN = BitSet(999)
     private val NEXT_ID: Int get() = MP_ID_GEN.nextClearBit(0).also { MP_ID_GEN.set(it) }
-    private val workers = arrayListOf<Thread>()
+    private val workers = ConcurrentHashMap<Int, Worker>()
 
     init {
         startInitialWorkers()
@@ -45,7 +47,8 @@ object CEMS: Logger(), EMS {
 
     private fun startWorker() {
         synchronized(workers) {
-            workers += Worker(NEXT_ID).apply { start() }
+            val id = NEXT_ID
+            workers[id] = Worker(id).apply { start() }
         }
     }
 
@@ -75,14 +78,15 @@ object CEMS: Logger(), EMS {
             debug("Worker %d starting, patience = %s", number, patience.representation)
             while (!interrupted()) {
                 when (val item = queue.poll(patience.amount, patience.unit)) {
-                    null -> break
+                    null -> if (PROP_LOW_WATER_MARK.value < workers.size) break
                     is Information -> broadcast(item)
                     is Agent -> item.trigger()
                     else -> error(TEXT_INVALID_OBJECT_TYPE, item::class.java, item)
                 }
             }
             MP_ID_GEN.clear(number)
-            debug("Worker %d stopping.", number)
+            workers -= number
+            debug("Worker %d stopped.", number)
         }
     }
 
