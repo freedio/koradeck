@@ -4,7 +4,12 @@
 
 package com.coradec.coradeck.type.module.impl
 
+import com.coradec.coradeck.type.ctrl.TypeConverter
+import com.coradec.coradeck.type.model.Password
+import com.coradec.coradeck.type.model.Secret
 import com.coradec.coradeck.type.model.TypeConverters
+import com.coradec.coradeck.type.model.impl.BasicPassword
+import com.coradec.coradeck.type.model.impl.BasicSecret
 import com.coradec.coradeck.type.module.CoraTypeAPI
 import com.coradec.coradeck.type.trouble.MissingTypeArgumentsException
 import kotlin.reflect.KClass
@@ -21,6 +26,9 @@ class CoraTypeImpl: CoraTypeAPI {
         return klass.createType(/* TODO type arguments! */)
     }
 
-    override fun <T : Any> castTo(value: Any?, type: KType): T? = type.classifier?.let { castTo(value, it as KClass<T>) }
+    override fun <T : Any> castTo(value: Any?, type: KType): T? =
+            (TypeConverters[type] as TypeConverter<T>).convert(value)
     override fun <T : Any> castTo(value: Any?, type: KClass<T>): T? = TypeConverters[type].convert(value)
+    override fun password(cleartext: String): Password = BasicPassword(cleartext)
+    override fun secret(cleartext: String): Secret = BasicSecret(cleartext)
 }
