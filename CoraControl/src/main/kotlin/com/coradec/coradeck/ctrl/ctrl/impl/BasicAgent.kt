@@ -17,6 +17,7 @@ import com.coradec.coradeck.text.model.LocalText
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.LinkedBlockingDeque
+import kotlin.reflect.KClass
 
 @Suppress("UNCHECKED_CAST")
 open class BasicAgent : Logger(), Agent {
@@ -37,6 +38,14 @@ open class BasicAgent : Logger(), Agent {
     override fun trigger() = onMessage(queue.take())
     override fun synchronize() {
         inject(Synchronization()).standBy()
+    }
+
+    override fun approve(vararg cmd: KClass<out Command>) {
+        approvedCommands.addAll(cmd.toList())
+    }
+
+    override fun disapprove(vararg cmd: KClass<out Command>) {
+        approvedCommands.removeAll(cmd.toList())
     }
 
     override fun onMessage(message: Information) = when (message) {
