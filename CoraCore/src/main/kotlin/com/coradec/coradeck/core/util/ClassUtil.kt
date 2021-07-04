@@ -13,6 +13,7 @@ val KClass<*>.classname: String
             .removePrefix("kotlin.")
             .removePrefix("java.lang.")
             .removePrefix("collections.")
+val KClass<*>.shortClassname: String get() = (simpleName ?: throw IllegalStateException("Class $this has no simple name!"))
 operator fun KClass<*>.contains(other: KClass<*>) = isSubclassOf(other)
 operator fun KClass<*>.contains(instance: Any) = isInstance(instance)
 
