@@ -21,7 +21,7 @@ interface ClassPathResource {
     companion object {
         /** Creates a class path resource from the specified kotlin class, with the specified extension (must include the dot!) */
         operator fun invoke(klass: KClass<*>, ext: String): ClassPathResource =
-                BasicClassPathResource(klass.java.name.replace('.', '/') + ext)
+                BasicClassPathResource(klass.java.name.replace('.', '/') + '/' + ext)
         /** Creates a class path resource from the specified path (must be relative to work properly!) */
         operator fun invoke(path: String): ClassPathResource = BasicClassPathResource(path)
     }
