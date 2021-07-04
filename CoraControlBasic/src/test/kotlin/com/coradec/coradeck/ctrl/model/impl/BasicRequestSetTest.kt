@@ -16,7 +16,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import kotlin.random.Random
+import java.util.concurrent.atomic.AtomicInteger
 
 internal class BasicRequestSetTest {
 
@@ -44,7 +44,7 @@ internal class BasicRequestSetTest {
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
-        assertThat(agent.sum).isEqualTo(0)
+        assertThat(agent.sum.get()).isEqualTo(0)
     }
 
     @Test
@@ -61,8 +61,8 @@ internal class BasicRequestSetTest {
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
-        Thread.sleep(1000)
-        assertThat(agent.sum).isEqualTo(111)
+        Thread.sleep(100)
+        assertThat(agent.sum.get()).isEqualTo(111)
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)
@@ -87,7 +87,7 @@ internal class BasicRequestSetTest {
         assertThat(testee.successful).isFalse()
         assertThat(testee.failed).isTrue()
         assertThat(testee.cancelled).isFalse()
-        assertThat(agent.sum).isEqualTo(101)
+        assertThat(agent.sum.get()).isEqualTo(101)
         assertThat(trouble).isNotNull()
         Thread.sleep(100)
         assertThat(req1.observerCount).isEqualTo(0)
@@ -115,7 +115,7 @@ internal class BasicRequestSetTest {
         assertThat(testee.successful).isFalse()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isTrue()
-        assertThat(agent.sum).isBetween(100, 101)
+        assertThat(agent.sum.get()).isIn(100, 101)
         assertThat(trouble).isNotNull()
         Thread.sleep(100)
         assertThat(req1.observerCount).isEqualTo(0)
@@ -162,11 +162,11 @@ internal class BasicRequestSetTest {
     class CancellingRequest(agent: Agent, val value: Int) : BasicRequest(here, agent)
 
     class TestAgent : BasicAgent() {
-        var sum = 0
+        var sum = AtomicInteger(0)
 
         override fun onMessage(message: Information) = when (message) {
             is TestRequest -> if (!message.cancelled) {
-                sum += message.value
+                sum.addAndGet(message.value)
                 message.succeed()
             } else relax()
             is CancellingRequest -> message.cancel()

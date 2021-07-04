@@ -1,3 +1,4 @@
 # Localized text base for default local of class BasicAgent
-MessageNotUnderstood: Message «%s» not understood (not routed or not allowed?)!
-MessageNotApproved: Message «%s» not approved!
+MessageNotUnderstood1: Message «%s» not understood (not routed or not allowed?)!
+MessageNotApproved1: Message «%s» not approved!
+CommandFailedUngracefully2: Command «%s» failed ungracefully with «%s»!

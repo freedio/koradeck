@@ -10,6 +10,7 @@ import com.coradec.coradeck.com.model.impl.BasicCommand
 import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.util.caller
+import com.coradec.coradeck.core.util.classname
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.module.CoraControl.EMS
@@ -49,7 +50,13 @@ open class BasicAgent : Logger(), Agent {
     }
 
     override fun onMessage(message: Information) = when (message) {
-        is Command -> if (approvedCommands.any { it.isInstance(message) }) message.execute() else error(TEXT_MESSAGE_NOT_APPROVED, message)
+        is Command ->
+            if (approvedCommands.any { it.isInstance(message) })
+                try { message.execute() } catch (e: Throwable) {
+                    error(e, TEXT_COMMAND_FAILED_UNGRACEFULLY, message::class.classname, e.toString())
+                    message.fail(e)
+                }
+            else error(TEXT_MESSAGE_NOT_APPROVED, message)
         is Synchronization -> {
             debug("Synchronization point «%s» reached", message)
             message.succeed()
@@ -66,10 +73,10 @@ open class BasicAgent : Logger(), Agent {
     }
 
     private inner class AddRouteCommand<T>(
-            origin: Origin,
-            recipient: Recipient,
-            private val type: Class<out Any>,
-            private val processor: (T) -> Unit
+        origin: Origin,
+        recipient: Recipient,
+        private val type: Class<out Any>,
+        private val processor: (T) -> Unit
     ) : BasicCommand(origin, recipient) {
         override fun execute() {
             routes[type] = processor as (Any) -> Unit
@@ -78,9 +85,9 @@ open class BasicAgent : Logger(), Agent {
     }
 
     private inner class RemoveRouteCommand(
-            origin: Origin,
-            recipient: Recipient,
-            private val type: Class<out Any>
+        origin: Origin,
+        recipient: Recipient,
+        private val type: Class<out Any>
     ) : BasicCommand(origin, recipient) {
         override fun execute() {
             routes.remove(type)
@@ -91,13 +98,14 @@ open class BasicAgent : Logger(), Agent {
     private inner class Synchronization : BasicRequest(here, this@BasicAgent)
 
     companion object {
-        private val TEXT_MESSAGE_NOT_UNDERSTOOD = LocalText("MessageNotUnderstood")
-        private val TEXT_MESSAGE_NOT_APPROVED = LocalText("MessageNotApproved")
+        private val TEXT_MESSAGE_NOT_UNDERSTOOD = LocalText("MessageNotUnderstood1")
+        private val TEXT_MESSAGE_NOT_APPROVED = LocalText("MessageNotApproved1")
+        private val TEXT_COMMAND_FAILED_UNGRACEFULLY = LocalText("CommandFailedUngracefully2")
         private val INTERNAL_COMMANDS = listOf(
-                AddRouteCommand::class,
-                RemoveRouteCommand::class,
-                MultiRequest::class,
-                ActionCommand::class
+            AddRouteCommand::class,
+            RemoveRouteCommand::class,
+            MultiRequest::class,
+            ActionCommand::class
         )
     }
 }
