@@ -12,7 +12,7 @@ internal class ClassPathResourceTest {
 
     @Test fun testExisting() {
         // given:
-        val testee = ClassPathResource(this::class, "testExisting.txt")
+        val testee = ClassPathResource(this::class, "/testExisting.txt")
         // when:
         val r1 = testee.exists
         val r2 = testee.location
@@ -33,7 +33,7 @@ internal class ClassPathResourceTest {
 
     @Test fun testNonExisting() {
         // given:
-        val testee = ClassPathResource(this::class, "testNonExisting.txt")
+        val testee = ClassPathResource(this::class, "/testNonExisting.txt")
         // when:
         val r1 = testee.exists
         val r2 = try { testee.location } catch (e: ClassPathResourceNotFoundException) { null }
