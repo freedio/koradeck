@@ -19,7 +19,11 @@ interface ClassPathResource {
     fun ifExists(function: ClassPathResource.() -> Unit): Boolean
 
     companion object {
-        /** Creates a class path resource from the specified kotlin class, with the specified extension (must include the dot!) */
+        /**
+         * Creates a class path resource from the specified kotlin class, with the specified extension (must include the dot!)
+         * This method can also be used to refer to the class as a directory, containing the file specified in [ext].  In this case,
+         * the file name ([ext]) must start with a slash, as in "/example.txt".
+         */
         operator fun invoke(klass: KClass<*>, ext: String): ClassPathResource =
                 BasicClassPathResource(klass.java.name.replace('.', '/') + ext)
         /** Creates a class path resource from the specified path (must be relative to work properly!) */
