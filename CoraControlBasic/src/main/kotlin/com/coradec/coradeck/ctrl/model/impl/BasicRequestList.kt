@@ -5,7 +5,6 @@ import com.coradec.coradeck.com.model.State.*
 import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.com.model.impl.StateChangedEvent
 import com.coradec.coradeck.core.model.Origin
-import com.coradec.coradeck.core.model.StackFrame
 import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.ctrl.model.RequestList
 import com.coradec.coradeck.text.model.LocalText
@@ -45,6 +44,6 @@ class BasicRequestList(origin: Origin, recipient: Recipient, private val request
     }
 
     companion object {
-        private val TEXT_EVENT_NOT_UNDERSTOOD = LocalText("EventNotUnderstood")
+        private val TEXT_EVENT_NOT_UNDERSTOOD = LocalText("EventNotUnderstood1")
     }
 }

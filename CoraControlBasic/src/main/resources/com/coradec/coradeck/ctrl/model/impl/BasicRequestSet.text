@@ -1,2 +1,2 @@
 # Localized textbase for default locale of class BasicRequestSet
-EventNotUnderstood: Event «%s» not understood!
+EventNotUnderstood1: Event «%s» not understood!
