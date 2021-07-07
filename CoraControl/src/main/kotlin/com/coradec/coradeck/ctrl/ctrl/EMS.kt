@@ -10,4 +10,6 @@ interface EMS {
     fun execute(agent: Agent)
     fun inject(message: Information)
     fun post(obj: Any)
+    fun onQueueEmpty(function: () -> Unit)
+    fun standBy()
 }

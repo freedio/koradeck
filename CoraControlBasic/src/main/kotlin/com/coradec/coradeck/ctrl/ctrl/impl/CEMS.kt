@@ -7,8 +7,6 @@ package com.coradec.coradeck.ctrl.ctrl.impl
 import com.coradec.coradeck.com.ctrl.impl.Logger
 import com.coradec.coradeck.com.model.Information
 import com.coradec.coradeck.conf.model.LocalProperty
-import com.coradec.coradeck.core.model.CacheQueue
-import com.coradec.coradeck.core.model.Null
 import com.coradec.coradeck.core.model.Timespan
 import com.coradec.coradeck.core.util.formatted
 import com.coradec.coradeck.ctrl.ctrl.Agent
@@ -17,8 +15,8 @@ import com.coradec.coradeck.text.model.LocalText
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit.SECONDS
 
 object CEMS: Logger(), EMS {
@@ -68,8 +66,14 @@ object CEMS: Logger(), EMS {
         queue.put(obj)
     }
 
-    fun onQueueEmpty(function: () -> Unit) {
+    override fun onQueueEmpty(function: () -> Unit) {
         queueEmptyTriggers += function
+    }
+
+    override fun standBy() {
+        val sync = Semaphore(1)
+        onQueueEmpty { sync.release() }
+        sync.acquire()
     }
 
     private class Worker(val number: Int): Thread("CEMS-%03d".format(number)) {
