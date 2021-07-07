@@ -12,7 +12,7 @@ class BasicProblemLogEntry(
     origin: Origin,
     level: LogLevel,
     override val problem: Throwable,
-    val text: Text?,
+    val text: Text? = null,
     private vararg val args: Any
 ) : BasicLogEntry(origin, level), ProblemLogEntry {
     override fun formattedWith(format: String): String =
