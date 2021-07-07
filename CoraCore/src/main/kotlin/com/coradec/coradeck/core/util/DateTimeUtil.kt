@@ -6,6 +6,8 @@ package com.coradec.coradeck.core.util
 
 import java.time.Duration
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 val Duration.pretty: CharSequence
     get() {
@@ -27,4 +29,7 @@ val Duration.pretty: CharSequence
     }
 
 operator fun StringBuilder.plusAssign(s: String) { append(s) }
-fun String.asLocalDate(): LocalDate = LocalDate.parse(this)
+fun String.asLocalDate(pattern: String = "yyyy-MM-dd"): LocalDate =
+    LocalDate.parse(this, DateTimeFormatter.ofPattern(pattern))
+fun String.asLocalDateTime(pattern: String = "yyyy-MM-dd'T'HH:mm:ss"): LocalDateTime =
+    LocalDateTime.parse(this, DateTimeFormatter.ofPattern(pattern))
