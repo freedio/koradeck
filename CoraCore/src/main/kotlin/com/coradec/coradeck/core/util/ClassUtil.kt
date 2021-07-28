@@ -4,9 +4,10 @@
 
 package com.coradec.coradeck.core.util
 
+import com.coradec.coradeck.core.model.Origin
+import com.coradec.coradeck.core.model.impl.ClassOrigin
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
-import kotlin.reflect.full.isSuperclassOf
 
 val KClass<*>.classname: String
     get() = (qualifiedName ?: throw IllegalStateException("Class $this has no qualified name!"))
@@ -14,6 +15,7 @@ val KClass<*>.classname: String
             .removePrefix("java.lang.")
             .removePrefix("collections.")
 val KClass<*>.shortClassname: String get() = (simpleName ?: throw IllegalStateException("Class $this has no simple name!"))
+val KClass<*>.asOrigin: Origin get() = ClassOrigin(this)
 operator fun KClass<*>.contains(other: KClass<*>) = isSubclassOf(other)
 operator fun KClass<*>.contains(instance: Any) = isInstance(instance)
 
