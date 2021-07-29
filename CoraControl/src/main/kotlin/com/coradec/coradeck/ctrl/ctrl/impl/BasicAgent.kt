@@ -50,7 +50,7 @@ open class BasicAgent : Logger(), Agent {
         approvedCommands.removeAll(cmd.toList())
     }
 
-    override fun onMessage(message: Information): Unit = when (message) {
+    protected open fun onMessage(message: Information): Unit = when (message) {
         is Command ->
             if (approvedCommands.any { it.isInstance(message) })
                 try { message.execute() } catch (e: Throwable) {
