@@ -54,16 +54,6 @@
             <version>5.5.1</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.coradec.coradeck</groupId>
-            <artifactId>text-basic</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.coradec.coradeck</groupId>
-            <artifactId>com-basic</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>

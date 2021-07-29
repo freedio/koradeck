@@ -91,14 +91,12 @@ object CEMS: Logger(), EMS {
             val patience = PROP_PATIENCE.value
             debug("Worker %d starting, patience = %s", number, patience.representation)
             while (!interrupted()) {
-                debug("Before Poll: $queueSize")
                 when (val item = prioqueue.poll() ?: normqueue.poll(patience.amount, patience.unit)) {
                     null -> if (workers.size > PROP_LOW_WATER_MARK.value) break
                     is Information -> broadcast(item)
                     is Agent -> item.trigger()
                     else -> error(TEXT_INVALID_OBJECT_TYPE, item::class.java, item)
                 }
-                debug("After Poll: $queueSize")
             }
             MP_ID_GEN.clear(number)
             workers -= number
