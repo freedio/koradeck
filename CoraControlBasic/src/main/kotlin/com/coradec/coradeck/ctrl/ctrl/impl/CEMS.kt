@@ -15,7 +15,7 @@ import com.coradec.coradeck.text.model.LocalText
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit.SECONDS
 
@@ -27,13 +27,16 @@ object CEMS: Logger(), EMS {
     private val PROP_HIGH_WATER_MARK = LocalProperty("HighWaterMark", 12)
     private val PROP_PATIENCE = LocalProperty("Patience", Timespan(2, SECONDS))
 
-    private val queue = LinkedBlockingDeque<Any>(PROP_QUEUE_SIZE.value)
+    private val normqueue = LinkedBlockingQueue<Any>(PROP_QUEUE_SIZE.value)
+    private val prioqueue = LinkedBlockingQueue<Any>(1024)
     private val queueEmptyTriggers = ConcurrentLinkedQueue<() -> Unit>()
     private var enabled = true
 
     private val MP_ID_GEN = BitSet(999)
     private val NEXT_ID: Int get() = MP_ID_GEN.nextClearBit(0).also { MP_ID_GEN.set(it) }
     private val workers = ConcurrentHashMap<Int, Worker>()
+
+    override val queueSize: Int get() = normqueue.size
 
     init {
         startInitialWorkers()
@@ -44,26 +47,33 @@ object CEMS: Logger(), EMS {
     }
 
     private fun startWorker() {
-        synchronized(workers) {
             val id = NEXT_ID
             workers[id] = Worker(id).apply { start() }
-        }
+    }
+
+    private fun increaseLoad() {
+        if (queueSize > workers.size && workers.size < PROP_HIGH_WATER_MARK.value) startWorker()
     }
 
     override fun execute(agent: Agent) {
-        queue.put(agent)
+        normqueue.put(agent)
+        increaseLoad()
     }
 
     override fun inject(message: Information) {
         if (message.urgent) {
-            queue.putFirst(message)
+//            queue.putFirst(message)
+            prioqueue.put(message)
         } else {
-            queue.putLast(message)
+//            queue.putLast(message)
+            normqueue.put(message)
         }
+        increaseLoad()
     }
 
     override fun post(obj: Any) {
-        queue.put(obj)
+        normqueue.put(obj)
+        increaseLoad()
     }
 
     override fun onQueueEmpty(function: () -> Unit) {
@@ -81,12 +91,14 @@ object CEMS: Logger(), EMS {
             val patience = PROP_PATIENCE.value
             debug("Worker %d starting, patience = %s", number, patience.representation)
             while (!interrupted()) {
-                when (val item = queue.poll(patience.amount, patience.unit)) {
-                    null -> if (PROP_LOW_WATER_MARK.value < workers.size) break
+                debug("Before Poll: $queueSize")
+                when (val item = prioqueue.poll() ?: normqueue.poll(patience.amount, patience.unit)) {
+                    null -> if (workers.size > PROP_LOW_WATER_MARK.value) break
                     is Information -> broadcast(item)
                     is Agent -> item.trigger()
                     else -> error(TEXT_INVALID_OBJECT_TYPE, item::class.java, item)
                 }
+                debug("After Poll: $queueSize")
             }
             MP_ID_GEN.clear(number)
             workers -= number

@@ -7,6 +7,7 @@ package com.coradec.coradeck.ctrl.ctrl
 import com.coradec.coradeck.com.model.Information
 
 interface EMS {
+    val queueSize: Int
     fun execute(agent: Agent)
     fun inject(message: Information)
     fun post(obj: Any)
