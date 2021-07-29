@@ -25,6 +25,7 @@ open class BasicAgent : Logger(), Agent {
     private val routes = ConcurrentHashMap<Class<*>, (Any) -> Unit>()
     private val approvedCommands = CopyOnWriteArraySet(INTERNAL_COMMANDS)
     private val queue = LinkedBlockingDeque<Information>()
+    override val queueSize: Int = queue.size
 
     override fun <I : Information> inject(message: I): I = message.also {
         if (message.urgent) queue.addFirst(message) else queue.addLast(message)
