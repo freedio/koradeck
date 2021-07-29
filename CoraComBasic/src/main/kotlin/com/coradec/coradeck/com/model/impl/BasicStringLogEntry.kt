@@ -10,7 +10,12 @@ class BasicStringLogEntry(
         private val text: String,
         private vararg val args: Any
 ) : BasicLogEntry(origin, level), StringLogEntry {
-    override fun formattedWith(format: String): String =
-            format.format(createdAt, worker.name, level.abbrev, text.format(*args), origin.representation)
+    override fun formattedWith(format: String): String = format.format(
+        createdAt,
+        worker.name,
+        level.abbrev,
+        text.let { if (args.isEmpty() && '%' in it) it.replace("%", "%%") else it }.format(*args),
+        origin.representation
+    )
     override fun toString(): String = formattedWith(Syslog.FORMAT)
 }

@@ -13,8 +13,8 @@ import kotlin.reflect.typeOf
 interface LocalProperty<P : Any> : Property<P> {
     companion object {
         inline operator fun <reified P : Any> invoke(name: String, default: P): Property<P> =
-            ContextProperty(typeOf<P?>(), caller.className, name, default)
+            ContextProperty(typeOf<P?>(), caller.propertyBase, name, default)
         inline operator fun <reified P : Any> invoke(name: String): Property<P> =
-            MandatoryContextProperty(typeOf<P?>(), caller.className, name)
+            MandatoryContextProperty(typeOf<P?>(), caller.propertyBase, name)
     }
 }
