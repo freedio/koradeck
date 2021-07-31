@@ -38,4 +38,11 @@ open class BasicInformation(
 
     override fun enregister(observer: Observer) = stateRegistry.add(observer)
     override fun deregister(observer: Observer) = stateRegistry.remove(observer)
+    override fun enqueue() {
+        state = ENQUEUED
+    }
+
+    override fun dispatch() {
+        state = DISPATCHED
+    }
 }

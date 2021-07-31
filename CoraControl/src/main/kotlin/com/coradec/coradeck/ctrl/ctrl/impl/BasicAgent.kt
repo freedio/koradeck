@@ -1,19 +1,19 @@
 package com.coradec.coradeck.ctrl.ctrl.impl
 
 import com.coradec.coradeck.com.ctrl.impl.Logger
-import com.coradec.coradeck.com.model.Command
-import com.coradec.coradeck.com.model.Information
-import com.coradec.coradeck.com.model.MultiRequest
-import com.coradec.coradeck.com.model.Recipient
+import com.coradec.coradeck.com.model.*
 import com.coradec.coradeck.com.model.impl.ActionCommand
 import com.coradec.coradeck.com.model.impl.BasicCommand
 import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.util.caller
 import com.coradec.coradeck.core.util.classname
+import com.coradec.coradeck.core.util.contains
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.module.CoraControl.EMS
+import com.coradec.coradeck.ctrl.trouble.CommandNotApprovedException
+import com.coradec.coradeck.ctrl.trouble.NoRouteForMessageException
 import com.coradec.coradeck.text.model.LocalText
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
@@ -37,7 +37,7 @@ open class BasicAgent : Logger(), Agent {
         EMS.execute(this)
     }
 
-    override fun trigger() = onMessage(queue.take())
+    override fun trigger() = onMessage(queue.take().also { it.dispatch() })
     override fun synchronize() {
         inject(Synchronization()).standBy()
     }
@@ -57,12 +57,21 @@ open class BasicAgent : Logger(), Agent {
                     error(e, TEXT_COMMAND_FAILED_UNGRACEFULLY, message::class.classname, e.toString())
                     message.fail(e)
                 }
-            else error(TEXT_MESSAGE_NOT_APPROVED, message)
+            else {
+                if (message is Request) message.fail(CommandNotApprovedException(message))
+                error(TEXT_MESSAGE_NOT_APPROVED, message)
+            }
         is Synchronization -> {
             debug("Synchronization point «%s» reached", message)
             message.succeed()
         }
-        else -> error(TEXT_MESSAGE_NOT_UNDERSTOOD, message)
+        in routes.keys -> {
+            routes.filterKeys { it.isInstance(message) }.iterator().next().value.invoke(message)
+        }
+        else -> {
+            if (message is Request) message.fail(NoRouteForMessageException(message))
+            error(TEXT_MESSAGE_NOT_UNDERSTOOD, message)
+        }
     }
 
     protected fun <T : Information> addRoute(type: Class<out T>, processor: (T) -> Unit) {

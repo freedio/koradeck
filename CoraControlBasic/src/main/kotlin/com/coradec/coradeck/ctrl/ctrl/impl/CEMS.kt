@@ -62,12 +62,11 @@ object CEMS: Logger(), EMS {
 
     override fun inject(message: Information) {
         if (message.urgent) {
-//            queue.putFirst(message)
             prioqueue.put(message)
         } else {
-//            queue.putLast(message)
             normqueue.put(message)
         }
+        message.enqueue()
         increaseLoad()
     }
 
@@ -93,7 +92,7 @@ object CEMS: Logger(), EMS {
             while (!interrupted()) {
                 when (val item = prioqueue.poll() ?: normqueue.poll(patience.amount, patience.unit)) {
                     null -> if (workers.size > PROP_LOW_WATER_MARK.value) break
-                    is Information -> broadcast(item)
+                    is Information -> broadcast(item).also { item.dispatch() }
                     is Agent -> item.trigger()
                     else -> error(TEXT_INVALID_OBJECT_TYPE, item::class.java, item)
                 }
