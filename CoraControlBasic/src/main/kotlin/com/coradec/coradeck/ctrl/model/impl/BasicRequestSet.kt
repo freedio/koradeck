@@ -28,15 +28,16 @@ class BasicRequestSet(origin: Origin, recipient: Recipient, private val requests
     }
 
     override fun notify(event: Event) = when {
-        complete -> relax()
+        complete -> relax().let { false }
         event is StateChangedEvent -> {
             val element: Information = event.source
             trace("State Changed: %s %s→%s", element, event.previous, event.current)
             val newState = event.current
             process(element, newState)
+            newState in State.FINISHED
         }
-        else -> warn(TEXT_EVENT_NOT_UNDERSTOOD, event)
-    }.let { true }
+        else -> warn(TEXT_EVENT_NOT_UNDERSTOOD, event).let { false }
+    }
 
     private fun process(element: Information, state: State) {
         if (endState == SUCCESSFUL) when (state) {

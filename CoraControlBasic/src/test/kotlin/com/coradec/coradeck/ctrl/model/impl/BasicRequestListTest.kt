@@ -15,7 +15,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import kotlin.random.Random
 
 internal class BasicRequestListTest {
 
@@ -92,6 +91,22 @@ internal class BasicRequestListTest {
         assertThat(req3.observerCount).isEqualTo(0)
     }
 
+    @Test
+    fun testSingle() {
+        // given:
+        val agent = TestAgent()
+        val req1 = TestRequest(agent, 100)
+        val testee = BasicRequestList(here, agent, listOf(req1))
+        // when:
+        agent.inject(testee).standBy()
+        // then:
+        assertThat(testee.successful).isTrue()
+        assertThat(testee.failed).isFalse()
+        assertThat(testee.cancelled).isFalse()
+        assertThat(agent.sum).isEqualTo(100)
+        Thread.sleep(100)
+        assertThat(req1.observerCount).isEqualTo(0)
+    }
 
     @Test
     fun testCancelledList() {

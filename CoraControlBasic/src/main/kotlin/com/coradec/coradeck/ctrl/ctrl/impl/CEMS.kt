@@ -15,7 +15,7 @@ import com.coradec.coradeck.text.model.LocalText
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit.SECONDS
 
@@ -27,8 +27,7 @@ object CEMS: Logger(), EMS {
     private val PROP_HIGH_WATER_MARK = LocalProperty("HighWaterMark", 12)
     private val PROP_PATIENCE = LocalProperty("Patience", Timespan(2, SECONDS))
 
-    private val normqueue = LinkedBlockingQueue<Any>(PROP_QUEUE_SIZE.value)
-    private val prioqueue = LinkedBlockingQueue<Any>(1024)
+    private val queue = LinkedBlockingDeque<Any>(PROP_QUEUE_SIZE.value)
     private val queueEmptyTriggers = ConcurrentLinkedQueue<() -> Unit>()
     private var enabled = true
 
@@ -36,7 +35,7 @@ object CEMS: Logger(), EMS {
     private val NEXT_ID: Int get() = MP_ID_GEN.nextClearBit(0).also { MP_ID_GEN.set(it) }
     private val workers = ConcurrentHashMap<Int, Worker>()
 
-    override val queueSize: Int get() = normqueue.size
+    override val queueSize: Int get() = queue.size
 
     init {
         startInitialWorkers()
@@ -56,22 +55,22 @@ object CEMS: Logger(), EMS {
     }
 
     override fun execute(agent: Agent) {
-        normqueue.put(agent)
+        queue.put(agent)
         increaseLoad()
     }
 
     override fun inject(message: Information) {
         if (message.urgent) {
-            prioqueue.put(message)
+            queue.putFirst(message)
         } else {
-            normqueue.put(message)
+            queue.putLast(message)
         }
         message.enqueue()
         increaseLoad()
     }
 
     override fun post(obj: Any) {
-        normqueue.put(obj)
+        queue.put(obj)
         increaseLoad()
     }
 
@@ -90,7 +89,8 @@ object CEMS: Logger(), EMS {
             val patience = PROP_PATIENCE.value
             debug("Worker %d starting, patience = %s", number, patience.representation)
             while (!interrupted()) {
-                when (val item = prioqueue.poll() ?: normqueue.poll(patience.amount, patience.unit)) {
+                val item = queue.poll(patience.amount, patience.unit)
+                when (item) {
                     null -> if (workers.size > PROP_LOW_WATER_MARK.value) break
                     is Information -> broadcast(item).also { item.dispatch() }
                     is Agent -> item.trigger()

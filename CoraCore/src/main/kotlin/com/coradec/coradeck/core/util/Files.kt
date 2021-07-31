@@ -5,12 +5,10 @@
 package com.coradec.coradeck.core.util
 
 import java.io.IOException
-import java.nio.file.FileVisitResult
+import java.nio.file.*
 import java.nio.file.FileVisitResult.CONTINUE
 import java.nio.file.FileVisitResult.TERMINATE
-import java.nio.file.FileVisitor
 import java.nio.file.Files
-import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 
 object Files {
@@ -60,3 +58,5 @@ enum class FileType(val formatted: String) {
         }
     }
 }
+
+fun Path.relativeTo(base: String): Path = Paths.get(base).relativize(this)
