@@ -27,7 +27,7 @@ class BasicRequestList(origin: Origin, recipient: Recipient, private val request
     }
 
     override fun notify(event: Event): Boolean = when {
-        complete -> relax().let { false }
+        complete -> false
         event is StateChangedEvent -> {
             val element: Information = event.source
             debug("State Changed: %s %s→%s", element, event.previous, event.current)
@@ -35,7 +35,7 @@ class BasicRequestList(origin: Origin, recipient: Recipient, private val request
             process(element, newState)
             newState in FINISHED
         }
-        else -> warn(TEXT_EVENT_NOT_UNDERSTOOD, event).let { false }
+        else -> false.also { warn(TEXT_EVENT_NOT_UNDERSTOOD, event) }
     }
 
     private fun process(element: Information, state: State) = when (state) {

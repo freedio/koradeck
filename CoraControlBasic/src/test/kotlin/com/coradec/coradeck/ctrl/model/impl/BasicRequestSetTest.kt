@@ -65,6 +65,7 @@ internal class BasicRequestSetTest {
         assertThat(agent.sum.get()).isEqualTo(111)
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
+        Thread.sleep(100)
         assertThat(req3.observerCount).isEqualTo(0)
     }
 
@@ -84,12 +85,12 @@ internal class BasicRequestSetTest {
             e
         }
         // then:
+        Thread.sleep(100)
         assertThat(testee.successful).isFalse()
         assertThat(testee.failed).isTrue()
         assertThat(testee.cancelled).isFalse()
         assertThat(agent.sum.get()).isEqualTo(101)
         assertThat(trouble).isNotNull()
-        Thread.sleep(100)
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)
@@ -112,12 +113,12 @@ internal class BasicRequestSetTest {
             e
         }
         // then:
+        Thread.sleep(100)
         assertThat(testee.successful).isFalse()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isTrue()
         assertThat(agent.sum.get()).isIn(100, 101)
         assertThat(trouble).isNotNull()
-        Thread.sleep(100)
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)
@@ -144,11 +145,12 @@ internal class BasicRequestSetTest {
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
-        assertThat(agent.value.toList()).containsExactlyInAnyOrder(*"abcdefghi".toList().toTypedArray())
         Thread.sleep(100)
+        assertThat(agent.value.toList()).containsExactlyInAnyOrder(*"abcdefghi".toList().toTypedArray())
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)
+        Thread.sleep(100)
         assertThat(req4.observerCount).isEqualTo(0)
         assertThat(req5.observerCount).isEqualTo(0)
         assertThat(req6.observerCount).isEqualTo(0)

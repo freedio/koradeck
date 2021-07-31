@@ -2,6 +2,7 @@ package com.coradec.coradeck.ctrl.model.impl
 
 import com.coradec.coradeck.com.model.*
 import com.coradec.coradeck.com.model.State.*
+import com.coradec.coradeck.com.model.State.Companion.FINISHED
 import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.com.model.impl.StateChangedEvent
 import com.coradec.coradeck.core.model.Origin
@@ -28,15 +29,15 @@ class BasicRequestSet(origin: Origin, recipient: Recipient, private val requests
     }
 
     override fun notify(event: Event) = when {
-        complete -> relax().let { false }
+        complete -> false
         event is StateChangedEvent -> {
             val element: Information = event.source
-            trace("State Changed: %s %s→%s", element, event.previous, event.current)
+            debug("State Changed: %s %s→%s", element, event.previous, event.current)
             val newState = event.current
             process(element, newState)
-            newState in State.FINISHED
+            newState in FINISHED
         }
-        else -> warn(TEXT_EVENT_NOT_UNDERSTOOD, event).let { false }
+        else -> false.also { warn(TEXT_EVENT_NOT_UNDERSTOOD, event) }
     }
 
     private fun process(element: Information, state: State) {
@@ -51,7 +52,7 @@ class BasicRequestSet(origin: Origin, recipient: Recipient, private val requests
             }
             else -> relax()
         }
-        if (--outstanding == 0) when (endState) {
+        if (state in FINISHED && --outstanding == 0) when (endState) {
             SUCCESSFUL -> succeed()
             FAILED -> fail(endProblem)
             CANCELLED -> cancel()
