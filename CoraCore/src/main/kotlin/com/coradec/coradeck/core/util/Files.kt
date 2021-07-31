@@ -52,6 +52,7 @@ enum class FileType(val formatted: String) {
             "lb" -> SYMLINK
             "lc" -> SYMLINK
             "lp" -> SYMLINK
+            "l?" -> SYMLINK
             "lD" -> SYMLINK
             "lL" -> LOOP_LINK
             "lN" -> LOST_LINK
