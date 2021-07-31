@@ -19,6 +19,7 @@ val KClass<*>.asOrigin: Origin get() = ClassOrigin(this)
 val Any.asOrigin: Origin get() = this::class.asOrigin
 operator fun KClass<*>.contains(other: KClass<*>) = isSubclassOf(other)
 operator fun KClass<*>.contains(instance: Any) = isInstance(instance)
+operator fun Set<Class<*>>.contains(instance: Any) = any { it.isInstance(instance) }
 
 fun genericToString(klass: KClass<*>, vararg fields: Pair<String, Any>): String {
     val collector = StringBuffer()
