@@ -23,4 +23,10 @@ interface Request: Message {
     fun cancel()
     /** Wait until the request has finished (i. e. has been successful, cancelled, or failed). */
     fun standBy()
+    /** Add an action to perform when the request was successful. */
+    fun onSuccess(action: Request.() -> Unit)
+    /** Add an action to perform when the request failed. */
+    fun onFailure(action: Request.() -> Unit)
+    /** Add an action to perform when the request was cancelled. */
+    fun onCancellation(action: Request.() -> Unit)
 }
