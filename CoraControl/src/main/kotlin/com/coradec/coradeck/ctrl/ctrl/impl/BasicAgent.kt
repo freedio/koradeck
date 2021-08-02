@@ -54,7 +54,7 @@ open class BasicAgent : Logger(), Agent {
         is Command ->
             if (approvedCommands.any { it.isInstance(message) })
                 try { message.execute() } catch (e: Throwable) {
-                    error(e, TEXT_COMMAND_FAILED_UNGRACEFULLY, message::class.classname, e.toString())
+                    error(e, TEXT_COMMAND_FAILED, message::class.classname, e.toString())
                     message.fail(e)
                 }
             else {
@@ -65,8 +65,13 @@ open class BasicAgent : Logger(), Agent {
             debug("Synchronization point «%s» reached", message)
             message.succeed()
         }
-        in routes.keys -> {
-            routes.filterKeys { it.isInstance(message) }.iterator().next().value.invoke(message)
+        in routes.keys -> with (routes.filterKeys { it.isInstance(message) }.iterator().next().value) {
+            try {
+                invoke(message)
+            } catch (e: Throwable) {
+                error(e, TEXT_MESSAGE_FAILED, message::class.classname, e.toString())
+                if (message is Request) message.fail(e)
+            }
         }
         else -> {
             if (message is Request) message.fail(NoRouteForMessageException(message))
@@ -110,7 +115,8 @@ open class BasicAgent : Logger(), Agent {
     companion object {
         private val TEXT_MESSAGE_NOT_UNDERSTOOD = LocalText("MessageNotUnderstood1")
         private val TEXT_MESSAGE_NOT_APPROVED = LocalText("MessageNotApproved1")
-        private val TEXT_COMMAND_FAILED_UNGRACEFULLY = LocalText("CommandFailedUngracefully2")
+        private val TEXT_COMMAND_FAILED = LocalText("CommandFailed2")
+        private val TEXT_MESSAGE_FAILED = LocalText("MessageFailed2")
         private val INTERNAL_COMMANDS = listOf(
             AddRouteCommand::class,
             RemoveRouteCommand::class,
