@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit.SECONDS
 object CEMS: Logger(), EMS {
     private val TEXT_INVALID_OBJECT_TYPE = LocalText("InvalidObjectType")
     private val TEXT_BROADCAST_NOT_IMPLEMENTED = LocalText("BroadcastNotImplemented")
+    private val TEXT_EXECUTION_ABORTED = LocalText("ExecutionAborted1")
     private val PROP_QUEUE_SIZE = LocalProperty("QueueSize", 4096)
     private val PROP_LOW_WATER_MARK = LocalProperty("LowWaterMark", 3)
     private val PROP_HIGH_WATER_MARK = LocalProperty("HighWaterMark", 12)
@@ -90,11 +91,15 @@ object CEMS: Logger(), EMS {
             debug("Worker %d starting, patience = %s", number, patience.representation)
             while (!interrupted()) {
                 val item = queue.poll(patience.amount, patience.unit)
-                when (item) {
-                    null -> if (workers.size > PROP_LOW_WATER_MARK.value) break
-                    is Information -> broadcast(item).also { item.dispatch() }
-                    is Agent -> item.trigger()
-                    else -> error(TEXT_INVALID_OBJECT_TYPE, item::class.java, item)
+                try {
+                    when (item) {
+                        null -> if (workers.size > PROP_LOW_WATER_MARK.value) break
+                        is Information -> broadcast(item).also { item.dispatch() }
+                        is Agent -> item.trigger()
+                        else -> error(TEXT_INVALID_OBJECT_TYPE, item::class.java, item)
+                    }
+                } catch (e: Exception) {
+                    error(TEXT_EXECUTION_ABORTED, item!!)
                 }
             }
             MP_ID_GEN.clear(number)
