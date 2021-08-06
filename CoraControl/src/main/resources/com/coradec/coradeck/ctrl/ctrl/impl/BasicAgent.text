@@ -2,4 +2,4 @@
 MessageNotUnderstood1: Message «%s» not understood (not routed or not allowed?)!
 MessageNotApproved1: Message «%s» not approved!
 CommandFailed2: Command «%s» failed with «%s»!
-MessageFailed2: Message «%s» execution failed with «%s»!
+MessageFailed2: Execution of message «%s» failed with «%s»!
