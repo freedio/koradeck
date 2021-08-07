@@ -15,7 +15,7 @@ val caller: StackFrame get() = getStackFrame(base)
 val caller2: StackFrame get() = getStackFrame(base + 1)
 val caller3: StackFrame get() = getStackFrame(base + 2)
 val callerStack: StackTrace get() = StackTrace(Thread.currentThread().stackTrace.map { StackFrame(it) })
-val here: StackFrame = caller
+val here: StackFrame get() = caller2
 
 fun getStackFrame(index: Int): StackFrame = StackFrame(Thread.currentThread().stackTrace
     .drop(index)

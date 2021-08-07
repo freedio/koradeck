@@ -26,8 +26,12 @@ interface Information {
     /** A list of states (in order) the information went through. */
     val states: List<State>
 
+    /** Whether the information is new and was never enqueued nor dispatched. */
+    val new: Boolean
     /** Whether the information was ever enqueued. */
     val enqueued: Boolean
+    /** Whether the information was ever dispatched. */
+    val dispatched: Boolean
     /** Number of ovservers attached to the information. */
     val observerCount: Int
 

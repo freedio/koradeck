@@ -40,7 +40,7 @@ class BasicRequestList(origin: Origin, recipient: Recipient, private val request
 
     private fun process(element: Information, state: State) = when (state) {
         SUCCESSFUL -> execute()
-        FAILED -> fail(if (element is Request) element.problem else null)
+        FAILED -> fail(if (element is Request) element.reason else null)
         CANCELLED -> cancel()
         else -> relax()
     }

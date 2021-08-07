@@ -32,7 +32,7 @@ class BasicRequestSet(origin: Origin, recipient: Recipient, private val requests
         complete -> false
         event is StateChangedEvent -> {
             val element: Information = event.source
-            debug("State Changed: %s %s→%s", element, event.previous, event.current)
+            trace("State Changed: %s %s→%s", element, event.previous, event.current)
             val newState = event.current
             process(element, newState)
             newState in FINISHED
@@ -43,7 +43,7 @@ class BasicRequestSet(origin: Origin, recipient: Recipient, private val requests
     private fun process(element: Information, state: State) {
         if (endState == SUCCESSFUL) when (state) {
             FAILED -> {
-                if (element is Request) endProblem = element.problem
+                if (element is Request) endProblem = element.reason
                 endState = FAILED
             }
             CANCELLED -> {

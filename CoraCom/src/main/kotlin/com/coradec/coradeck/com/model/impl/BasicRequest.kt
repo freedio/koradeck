@@ -1,6 +1,7 @@
 package com.coradec.coradeck.com.model.impl
 
 import com.coradec.coradeck.com.ctrl.Observer
+import com.coradec.coradeck.com.model.Event
 import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.com.model.Request
 import com.coradec.coradeck.com.model.State.*
@@ -12,13 +13,13 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Semaphore
 
 open class BasicRequest(origin: Origin, recipient: Recipient) : BasicMessage(origin, recipient), Request {
-    private var myProblem: Throwable? = null
+    private var myReason: Throwable? = null
     private val unfinished = CountDownLatch(1)
-    override val problem: Throwable? get() = myProblem
+    override val reason: Throwable? get() = myReason
     override val successful: Boolean get() = state == SUCCESSFUL
     override val failed: Boolean get() = state == FAILED
     override val cancelled: Boolean get() = state == CANCELLED
-    override val complete: Boolean get() = state in COMPLETION_STATES
+    override val complete: Boolean get() = state in FINISHED
     private val successActions: MutableList<Request.() -> Unit> = mutableListOf()
     private val failureActions: MutableList<Request.() -> Unit> = mutableListOf()
     private val cancellationActions: MutableList<Request.() -> Unit> = mutableListOf()
@@ -29,49 +30,50 @@ open class BasicRequest(origin: Origin, recipient: Recipient) : BasicMessage(ori
         unfinished.countDown()
     }
 
-    override fun cancel() {
+    override fun cancel(reason: Throwable?) {
+        myReason = reason
         state = CANCELLED
         unfinished.countDown()
     }
 
-    override fun fail(problem: Throwable?) {
-        myProblem = problem
+    override fun fail(reason: Throwable?) {
+        myReason = reason
         state = FAILED
         unfinished.countDown()
     }
 
     override fun standBy() {
         unfinished.await()
-        if (problem != null) throw problem!!
+        if (reason != null) throw reason!!
         if (failed) throw RequestFailedException()
         if (cancelled) throw RequestCancelledException()
     }
 
-    override fun onSuccess(action: Request.() -> Unit) {
+    override fun onSuccess(action: Request.() -> Unit): Request = also {
         postActionSemaphore.acquire()
         try {
             successActions += action
-            if (state in FINISHED) runPostActions()
+            if (state in FINISHED) runPostActions() else enregister(PostActionObserver())
         } finally {
             postActionSemaphore.release()
         }
     }
 
-    override fun onFailure(action: Request.() -> Unit) {
+    override fun onFailure(action: Request.() -> Unit): Request = also {
         postActionSemaphore.acquire()
         try {
             failureActions += action
-            if (state in FINISHED) runPostActions()
+            if (state in FINISHED) runPostActions() else enregister(PostActionObserver())
         } finally {
             postActionSemaphore.release()
         }
     }
 
-    override fun onCancellation(action: Request.() -> Unit) {
+    override fun onCancellation(action: Request.() -> Unit): Request = also {
         postActionSemaphore.acquire()
         try {
             cancellationActions += action
-            if (state in FINISHED) runPostActions()
+            if (state in FINISHED) runPostActions() else enregister(PostActionObserver())
         } finally {
             postActionSemaphore.release()
         }
@@ -88,7 +90,13 @@ open class BasicRequest(origin: Origin, recipient: Recipient) : BasicMessage(ori
 
     override fun enregister(observer: Observer) = !complete && super.enregister(observer)
 
-    companion object {
-        private val COMPLETION_STATES = setOf(SUCCESSFUL, FAILED, CANCELLED)
+    private inner class PostActionObserver: Observer {
+        override fun notify(event: Event): Boolean = when (event) {
+            is StateChangedEvent -> (event.current in FINISHED).also { complete ->
+                if (complete) runPostActions()
+            }
+            else -> false
+        }
+
     }
 }

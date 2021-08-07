@@ -10,5 +10,6 @@ class BasicStackFrame(frame: StackTraceElement): StackFrame {
     override val fileName: String = frame.fileName ?: "unknown"
     override val lineNumber: Int = frame.lineNumber
 
-    override val representation: String = "\tat $className.$methodName ($fileName:$lineNumber)"
+    override val representation: String = "\tat $className.$methodName($fileName:$lineNumber)"
+    override fun toString(): String = "BasicStackFrame[$className.$methodName($fileName:$lineNumber)]"
 }

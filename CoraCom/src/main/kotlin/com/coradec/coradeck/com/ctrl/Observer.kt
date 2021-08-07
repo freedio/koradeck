@@ -2,6 +2,7 @@ package com.coradec.coradeck.com.ctrl
 
 import com.coradec.coradeck.com.model.Event
 
+@FunctionalInterface
 interface Observer {
     /**
      * Notifies the observer about the specified event.

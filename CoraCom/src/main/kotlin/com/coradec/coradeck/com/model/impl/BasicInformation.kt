@@ -25,7 +25,9 @@ open class BasicInformation(
     override val urgent: Boolean = false
     private val myStates = mutableListOf(NEW)
     override val states: List<State> = Collections.unmodifiableList(myStates)
+    override val new: Boolean get() = states.singleOrNull() == NEW
     override val enqueued: Boolean get() = ENQUEUED in states
+    override val dispatched: Boolean get() = DISPATCHED in states
     override val observerCount: Int get() = stateRegistry.size
     override var state: State
         get() = myStates.last()
@@ -39,10 +41,10 @@ open class BasicInformation(
     override fun enregister(observer: Observer) = stateRegistry.add(observer)
     override fun deregister(observer: Observer) = stateRegistry.remove(observer)
     override fun enqueue() {
-        state = ENQUEUED
+        myStates += ENQUEUED
     }
 
     override fun dispatch() {
-        state = DISPATCHED
+        myStates += DISPATCHED
     }
 }

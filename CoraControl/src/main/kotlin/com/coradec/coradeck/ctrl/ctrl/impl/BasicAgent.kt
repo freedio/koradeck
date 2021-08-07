@@ -29,11 +29,13 @@ open class BasicAgent : Logger(), Agent {
 
     override fun <I : Information> inject(message: I): I = message.also {
         if (message.urgent) queue.addFirst(message) else queue.addLast(message)
+        message.enqueue()
         EMS.execute(this)
     }
 
     fun inject(action: () -> Unit): ActionCommand = ActionCommand(caller, this, action).also {
         queue.addLast(it)
+        it.enqueue()
         EMS.execute(this)
     }
 
