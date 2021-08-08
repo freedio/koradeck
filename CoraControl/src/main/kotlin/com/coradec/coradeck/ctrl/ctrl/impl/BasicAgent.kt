@@ -85,8 +85,16 @@ open class BasicAgent : Logger(), Agent {
         inject(AddRouteCommand(caller, this, type, processor))
     }
 
+    protected fun <T : Information> addRoute(type: KClass<out T>, processor: (T) -> Unit) {
+        inject(AddRouteCommand(caller, this, type.java, processor))
+    }
+
     protected fun removeRoute(type: Class<out Information>) {
         inject(RemoveRouteCommand(caller, this, type))
+    }
+
+    protected fun removeRoute(type: KClass<out Information>) {
+        inject(RemoveRouteCommand(caller, this, type.java))
     }
 
     private inner class AddRouteCommand<T>(
