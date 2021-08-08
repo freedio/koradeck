@@ -109,7 +109,9 @@ open class BasicAgent : Logger(), Agent {
         recipient: Recipient,
         private val type: Class<out Any>,
         private val processor: (T) -> Unit
-    ) : BasicCommand(origin, recipient) {
+    ) : BasicCommand(origin, recipient, urgent = true) {
+        override val copy: AddRouteCommand<T> get() = AddRouteCommand<T>(origin, recipient, type, processor)
+
         override fun execute() {
             routes[type] = processor as (Any) -> Unit
         }
@@ -120,7 +122,9 @@ open class BasicAgent : Logger(), Agent {
         origin: Origin,
         recipient: Recipient,
         private val type: Class<out Any>
-    ) : BasicCommand(origin, recipient) {
+    ) : BasicCommand(origin, recipient, urgent = true) {
+        override val copy: RemoveRouteCommand get() = RemoveRouteCommand(origin, recipient, type)
+
         override fun execute() {
             routes.remove(type)
         }

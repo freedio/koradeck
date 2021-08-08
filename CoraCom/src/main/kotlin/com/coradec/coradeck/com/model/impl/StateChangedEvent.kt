@@ -16,4 +16,7 @@ class StateChangedEvent(
     session: Session = Session.current,
     expires: Expiration = Expiration.never_expires,
     urgent: Boolean = false
-) : BasicEvent(origin, created, session, expires, urgent)
+) : BasicEvent(origin, created, session, expires, urgent) {
+    override val copy: StateChangedEvent get() =
+        StateChangedEvent(origin, source, previous, current, createdAt, session, expires, urgent)
+}

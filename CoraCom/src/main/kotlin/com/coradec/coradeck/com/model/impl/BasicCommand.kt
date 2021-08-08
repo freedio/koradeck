@@ -14,4 +14,6 @@ abstract class BasicCommand(
     session: Session = Session.current,
     expires: Expiration = Expiration.never_expires,
     urgent: Boolean = false
-): BasicRequest(origin, recipient, created, session, expires, urgent), Command
+): BasicRequest(origin, recipient, created, session, expires, urgent), Command {
+    abstract override val copy: BasicCommand
+}

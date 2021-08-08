@@ -16,6 +16,7 @@ class ActionCommand(
     expires: Expiration = Expiration.never_expires,
     urgent: Boolean = false
 ): BasicRequest(origin, recipient, created, session, expires, urgent), Command {
+    override val copy: ActionCommand get() = ActionCommand(origin, recipient, action, createdAt, session, expires, urgent)
     override fun execute() {
         try {
             action.invoke()
