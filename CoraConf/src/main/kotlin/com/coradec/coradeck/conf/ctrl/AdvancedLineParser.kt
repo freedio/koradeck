@@ -60,7 +60,7 @@ class AdvancedLineParser(
         }
 
         fun processEscape(c: Char, radix: Int, maxLength: Int, limit: Int): Boolean {
-            val v = "0123456789abcdef".indexOf(c.toLowerCase())
+            val v = "0123456789abcdef".indexOf(c.lowercaseChar())
             fun addEsc(): Boolean {
                 collector.append(escapeBuffer.insert(0, '0').toString().toInt(radix).toChar())
                 escapeBuffer.clear()

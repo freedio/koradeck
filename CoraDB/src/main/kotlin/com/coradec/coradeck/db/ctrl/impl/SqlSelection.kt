@@ -1,6 +1,5 @@
 package com.coradec.coradeck.db.ctrl.impl
 
-import com.coradec.coradeck.core.util.trimIfBlank
 import com.coradec.coradeck.db.ctrl.Selection
 import com.coradec.coradeck.db.util.toSqlObjectName
 
@@ -13,21 +12,21 @@ open class SqlSelection(private val expr: String) : Selection {
             val op = vals
                 .drop(2)
                 .dropLast(1)
-                .joinToString("") { it.trim().toLowerCase() }
+                .joinToString("") { it.trim().lowercase() }
                 .replace(Regex("\\s+"), " ")
             if (vals.size>3) resultList += "${vals[1].toSqlObjectName()} $op ${vals.last()}" }
         }
         WHERE2.findAll(expr).forEach { result -> result.groupValues.let { vals ->
             val op = vals
                 .drop(2)
-                .joinToString("") { it.trim().toLowerCase() }
+                .joinToString("") { it.trim().lowercase() }
                 .replace(Regex("\\s+"), " ")
             if (vals.size>2) resultList += "${vals[1].toSqlObjectName()} $op" }
         }
         resultList.toList()
     }
     private val orderList: List<String> by lazy {
-        fun orderExpr(fieldName: String, ordering: String): String = "$fieldName ${ordering.toLowerCase()}"
+        fun orderExpr(fieldName: String, ordering: String): String = "$fieldName ${ordering.lowercase()}"
         val resultList = ArrayList<String>()
         ORDER.findAll(expr).forEach { result -> result.groupValues.let { if (it.size>2) resultList += orderExpr(it[1], it[2])} }
         resultList.toList()

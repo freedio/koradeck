@@ -1,11 +1,9 @@
 package com.coradec.coradeck.type.converter
 
 import com.coradec.coradeck.type.ctrl.impl.BasicTypeConverter
-import java.lang.IllegalArgumentException
-import kotlin.reflect.full.createType
 
 class BooleanConverter: BasicTypeConverter<Boolean>(Boolean::class) {
-    override fun decodeFrom(value: String): Boolean = when(value.toLowerCase()) {
+    override fun decodeFrom(value: String): Boolean = when(value.lowercase()) {
         "yes", "on", "true", "+" -> true
         "no", "off", "false", "-", "−" -> false
         else -> throw IllegalArgumentException("Not a representation of Boolean: \"$value\"!")
