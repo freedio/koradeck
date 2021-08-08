@@ -9,9 +9,12 @@ import com.coradec.coradeck.session.model.Session
 import java.time.ZonedDateTime
 
 open class BasicMessage(
-        origin: Origin,
-        override val recipient: Recipient,
-        created: ZonedDateTime = ZonedDateTime.now(),
-        session: Session = Session.current,
-        expires: Expiration = never_expires
-) : BasicInformation(origin, created, session, expires), Message
+    origin: Origin,
+    override val recipient: Recipient,
+    created: ZonedDateTime = ZonedDateTime.now(),
+    session: Session = Session.current,
+    expires: Expiration = never_expires,
+    urgent: Boolean = false
+) : BasicInformation(origin, created, session, expires, urgent), Message {
+    override val copy: BasicMessage get() = BasicMessage(origin, recipient, createdAt, session, expires, urgent)
+}

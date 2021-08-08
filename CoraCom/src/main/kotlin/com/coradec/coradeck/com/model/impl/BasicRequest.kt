@@ -8,11 +8,21 @@ import com.coradec.coradeck.com.model.State.*
 import com.coradec.coradeck.com.model.State.Companion.FINISHED
 import com.coradec.coradeck.com.trouble.RequestCancelledException
 import com.coradec.coradeck.com.trouble.RequestFailedException
+import com.coradec.coradeck.core.model.Expiration
 import com.coradec.coradeck.core.model.Origin
+import com.coradec.coradeck.session.model.Session
+import java.time.ZonedDateTime
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Semaphore
 
-open class BasicRequest(origin: Origin, recipient: Recipient) : BasicMessage(origin, recipient), Request {
+open class BasicRequest(
+    origin: Origin,
+    recipient: Recipient,
+    created: ZonedDateTime = ZonedDateTime.now(),
+    session: Session = Session.current,
+    expires: Expiration = Expiration.never_expires,
+    urgent: Boolean = false
+) : BasicMessage(origin, recipient, created, session, expires, urgent), Request {
     private var myReason: Throwable? = null
     private val unfinished = CountDownLatch(1)
     override val reason: Throwable? get() = myReason
@@ -90,7 +100,7 @@ open class BasicRequest(origin: Origin, recipient: Recipient) : BasicMessage(ori
 
     override fun enregister(observer: Observer) = !complete && super.enregister(observer)
 
-    private inner class PostActionObserver: Observer {
+    private inner class PostActionObserver : Observer {
         override fun notify(event: Event): Boolean = when (event) {
             is StateChangedEvent -> (event.current in FINISHED).also { complete ->
                 if (complete) runPostActions()

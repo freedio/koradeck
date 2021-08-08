@@ -15,20 +15,20 @@ import java.util.*
 
 @Suppress("UNCHECKED_CAST")
 open class BasicInformation(
-        override val origin: Origin,
-        override val createdAt: ZonedDateTime = ZonedDateTime.now(),
-        override val session: Session = Session.current,
-        override val expires: Expiration = never_expires
+    override val origin: Origin,
+    override val createdAt: ZonedDateTime = ZonedDateTime.now(),
+    override val session: Session = Session.current,
+    override val expires: Expiration = never_expires,
+    override val urgent: Boolean = false
 ) : Logger(), Information {
     private val stateRegistry = mutableSetOf<Observer>()
-
-    override val urgent: Boolean = false
     private val myStates = mutableListOf(NEW)
     override val states: List<State> = Collections.unmodifiableList(myStates)
     override val new: Boolean get() = states.singleOrNull() == NEW
     override val enqueued: Boolean get() = ENQUEUED in states
     override val dispatched: Boolean get() = DISPATCHED in states
     override val observerCount: Int get() = stateRegistry.size
+    override val copy: BasicInformation get() = BasicInformation(origin, createdAt, session, expires, urgent)
     override var state: State
         get() = myStates.last()
         set(state) {

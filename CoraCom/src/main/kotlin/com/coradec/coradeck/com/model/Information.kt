@@ -35,6 +35,9 @@ interface Information {
     /** Number of ovservers attached to the information. */
     val observerCount: Int
 
+    /** A fresh copy of this information. */
+    val copy: Information
+
     /** Registers the specified observer for state changes. @return `true` if the observer was enregistered. */
     fun enregister(observer: Observer): Boolean
     /** Removes the specified observer from the state change registry. @return `true` if the observer was deregistered. */

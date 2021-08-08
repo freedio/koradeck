@@ -33,6 +33,13 @@ open class BasicAgent : Logger(), Agent {
         EMS.execute(this)
     }
 
+    override fun <I : Information> forward(message: I): I = message.also {
+        val copy = message.copy
+        if (copy.urgent) queue.addFirst(copy) else queue.addLast(copy)
+        copy.enqueue()
+        EMS.execute(this)
+    }
+
     fun inject(action: () -> Unit): ActionCommand = ActionCommand(caller, this, action).also {
         queue.addLast(it)
         it.enqueue()
