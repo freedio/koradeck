@@ -15,6 +15,8 @@ val KClass<*>.classname: String
             .removePrefix("java.lang.")
             .removePrefix("collections.")
 val KClass<*>.shortClassname: String get() = (simpleName ?: throw IllegalStateException("Class $this has no simple name!"))
+val Any.classname: String get() = this::class.classname
+val Any.shortClassname: String get() = this::class.shortClassname
 val KClass<*>.asOrigin: Origin get() = ClassOrigin(this)
 val Any.asOrigin: Origin get() = this::class.asOrigin
 operator fun KClass<*>.contains(other: KClass<*>) = isSubclassOf(other)
