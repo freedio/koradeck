@@ -10,6 +10,6 @@ abstract class BasicLogEntry(
         override val level: LogLevel,
         override val worker: Thread = Thread.currentThread(),
         created: ZonedDateTime = ZonedDateTime.now()
-) : BasicEvent(origin, created), LogEntry {
+) : BasicEvent(origin, false, created), LogEntry {
 
 }

@@ -8,10 +8,10 @@ import java.time.ZonedDateTime
 
 open class BasicEvent(
     origin: Origin,
+    urgent: Boolean = false,
     created: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
-    expires: Expiration = Expiration.never_expires,
-    urgent: Boolean = false
-) : BasicInformation(origin, created, session, expires, urgent), Event {
-    override val copy: BasicEvent get() = BasicEvent(origin, createdAt, session, expires, urgent)
+    expires: Expiration = Expiration.never_expires
+) : BasicInformation(origin, urgent, created, session, expires), Event {
+    override val copy: BasicEvent get() = BasicEvent(origin, urgent, createdAt, session, expires)
 }

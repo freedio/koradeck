@@ -12,11 +12,11 @@ class StateChangedEvent(
     val source: Information,
     val previous: State,
     val current: State,
+    urgent: Boolean = false,
     created: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
-    expires: Expiration = Expiration.never_expires,
-    urgent: Boolean = false
-) : BasicEvent(origin, created, session, expires, urgent) {
+    expires: Expiration = Expiration.never_expires
+) : BasicEvent(origin, urgent, created, session, expires) {
     override val copy: StateChangedEvent get() =
-        StateChangedEvent(origin, source, previous, current, createdAt, session, expires, urgent)
+        StateChangedEvent(origin, source, previous, current, urgent, createdAt, session, expires)
 }

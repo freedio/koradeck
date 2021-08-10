@@ -11,6 +11,6 @@ interface Command: Request {
     fun execute()
 
     companion object {
-        operator fun invoke(origin: Origin, recipient: Recipient, action: () -> Unit) = ActionCommand(origin, recipient, action)
+        operator fun invoke(origin: Origin, action: () -> Unit) = ActionCommand(origin, action)
     }
 }

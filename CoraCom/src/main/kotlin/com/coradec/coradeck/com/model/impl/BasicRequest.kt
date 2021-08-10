@@ -17,12 +17,12 @@ import java.util.concurrent.Semaphore
 
 open class BasicRequest(
     origin: Origin,
-    recipient: Recipient,
+    urgent: Boolean = false,
     created: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
     expires: Expiration = Expiration.never_expires,
-    urgent: Boolean = false
-) : BasicMessage(origin, recipient, created, session, expires, urgent), Request {
+    target: Recipient? = null
+) : BasicMessage(origin, urgent, created, session, expires, target), Request {
     private var myReason: Throwable? = null
     private val unfinished = CountDownLatch(1)
     override val reason: Throwable? get() = myReason
@@ -35,7 +35,7 @@ open class BasicRequest(
     private val cancellationActions: MutableList<Request.() -> Unit> = mutableListOf()
     private val postActionSemaphore = Semaphore(1)
 
-    override val copy: BasicRequest get() = BasicRequest(origin, recipient, createdAt, session, expires, urgent)
+    override val copy: BasicRequest get() = BasicRequest(origin, urgent, target = recipient)
 
     override fun succeed() {
         state = SUCCESSFUL
