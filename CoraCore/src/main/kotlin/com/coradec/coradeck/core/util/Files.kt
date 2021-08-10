@@ -33,7 +33,8 @@ enum class FileType(val formatted: String) {
     SYMLINK("l"),
     DOOR("D"),
     LOOP_LINK("L"),
-    LOST_LINK("N");
+    LOST_LINK("N"),
+    UNKNOWN("U");
 
     companion object {
         operator fun invoke(type: String): FileType = when (type) {
