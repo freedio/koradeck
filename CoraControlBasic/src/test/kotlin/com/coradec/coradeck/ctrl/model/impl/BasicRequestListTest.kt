@@ -33,7 +33,7 @@ internal class BasicRequestListTest {
     @Test fun testEmptyList() {
         // given
         val agent = TestAgent()
-        val testee = BasicRequestList(here, agent, listOf())
+        val testee = BasicRequestList(here, listOf())
         // when
         agent.inject(testee).standBy()
         // then
@@ -50,7 +50,7 @@ internal class BasicRequestListTest {
         val req1 = TestRequest(agent, 100)
         val req2 = TestRequest(agent, 10)
         val req3 = TestRequest(agent, 1)
-        val testee = BasicRequestList(here, agent, listOf(req1, req2, req3))
+        val testee = BasicRequestList(here, listOf(req1, req2, req3))
         // when:
         agent.inject(testee).standBy()
         // then:
@@ -71,7 +71,7 @@ internal class BasicRequestListTest {
         val req1 = TestRequest(agent, 100)
         val req2 = FailingRequest(agent, 10)
         val req3 = TestRequest(agent, 1)
-        val testee = BasicRequestList(here, agent, listOf(req1, req2, req3))
+        val testee = BasicRequestList(here, listOf(req1, req2, req3))
         // when:
         val trouble = try {
             agent.inject(testee).standBy()
@@ -96,7 +96,7 @@ internal class BasicRequestListTest {
         // given:
         val agent = TestAgent()
         val req1 = TestRequest(agent, 100)
-        val testee = BasicRequestList(here, agent, listOf(req1))
+        val testee = BasicRequestList(here, listOf(req1))
         // when:
         agent.inject(testee).standBy()
         // then:
@@ -115,7 +115,7 @@ internal class BasicRequestListTest {
         val req1 = TestRequest(agent, 100)
         val req2 = CancellingRequest(agent, 10)
         val req3 = TestRequest(agent, 1)
-        val testee = BasicRequestList(here, agent, listOf(req1, req2, req3))
+        val testee = BasicRequestList(here, listOf(req1, req2, req3))
         // when:
         val trouble = try {
             agent.inject(testee).standBy()
@@ -149,7 +149,7 @@ internal class BasicRequestListTest {
         val req7 = TestRequest(agent, 'g'.code)
         val req8 = TestRequest(agent, 'h'.code)
         val req9 = TestRequest(agent, 'i'.code)
-        val testee = BasicRequestList(here, agent, listOf(req1, req2, req3, req4, req5, req6, req7, req8, req9))
+        val testee = BasicRequestList(here, listOf(req1, req2, req3, req4, req5, req6, req7, req8, req9))
         // when:
         agent.inject(testee).standBy()
         // then:
@@ -169,9 +169,9 @@ internal class BasicRequestListTest {
         assertThat(req9.observerCount).isEqualTo(0)
     }
 
-    class TestRequest(agent: Agent, val value: Int): BasicRequest(here, agent)
-    class FailingRequest(agent: Agent, val value: Int): BasicRequest(here, agent)
-    class CancellingRequest(agent: Agent, val value: Int): BasicRequest(here, agent)
+    class TestRequest(agent: Agent, val value: Int): BasicRequest(here, target = agent)
+    class FailingRequest(agent: Agent, val value: Int): BasicRequest(here, target = agent)
+    class CancellingRequest(agent: Agent, val value: Int): BasicRequest(here, target = agent)
 
     class TestAgent : BasicAgent() {
         var sum = 0

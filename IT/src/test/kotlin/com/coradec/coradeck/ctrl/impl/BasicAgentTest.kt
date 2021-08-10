@@ -1,6 +1,5 @@
 package com.coradec.coradeck.ctrl.impl
 
-import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.com.model.impl.BasicCommand
 import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.com.module.CoraComImpl
@@ -35,8 +34,8 @@ internal class BasicAgentTest {
             }
         }
         // when:
-        testee.inject(TestRouteRequest(here, testee))
-        testee.inject(TestRouteRequest(here, testee)).standBy()
+        testee.inject(TestRouteRequest(here))
+        testee.inject(TestRouteRequest(here)).standBy()
         Thread.sleep(100)
         // then:
         assertThat(testee.received).isEqualTo(2)
@@ -49,7 +48,7 @@ internal class BasicAgentTest {
         }
         // when:
         try {
-            testee.inject(TestRouteRequest(here, testee)).standBy()
+            testee.inject(TestRouteRequest(here)).standBy()
             // then:
             fail("Expected RequestCancelledException!")
         } catch (e: NoRouteForMessageException) {
@@ -60,8 +59,8 @@ internal class BasicAgentTest {
     @Test fun testApproved() {
         // given:
         var received = 0
-        class TestRouteCommand(origin: Origin, recipient: Recipient): BasicCommand(origin, recipient) {
-            override val copy: TestRouteCommand get() = TestRouteCommand(origin, recipient)
+        class TestRouteCommand(origin: Origin): BasicCommand(origin) {
+            override val copy: TestRouteCommand get() = TestRouteCommand(origin)
 
             override fun execute() {
                 ++received
@@ -76,8 +75,8 @@ internal class BasicAgentTest {
             }
         }
         // when:
-        testee.inject(TestRouteCommand(here, testee))
-        testee.inject(TestRouteCommand(here, testee)).standBy()
+        testee.inject(TestRouteCommand(here))
+        testee.inject(TestRouteCommand(here)).standBy()
         Thread.sleep(100)
         // then:
         assertThat(received).isEqualTo(2)
@@ -86,8 +85,8 @@ internal class BasicAgentTest {
     @Test fun testUnapproved() {
         // given:
         var received = 0
-        class TestRouteCommand(origin: Origin, recipient: Recipient): BasicCommand(origin, recipient) {
-            override val copy: TestRouteCommand get() = TestRouteCommand(origin, recipient)
+        class TestRouteCommand(origin: Origin): BasicCommand(origin) {
+            override val copy: TestRouteCommand get() = TestRouteCommand(origin)
 
             override fun execute() {
                 ++received
@@ -98,7 +97,7 @@ internal class BasicAgentTest {
         val testee = BasicAgent()
         // when:
         try {
-            testee.inject(TestRouteCommand(here, testee)).standBy()
+            testee.inject(TestRouteCommand(here)).standBy()
             // then:
             fail("Expected CommandNotApprovedException!")
         } catch (e: CommandNotApprovedException) {
@@ -106,7 +105,7 @@ internal class BasicAgentTest {
         }
     }
 
-    class TestRouteRequest(origin: Origin, recipient: Recipient): BasicRequest(origin, recipient)
+    class TestRouteRequest(origin: Origin): BasicRequest(origin)
 
     companion object {
         @BeforeAll @JvmStatic fun setup() {

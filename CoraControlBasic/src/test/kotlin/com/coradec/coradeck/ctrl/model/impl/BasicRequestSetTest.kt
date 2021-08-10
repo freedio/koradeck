@@ -37,7 +37,7 @@ internal class BasicRequestSetTest {
     @Test fun testEmptySet() {
         // given
         val agent = TestAgent()
-        val testee = BasicRequestSet(here, agent, listOf())
+        val testee = BasicRequestSet(here, listOf())
         // when
         agent.inject(testee).standBy()
         // then
@@ -54,7 +54,7 @@ internal class BasicRequestSetTest {
         val req1 = TestRequest(agent, 100)
         val req2 = TestRequest(agent, 10)
         val req3 = TestRequest(agent, 1)
-        val testee = BasicRequestSet(here, agent, listOf(req1, req2, req3))
+        val testee = BasicRequestSet(here, listOf(req1, req2, req3))
         // when:
         agent.inject(testee).standBy()
         // then:
@@ -76,7 +76,7 @@ internal class BasicRequestSetTest {
         val req1 = TestRequest(agent, 100)
         val req2 = FailingRequest(agent, 10)
         val req3 = TestRequest(agent, 1)
-        val testee = BasicRequestSet(here, agent, listOf(req1, req2, req3))
+        val testee = BasicRequestSet(here, listOf(req1, req2, req3))
         // when:
         val trouble = try {
             agent.inject(testee).standBy()
@@ -104,7 +104,7 @@ internal class BasicRequestSetTest {
         val req1 = TestRequest(agent, 100)
         val req2 = CancellingRequest(agent, 10)
         val req3 = TestRequest(agent, 1)
-        val testee = BasicRequestSet(here, agent, listOf(req1, req2, req3))
+        val testee = BasicRequestSet(here, listOf(req1, req2, req3))
         // when:
         val trouble = try {
             agent.inject(testee).standBy()
@@ -138,7 +138,7 @@ internal class BasicRequestSetTest {
         val req7 = TestRequest(agent, 'g'.code)
         val req8 = TestRequest(agent, 'h'.code)
         val req9 = TestRequest(agent, 'i'.code)
-        val testee = BasicRequestSet(here, agent, listOf(req1, req2, req3, req4, req5, req6, req7, req8, req9))
+        val testee = BasicRequestSet(here, listOf(req1, req2, req3, req4, req5, req6, req7, req8, req9))
         // when:
         agent.inject(testee).standBy()
         // then:
@@ -158,9 +158,9 @@ internal class BasicRequestSetTest {
         assertThat(req9.observerCount).isEqualTo(0)
     }
 
-    class TestRequest(agent: Agent, val value: Int) : BasicRequest(here, agent)
-    class FailingRequest(agent: Agent, val value: Int) : BasicRequest(here, agent)
-    class CancellingRequest(agent: Agent, val value: Int) : BasicRequest(here, agent)
+    class TestRequest(agent: Agent, val value: Int) : BasicRequest(here, target = agent)
+    class FailingRequest(agent: Agent, val value: Int) : BasicRequest(here, target = agent)
+    class CancellingRequest(agent: Agent, val value: Int) : BasicRequest(here, target = agent)
 
     class TestAgent : BasicAgent() {
         var sum = AtomicInteger(0)

@@ -5,14 +5,24 @@ import com.coradec.coradeck.com.model.State.*
 import com.coradec.coradeck.com.model.State.Companion.FINISHED
 import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.com.model.impl.StateChangedEvent
+import com.coradec.coradeck.core.model.Expiration
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.ctrl.model.RequestSet
+import com.coradec.coradeck.session.model.Session
 import com.coradec.coradeck.text.model.LocalText
+import java.time.ZonedDateTime
 
-class BasicRequestSet(origin: Origin, recipient: Recipient, private val requests: Sequence<Request>) :
-    BasicRequest(origin, recipient), RequestSet {
-    constructor(origin: Origin, recipient: Recipient, requests: List<Request>) : this(origin, recipient, requests.asSequence())
+class BasicRequestSet(
+    origin: Origin,
+    private val requests: Sequence<Request>,
+    urgent: Boolean = false,
+    created: ZonedDateTime = ZonedDateTime.now(),
+    session: Session = Session.current,
+    expires: Expiration = Expiration.never_expires,
+    target: Recipient? = null
+) : BasicRequest(origin, urgent, created, session, expires, target = target), RequestSet {
+    constructor(origin: Origin, requests: List<Request>) : this(origin, requests.asSequence())
 
     var outstanding = 0
     var endState: State = SUCCESSFUL
@@ -22,8 +32,9 @@ class BasicRequestSet(origin: Origin, recipient: Recipient, private val requests
         if (requests.none()) succeed()
         requests.forEach { request ->
             if (!complete) {
+                if (recipient == null) throw IllegalStateException("Cannot execute when recipien is not set!")
                 if (request.enregister(this)) ++outstanding
-                if (request.complete) process(request, request.state) else if (!request.enqueued) recipient.inject(request)
+                if (request.complete) process(request, request.state) else if (!request.enqueued) recipient!!.inject(request)
             }
         }
     }

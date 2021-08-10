@@ -9,7 +9,6 @@ import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.util.caller
 import com.coradec.coradeck.core.util.classname
 import com.coradec.coradeck.core.util.contains
-import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.module.CoraControl.EMS
 import com.coradec.coradeck.ctrl.trouble.CommandNotApprovedException
@@ -29,26 +28,26 @@ open class BasicAgent : Logger(), Agent {
 
     override fun <I : Information> inject(message: I): I = message.also {
         if (message.urgent) queue.addFirst(message) else queue.addLast(message)
-        message.enqueue()
+        if (message is Message) message.enqueue(this) else message.enqueue()
         EMS.execute(this)
     }
 
     override fun <I : Information> forward(message: I): I = message.also {
         val copy = message.copy
         if (copy.urgent) queue.addFirst(copy) else queue.addLast(copy)
-        copy.enqueue()
+        if (copy is Message) copy.enqueue(this) else copy.enqueue()
         EMS.execute(this)
     }
 
-    fun inject(action: () -> Unit): ActionCommand = ActionCommand(caller, this, action).also {
+    fun inject(action: () -> Unit): ActionCommand = ActionCommand(caller, action).also {
         queue.addLast(it)
-        it.enqueue()
+        it.enqueue(this)
         EMS.execute(this)
     }
 
     override fun trigger() = onMessage(queue.take().also { it.dispatch() })
     override fun synchronize() {
-        inject(Synchronization()).standBy()
+        inject(Synchronization(caller)).standBy()
     }
 
     override fun approve(vararg cmd: KClass<out Command>) {
@@ -89,28 +88,27 @@ open class BasicAgent : Logger(), Agent {
     }
 
     protected fun <T : Information> addRoute(type: Class<out T>, processor: (T) -> Unit) {
-        inject(AddRouteCommand(caller, this, type, processor))
+        inject(AddRouteCommand(caller, type, processor))
     }
 
     protected fun <T : Information> addRoute(type: KClass<out T>, processor: (T) -> Unit) {
-        inject(AddRouteCommand(caller, this, type.java, processor))
+        inject(AddRouteCommand(caller, type.java, processor))
     }
 
     protected fun removeRoute(type: Class<out Information>) {
-        inject(RemoveRouteCommand(caller, this, type))
+        inject(RemoveRouteCommand(caller, type))
     }
 
     protected fun removeRoute(type: KClass<out Information>) {
-        inject(RemoveRouteCommand(caller, this, type.java))
+        inject(RemoveRouteCommand(caller, type.java))
     }
 
     private inner class AddRouteCommand<T>(
         origin: Origin,
-        recipient: Recipient,
         private val type: Class<out Any>,
         private val processor: (T) -> Unit
-    ) : BasicCommand(origin, recipient, urgent = true) {
-        override val copy: AddRouteCommand<T> get() = AddRouteCommand<T>(origin, recipient, type, processor)
+    ) : BasicCommand(origin, urgent = true) {
+        override val copy: AddRouteCommand<T> get() = AddRouteCommand<T>(origin, type, processor)
 
         override fun execute() {
             routes[type] = processor as (Any) -> Unit
@@ -120,10 +118,9 @@ open class BasicAgent : Logger(), Agent {
 
     private inner class RemoveRouteCommand(
         origin: Origin,
-        recipient: Recipient,
         private val type: Class<out Any>
-    ) : BasicCommand(origin, recipient, urgent = true) {
-        override val copy: RemoveRouteCommand get() = RemoveRouteCommand(origin, recipient, type)
+    ) : BasicCommand(origin, urgent = true) {
+        override val copy: RemoveRouteCommand get() = RemoveRouteCommand(origin, type)
 
         override fun execute() {
             routes.remove(type)
@@ -131,7 +128,7 @@ open class BasicAgent : Logger(), Agent {
 
     }
 
-    private inner class Synchronization : BasicRequest(here, this@BasicAgent)
+    private inner class Synchronization(origin: Origin) : BasicRequest(origin)
 
     companion object {
         private val TEXT_MESSAGE_NOT_UNDERSTOOD = LocalText("MessageNotUnderstood1")

@@ -6,6 +6,7 @@ package com.coradec.coradeck.ctrl.ctrl.impl
 
 import com.coradec.coradeck.com.ctrl.impl.Logger
 import com.coradec.coradeck.com.model.Information
+import com.coradec.coradeck.com.model.Message
 import com.coradec.coradeck.conf.model.LocalProperty
 import com.coradec.coradeck.core.model.Timespan
 import com.coradec.coradeck.core.util.formatted
@@ -19,7 +20,7 @@ import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit.SECONDS
 
-object CEMS: Logger(), EMS {
+object CEMS : Logger(), EMS {
     private val TEXT_INVALID_OBJECT_TYPE = LocalText("InvalidObjectType")
     private val TEXT_BROADCAST_NOT_IMPLEMENTED = LocalText("BroadcastNotImplemented")
     private val TEXT_EXECUTION_ABORTED = LocalText("ExecutionAborted1")
@@ -43,12 +44,12 @@ object CEMS: Logger(), EMS {
     }
 
     private fun startInitialWorkers() {
-        for (i in 1 .. PROP_LOW_WATER_MARK.value) startWorker()
+        for (i in 1..PROP_LOW_WATER_MARK.value) startWorker()
     }
 
     private fun startWorker() {
-            val id = NEXT_ID
-            workers[id] = Worker(id).apply { start() }
+        val id = NEXT_ID
+        workers[id] = Worker(id).apply { start() }
     }
 
     private fun increaseLoad() {
@@ -85,7 +86,7 @@ object CEMS: Logger(), EMS {
         sync.acquire()
     }
 
-    private class Worker(val number: Int): Thread("CEMS-%03d".format(number)) {
+    private class Worker(val number: Int) : Thread("CEMS-%03d".format(number)) {
         override fun run() {
             val patience = PROP_PATIENCE.value
             debug("Worker %d starting, patience = %s", number, patience.representation)
@@ -94,8 +95,11 @@ object CEMS: Logger(), EMS {
                 try {
                     when (item) {
                         null -> if (workers.size > PROP_LOW_WATER_MARK.value) break
-                        is Information -> broadcast(item).also { item.dispatch() }
                         is Agent -> item.trigger()
+                        is Message ->
+                            if (item.recipient == null) broadcast(item).also { item.dispatch() }
+                            else item.recipient!!.inject(item)
+                        is Information -> broadcast(item).also { item.dispatch() }
                         else -> error(TEXT_INVALID_OBJECT_TYPE, item::class.java, item)
                     }
                 } catch (e: Exception) {

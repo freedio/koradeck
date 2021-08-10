@@ -26,8 +26,7 @@ internal class BasicRequestTest {
     @Test fun newSimpleRequest() {
         // given:
         val started = ZonedDateTime.now()
-        val agent = TestAgent()
-        val request = BasicRequest(here, agent)
+        val request = BasicRequest(here)
         // when:
         // then:
         val softly = SoftAssertions()
@@ -145,10 +144,10 @@ internal class BasicRequestTest {
         softly.assertAll()
     }
 
-    class SuccessfulTestRequest(origin: Origin, recipient: Recipient) : BasicRequest(origin, recipient)
-    class FailedTestRequest(origin: Origin, recipient: Recipient) : BasicRequest(origin, recipient)
-    class CancelledTestRequest(origin: Origin, recipient: Recipient) : BasicRequest(origin, recipient)
-    class CancelledTestRequest2(origin: Origin, recipient: Recipient) : BasicRequest(origin, recipient)
+    class SuccessfulTestRequest(origin: Origin, recipient: Recipient) : BasicRequest(origin, target = recipient)
+    class FailedTestRequest(origin: Origin, recipient: Recipient) : BasicRequest(origin, target = recipient)
+    class CancelledTestRequest(origin: Origin, recipient: Recipient) : BasicRequest(origin, target = recipient)
+    class CancelledTestRequest2(origin: Origin, recipient: Recipient) : BasicRequest(origin, target = recipient)
     class TestFailureException: BasicException()
     class CancelReason : BasicException()
 

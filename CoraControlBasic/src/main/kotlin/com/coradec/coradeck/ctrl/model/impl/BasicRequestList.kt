@@ -1,6 +1,9 @@
 package com.coradec.coradeck.ctrl.model.impl
 
-import com.coradec.coradeck.com.model.*
+import com.coradec.coradeck.com.model.Event
+import com.coradec.coradeck.com.model.Information
+import com.coradec.coradeck.com.model.Request
+import com.coradec.coradeck.com.model.State
 import com.coradec.coradeck.com.model.State.*
 import com.coradec.coradeck.com.model.State.Companion.FINISHED
 import com.coradec.coradeck.com.model.impl.BasicRequest
@@ -10,17 +13,18 @@ import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.ctrl.model.RequestList
 import com.coradec.coradeck.text.model.LocalText
 
-class BasicRequestList(origin: Origin, recipient: Recipient, private val requests: Iterator<Request>) :
-        BasicRequest(origin, recipient), RequestList {
-    constructor(origin: Origin, recipient: Recipient, requests: Sequence<Request>) : this(origin, recipient, requests.iterator())
-    constructor(origin: Origin, recipient: Recipient, requests: List<Request>) : this(origin, recipient, requests.iterator())
+class BasicRequestList(origin: Origin, private val requests: Iterator<Request>) :
+        BasicRequest(origin), RequestList {
+    constructor(origin: Origin, requests: Sequence<Request>) : this(origin, requests.iterator())
+    constructor(origin: Origin, requests: List<Request>) : this(origin, requests.iterator())
 
     override fun execute(): Unit = when {
         complete -> relax()
         requests.hasNext() -> requests.next().let { request ->
+            if (recipient == null) throw IllegalStateException("Cannot execute when recipien is not set!")
             request.enregister(this)
             if (!request.complete) {
-                if (!request.enqueued) recipient.inject(request)
+                if (!request.enqueued) recipient!!.inject(request)
             } else process(request, request.state)
         }
         else -> succeed()
