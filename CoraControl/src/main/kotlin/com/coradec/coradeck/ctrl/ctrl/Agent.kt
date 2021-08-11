@@ -2,9 +2,10 @@ package com.coradec.coradeck.ctrl.ctrl
 
 import com.coradec.coradeck.com.model.Command
 import com.coradec.coradeck.com.model.Recipient
+import com.coradec.coradeck.core.model.Origin
 import kotlin.reflect.KClass
 
-interface Agent: Recipient {
+interface Agent: Origin, Recipient {
     val queueSize: Int
     /** Triggers the agent to process the next message in its queue. */
     fun trigger()

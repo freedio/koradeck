@@ -17,14 +17,21 @@ import com.coradec.coradeck.text.model.LocalText
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
 
-@Suppress("UNCHECKED_CAST")
+@Suppress("UNCHECKED_CAST", "LeakingThis")
 open class BasicAgent : Logger(), Agent {
+    private val index = NEXT.getAndIncrement()
     private val routes = ConcurrentHashMap<Class<*>, (Any) -> Unit>()
     private val approvedCommands = CopyOnWriteArraySet(INTERNAL_COMMANDS)
     private val queue = LinkedBlockingDeque<Information>()
     override val queueSize: Int get() = queue.size
+    override val representation: String get() = "BasicAgent#$index"
+
+    init {
+        AGENTS[index] = this
+    }
 
     override fun <I : Information> inject(message: I): I = message.also {
         if (message.urgent) queue.addFirst(message) else queue.addLast(message)
@@ -131,6 +138,8 @@ open class BasicAgent : Logger(), Agent {
     private inner class Synchronization(origin: Origin) : BasicRequest(origin)
 
     companion object {
+        private val AGENTS = ConcurrentHashMap<Int, Agent>()
+        private val NEXT = AtomicInteger(0)
         private val TEXT_MESSAGE_NOT_UNDERSTOOD = LocalText("MessageNotUnderstood1")
         private val TEXT_MESSAGE_NOT_APPROVED = LocalText("MessageNotApproved1")
         private val TEXT_COMMAND_FAILED = LocalText("CommandFailed2")
