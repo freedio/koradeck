@@ -15,7 +15,7 @@ import java.time.ZonedDateTime
 
 class BasicRequestSet(
     origin: Origin,
-    private val requests: Sequence<Request>,
+    val requests: Sequence<Request>,
     urgent: Boolean = false,
     created: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
@@ -32,24 +32,24 @@ class BasicRequestSet(
         if (requests.none()) succeed()
         requests.forEach { request ->
             if (!complete) {
-                if (recipient == null) throw IllegalStateException("Cannot execute when recipien is not set!")
+                if (recipient == null) throw IllegalStateException("Cannot execute when recipient is not set!")
                 if (request.enregister(this)) ++outstanding
                 if (request.complete) process(request, request.state) else if (!request.enqueued) recipient!!.inject(request)
             }
         }
     }
 
-    override fun notify(event: Event) = when {
-        complete -> false
-        event is StateChangedEvent -> {
-            val element: Information = event.source
-            trace("State Changed: %s %s→%s", element, event.previous, event.current)
-            val newState = event.current
-            process(element, newState)
-            newState in FINISHED
+    override fun onNotification(event: Event): Boolean = when {
+            complete -> false
+            event is StateChangedEvent -> {
+                val element: Information = event.source
+                trace("State Changed: %s %s→%s", element, event.previous, event.current)
+                val newState = event.current
+                process(element, newState)
+                newState in FINISHED
+            }
+            else -> false.also { warn(TEXT_EVENT_NOT_UNDERSTOOD, event) }
         }
-        else -> false.also { warn(TEXT_EVENT_NOT_UNDERSTOOD, event) }
-    }
 
     private fun process(element: Information, state: State) {
         if (endState == SUCCESSFUL) when (state) {

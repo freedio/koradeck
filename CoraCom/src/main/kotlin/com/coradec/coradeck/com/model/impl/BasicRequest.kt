@@ -59,6 +59,7 @@ open class BasicRequest(
         if (reason != null) throw reason!!
         if (failed) throw RequestFailedException()
         if (cancelled) throw RequestCancelledException()
+        Thread.yield()
     }
 
     override fun onSuccess(action: Request.() -> Unit): Request = also {
@@ -103,12 +104,11 @@ open class BasicRequest(
     override fun enregister(observer: Observer) = !complete && super.enregister(observer)
 
     private inner class PostActionObserver : Observer {
-        override fun notify(event: Event): Boolean = when (event) {
-            is StateChangedEvent -> (event.current in FINISHED).also { complete ->
-                if (complete) runPostActions()
+        override fun onNotification(event: Event): Boolean = when (event) {
+                is StateChangedEvent -> (event.current in FINISHED).also { complete ->
+                    if (complete) runPostActions()
+                }
+                else -> false
             }
-            else -> false
-        }
-
     }
 }

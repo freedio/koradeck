@@ -17,6 +17,7 @@ import com.coradec.coradeck.text.model.LocalText
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.LinkedBlockingDeque
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
 
@@ -27,6 +28,7 @@ open class BasicAgent : Logger(), Agent {
     private val approvedCommands = CopyOnWriteArraySet(INTERNAL_COMMANDS)
     private val queue = LinkedBlockingDeque<Information>()
     override val queueSize: Int get() = queue.size
+    private val ready = AtomicBoolean(true)
     override val representation: String get() = "BasicAgent#$index"
 
     init {
@@ -52,7 +54,7 @@ open class BasicAgent : Logger(), Agent {
         EMS.execute(this)
     }
 
-    override fun trigger() = onMessage(queue.take().also { it.dispatch() })
+    override fun trigger() = if (ready.get()) onMessage(queue.take().also { it.dispatch() }) else EMS.execute(this)
     override fun synchronize() {
         inject(Synchronization(caller)).standBy()
     }
@@ -65,32 +67,41 @@ open class BasicAgent : Logger(), Agent {
         approvedCommands.removeAll(cmd.toList())
     }
 
-    protected open fun onMessage(message: Information): Unit = when (message) {
-        is Command ->
-            if (approvedCommands.any { it.isInstance(message) })
-                try { message.execute() } catch (e: Throwable) {
-                    error(e, TEXT_COMMAND_FAILED, message::class.classname, e.toString())
-                    message.fail(e)
+    protected open fun onMessage(message: Information) {
+        ready.set(false)
+        try {
+            when (message) {
+                is Command ->
+                    if (approvedCommands.any { it.isInstance(message) })
+                        try {
+                            message.execute()
+                        } catch (e: Throwable) {
+                            error(e, TEXT_COMMAND_FAILED, message::class.classname, e.toString())
+                            message.fail(e)
+                        }
+                    else {
+                        message.fail(CommandNotApprovedException(message))
+                        error(TEXT_MESSAGE_NOT_APPROVED, message)
+                    }
+                is Synchronization -> {
+                    debug("Synchronization point «%s» reached", message)
+                    message.succeed()
                 }
-            else {
-                message.fail(CommandNotApprovedException(message))
-                error(TEXT_MESSAGE_NOT_APPROVED, message)
+                in routes.keys -> with(routes.filterKeys { it.isInstance(message) }.iterator().next().value) {
+                    try {
+                        invoke(message)
+                    } catch (e: Throwable) {
+                        error(e, TEXT_MESSAGE_FAILED, message::class.classname, e.toString())
+                        if (message is Request) message.fail(e)
+                    }
+                }
+                else -> {
+                    if (message is Request) message.fail(NoRouteForMessageException(message))
+                    error(TEXT_MESSAGE_NOT_UNDERSTOOD, message)
+                }
             }
-        is Synchronization -> {
-            debug("Synchronization point «%s» reached", message)
-            message.succeed()
-        }
-        in routes.keys -> with (routes.filterKeys { it.isInstance(message) }.iterator().next().value) {
-            try {
-                invoke(message)
-            } catch (e: Throwable) {
-                error(e, TEXT_MESSAGE_FAILED, message::class.classname, e.toString())
-                if (message is Request) message.fail(e)
-            }
-        }
-        else -> {
-            if (message is Request) message.fail(NoRouteForMessageException(message))
-            error(TEXT_MESSAGE_NOT_UNDERSTOOD, message)
+        } finally {
+            ready.set(true)
         }
     }
 

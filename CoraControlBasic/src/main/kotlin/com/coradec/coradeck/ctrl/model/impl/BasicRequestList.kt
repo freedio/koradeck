@@ -30,17 +30,17 @@ class BasicRequestList(origin: Origin, private val requests: Iterator<Request>) 
         else -> succeed()
     }
 
-    override fun notify(event: Event): Boolean = when {
-        complete -> false
-        event is StateChangedEvent -> {
-            val element: Information = event.source
-            debug("State Changed: %s %s→%s", element, event.previous, event.current)
-            val newState: State = event.current
-            process(element, newState)
-            newState in FINISHED
+    override fun onNotification(event: Event): Boolean = when {
+            complete -> false
+            event is StateChangedEvent -> {
+                val element: Information = event.source
+                debug("State Changed: %s %s→%s", element, event.previous, event.current)
+                val newState: State = event.current
+                process(element, newState)
+                newState in FINISHED
+            }
+            else -> false.also { warn(TEXT_EVENT_NOT_UNDERSTOOD, event) }
         }
-        else -> false.also { warn(TEXT_EVENT_NOT_UNDERSTOOD, event) }
-    }
 
     private fun process(element: Information, state: State) = when (state) {
         SUCCESSFUL -> execute()
