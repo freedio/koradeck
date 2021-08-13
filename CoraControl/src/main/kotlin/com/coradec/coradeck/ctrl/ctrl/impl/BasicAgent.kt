@@ -22,11 +22,11 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
 
 @Suppress("UNCHECKED_CAST", "LeakingThis")
-open class BasicAgent : Logger(), Agent {
+open class BasicAgent(queueSize: Int = 1024) : Logger(), Agent {
     private val index = NEXT.getAndIncrement()
     private val routes = ConcurrentHashMap<Class<*>, (Any) -> Unit>()
     private val approvedCommands = CopyOnWriteArraySet(INTERNAL_COMMANDS)
-    private val queue = LinkedBlockingDeque<Information>()
+    private val queue = LinkedBlockingDeque<Information>(queueSize)
     override val queueSize: Int get() = queue.size
     private val ready = AtomicBoolean(true)
     override val representation: String get() = "BasicAgent#$index"
