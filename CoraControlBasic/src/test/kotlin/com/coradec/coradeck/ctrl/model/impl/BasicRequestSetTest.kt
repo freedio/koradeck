@@ -88,6 +88,7 @@ internal class BasicRequestSetTest {
         assertThat(testee.cancelled).isFalse()
         assertThat(agent.sum.get()).isEqualTo(101)
         assertThat(trouble).isNotNull()
+        Thread.yield()
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)
@@ -110,7 +111,6 @@ internal class BasicRequestSetTest {
             e
         }
         // then:
-        Thread.sleep(100)
         assertThat(testee.successful).isFalse()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isTrue()
@@ -146,7 +146,7 @@ internal class BasicRequestSetTest {
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)
-        Thread.sleep(100)
+        Thread.yield()
         assertThat(req4.observerCount).isEqualTo(0)
         assertThat(req5.observerCount).isEqualTo(0)
         assertThat(req6.observerCount).isEqualTo(0)
