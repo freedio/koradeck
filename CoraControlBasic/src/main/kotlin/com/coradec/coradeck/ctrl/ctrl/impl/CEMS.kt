@@ -58,6 +58,7 @@ object CEMS : Logger(), EMS {
 
     override fun execute(agent: Agent) {
         queue.put(agent)
+        trace("Queue: $queueSize/${PROP_QUEUE_SIZE.value}")
         increaseLoad()
     }
 
