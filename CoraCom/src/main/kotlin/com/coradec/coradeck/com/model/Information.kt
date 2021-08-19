@@ -42,8 +42,14 @@ interface Information {
     fun enregister(observer: Observer): Boolean
     /** Removes the specified observer from the state change registry. @return `true` if the observer was deregistered. */
     fun deregister(observer: Observer): Boolean
-    /** Marks the information as enqueued. */
-    fun enqueue()
-    /** Marks the information as dispatched. */
-    fun dispatch()
+    /**
+     * Marks the information as enqueued.
+     * @return the same information for chaining.
+     */
+    fun enqueue(): Information
+    /**
+     * Marks the information as dispatched.
+     * @return the same information for chaining.
+     */
+    fun dispatch(): Information
 }

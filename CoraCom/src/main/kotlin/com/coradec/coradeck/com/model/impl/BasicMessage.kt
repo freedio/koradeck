@@ -32,8 +32,7 @@ open class BasicMessage(
         recipient = target
     }
 
-    override fun enqueue() {
-        super.enqueue()
+    override fun enqueue() = super.enqueue().also {
         if (recipient == null) throw IllegalArgumentException("Recipient must be present to use this method!")
     }
 }

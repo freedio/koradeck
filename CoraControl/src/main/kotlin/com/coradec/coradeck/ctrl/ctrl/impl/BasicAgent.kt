@@ -26,6 +26,7 @@ open class BasicAgent(queueSize: Int = 1024) : Logger(), Agent {
     private val index = NEXT.getAndIncrement()
     private val routes = ConcurrentHashMap<Class<*>, (Any) -> Unit>()
     private val approvedCommands = CopyOnWriteArraySet(INTERNAL_COMMANDS)
+    private val finalActions = mutableListOf<() -> Unit>()
     private val queue = LinkedBlockingDeque<Information>(queueSize)
     override val queueSize: Int get() = queue.size
     private val ready = AtomicBoolean(true)
@@ -54,7 +55,10 @@ open class BasicAgent(queueSize: Int = 1024) : Logger(), Agent {
         EMS.execute(this)
     }
 
-    override fun trigger() = if (ready.get()) onMessage(queue.take().also { it.dispatch() }) else EMS.execute(this)
+    override fun trigger() =
+        if (ready.getAndSet(false)) onMessage(queue.take().dispatch())
+        else EMS.execute(this).also { ready.set(true) }
+
     override fun synchronize() {
         inject(Synchronization(caller)).standBy()
     }
@@ -67,8 +71,16 @@ open class BasicAgent(queueSize: Int = 1024) : Logger(), Agent {
         approvedCommands.removeAll(cmd.toList())
     }
 
+    protected fun atEnd(action: () -> Unit) = synchronized(finalActions) {
+        if (finalActions.isEmpty()) Runtime.getRuntime().addShutdownHook(object : Thread("Finalization of $representation") {
+            override fun run() {
+                finalActions.forEach { it.invoke() }
+            }
+        })
+        finalActions += action
+    }
+
     protected open fun onMessage(message: Information) {
-        ready.set(false)
         try {
             when (message) {
                 is Command ->
