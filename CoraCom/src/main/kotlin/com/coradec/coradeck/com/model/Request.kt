@@ -29,4 +29,6 @@ interface Request: Message {
     fun onFailure(action: Request.() -> Unit): Request
     /** Add an action to perform when the request was cancelled. */
     fun onCancellation(action: Request.() -> Unit): Request
+    /** Triggers the specified action when the request is finished. */
+    fun whenFinished(action: Request.() -> Unit): Request
 }

@@ -92,6 +92,18 @@ open class BasicRequest(
         }
     }
 
+    override fun whenFinished(action: Request.() -> Unit): Request = also {
+        postActionSemaphore.acquire()
+        try {
+            successActions += action
+            failureActions += action
+            cancellationActions += action
+            if (state in FINISHED) runPostActions() else enregister(PostActionObserver())
+        } finally {
+            postActionSemaphore.release()
+        }
+    }
+
     private fun runPostActions() {
         if (successful) successActions.forEach { it.invoke(this) }
         if (failed) failureActions.forEach { it.invoke(this) }
