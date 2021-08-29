@@ -144,14 +144,30 @@ internal class BasicRequestTest {
         softly.assertAll()
     }
 
-    class SuccessfulTestRequest(origin: Origin, recipient: Recipient) : BasicRequest(origin, target = recipient)
-    class FailedTestRequest(origin: Origin, recipient: Recipient) : BasicRequest(origin, target = recipient)
-    class CancelledTestRequest(origin: Origin, recipient: Recipient) : BasicRequest(origin, target = recipient)
-    class CancelledTestRequest2(origin: Origin, recipient: Recipient) : BasicRequest(origin, target = recipient)
+    class SuccessfulTestRequest(origin: Origin, target: Recipient? = null) : BasicRequest(origin, target = target) {
+        override val copy get() = SuccessfulTestRequest(origin, recipient)
+        override fun copy(recipient: Recipient) = SuccessfulTestRequest(origin, recipient)
+    }
+
+    class FailedTestRequest(origin: Origin, recipient: Recipient? =null) : BasicRequest(origin, target = recipient) {
+        override val copy get() = FailedTestRequest(origin, recipient)
+        override fun copy(recipient: Recipient) = FailedTestRequest(origin, recipient)
+    }
+
+    class CancelledTestRequest(origin: Origin, recipient: Recipient? = null) : BasicRequest(origin, target = recipient) {
+        override val copy get() = CancelledTestRequest(origin, recipient)
+        override fun copy(recipient: Recipient) = CancelledTestRequest(origin, recipient)
+    }
+
+    class CancelledTestRequest2(origin: Origin, recipient: Recipient? = null) : BasicRequest(origin, target = recipient) {
+        override val copy get() = CancelledTestRequest2(origin, recipient)
+        override fun copy(recipient: Recipient) = CancelledTestRequest2(origin, recipient)
+    }
+
     class TestFailureException: BasicException()
     class CancelReason : BasicException()
 
-    class TestAgent(): BasicAgent() {
+    class TestAgent : BasicAgent() {
         override fun onMessage(message: Information) = when(message) {
             is SuccessfulTestRequest -> message.succeed()
             is FailedTestRequest -> message.fail(TestFailureException())

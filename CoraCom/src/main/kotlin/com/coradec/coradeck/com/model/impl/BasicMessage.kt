@@ -18,21 +18,22 @@ open class BasicMessage(
     expires: Expiration = never_expires,
     target: Recipient? = null
 ) : BasicInformation(origin, urgent, created, session, expires), Message {
-    override val copy: BasicMessage get() = BasicMessage(origin, urgent = urgent)
     override var recipient: Recipient? = target
         set(value) = when (field) {
             null -> field = value
             value -> relax()
             else -> throw IllegalRequestException("Cannot change recipient!")
         }
+    override val copy: BasicMessage get() = BasicMessage(origin, urgent, createdAt, session, expires, recipient)
+    override fun copy(recipient: Recipient) = BasicMessage(origin, urgent, createdAt, session, expires, recipient)
+    override fun withRecipient(target: Recipient) =
+        if (recipient == null) this.also { recipient = target } else copy(recipient = target)
+    override fun withDefaultRecipient(target: Recipient?) =
+        if (recipient == null) this.also { recipient = target } else this
 
     override fun enqueue(target: Recipient) {
         super.enqueue()
         if (recipient != null && recipient != target) throw IllegalRequestException("Recipient cannot be overridden!")
         recipient = target
-    }
-
-    override fun enqueue() = super.enqueue().also {
-        if (recipient == null) throw IllegalArgumentException("Recipient must be present to use this method!")
     }
 }

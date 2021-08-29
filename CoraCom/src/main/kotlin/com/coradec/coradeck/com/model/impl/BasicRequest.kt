@@ -35,31 +35,39 @@ open class BasicRequest(
     private val cancellationActions: MutableList<Request.() -> Unit> = mutableListOf()
     private val postActionSemaphore = Semaphore(1)
 
-    override val copy: BasicRequest get() = BasicRequest(origin, urgent, target = recipient)
+    override val copy: BasicRequest get() = BasicRequest(origin, urgent, createdAt, session, expires, recipient)
+    override fun copy(recipient: Recipient) = BasicRequest(origin, urgent, createdAt, session, expires, recipient)
 
     override fun succeed() {
-        state = SUCCESSFUL
-        unfinished.countDown()
+        if (!complete) {
+            state = SUCCESSFUL
+            unfinished.countDown()
+        }
     }
 
     override fun cancel(reason: Throwable?) {
-        myReason = reason
-        state = CANCELLED
-        unfinished.countDown()
+        if (!complete) {
+            myReason = reason
+            state = CANCELLED
+            unfinished.countDown()
+        }
     }
 
     override fun fail(reason: Throwable?) {
-        myReason = reason
-        state = FAILED
-        unfinished.countDown()
+        if (!complete) {
+            myReason = reason
+            state = FAILED
+            unfinished.countDown()
+        }
     }
 
-    override fun standBy() {
+    override fun standBy(): BasicRequest {
         unfinished.await()
         if (reason != null) throw reason!!
         if (failed) throw RequestFailedException()
         if (cancelled) throw RequestCancelledException()
         Thread.yield()
+        return this
     }
 
     override fun onSuccess(action: Request.() -> Unit): Request = also {

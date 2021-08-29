@@ -3,6 +3,7 @@ package com.coradec.coradeck.com.model.impl
 import com.coradec.coradeck.com.ctrl.Observer
 import com.coradec.coradeck.com.ctrl.impl.Logger
 import com.coradec.coradeck.com.model.Information
+import com.coradec.coradeck.com.model.Information.Companion.LOST_ITEMS
 import com.coradec.coradeck.com.model.State
 import com.coradec.coradeck.com.model.State.*
 import com.coradec.coradeck.core.model.Expiration
@@ -40,11 +41,11 @@ open class BasicInformation(
 
     override fun enregister(observer: Observer) = stateRegistry.add(observer)
     override fun deregister(observer: Observer) = stateRegistry.remove(observer)
-    override fun enqueue() = also {
-        myStates += ENQUEUED
-    }
-
-    override fun dispatch() = also {
-        myStates += DISPATCHED
+    override fun enqueue() = also { myStates += ENQUEUED }
+    override fun dispatch() = also { myStates += DISPATCHED }
+    override fun delivered() = also { myStates += DELIVERED }
+    override fun miss() = also {
+        myStates += LOST
+        LOST_ITEMS += this
     }
 }

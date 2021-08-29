@@ -1,0 +1,10 @@
+# Localized text base for default locale of the central information, market, messaging, event-handling and execution service.
+InvalidObjectType2: Information of object type ‹%s› cannot be processed!  Concrete message: «%s».
+ExecutionAborted1: Execution of «%s» aborted!
+NotFinished4: CIMMEX (Central Information, Messaging, Market, Event & Execution Service) did not shut down within %s: \
+              %d inputs, %d tasks, and %d messages left unprocessed!
+DispatchFailed1: Failed to dispatch ‹%s›! → item dropped.
+CantDispatch1: Can't dispatch item ‹%s›: all queues are full! → item dropped.
+NotExecutable2: Objects of type ‹%s› are not executable!  Concrete instance: «%s».
+MessageNotUnderstood2: CIMMEX can't process ‹%s› message «%s»! → Message dropped.
+NoRecipients2: Nobody was interested in ‹%s› message «%s» → Message dropped.

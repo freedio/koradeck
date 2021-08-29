@@ -1,6 +1,7 @@
 package com.coradec.coradeck.ctrl.model.impl
 
 import com.coradec.coradeck.com.model.Information
+import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
@@ -33,7 +34,7 @@ internal class BasicRequestListTest {
     @Test fun testEmptyList() {
         // given
         val agent = TestAgent()
-        val testee = BasicRequestList(here, listOf())
+        val testee = BasicRequestList(here, listOf(), agent)
         // when
         agent.inject(testee).standBy()
         // then
@@ -169,9 +170,18 @@ internal class BasicRequestListTest {
         assertThat(req9.observerCount).isEqualTo(0)
     }
 
-    class TestRequest(agent: Agent, val value: Int): BasicRequest(here, target = agent)
-    class FailingRequest(agent: Agent, val value: Int): BasicRequest(here, target = agent)
-    class CancellingRequest(agent: Agent, val value: Int): BasicRequest(here, target = agent)
+    class TestRequest(val agent: Agent, val value: Int, target: Recipient? = agent): BasicRequest(here, target = target) {
+        override val copy get() = TestRequest(agent, value, recipient)
+        override fun copy(recipient: Recipient) = TestRequest(agent, value, recipient)
+    }
+    class FailingRequest(val agent: Agent, val value: Int, target: Recipient? = agent): BasicRequest(here, target = target) {
+        override val copy get() = FailingRequest(agent, value, recipient)
+        override fun copy(recipient: Recipient) = FailingRequest(agent, value, recipient)
+    }
+    class CancellingRequest(val agent: Agent, val value: Int, target: Recipient? = agent): BasicRequest(here, target = target) {
+        override val copy get() = CancellingRequest(agent, value, recipient)
+        override fun copy(recipient: Recipient) = CancellingRequest(agent, value, recipient)
+    }
 
     class TestAgent : BasicAgent() {
         var sum = 0

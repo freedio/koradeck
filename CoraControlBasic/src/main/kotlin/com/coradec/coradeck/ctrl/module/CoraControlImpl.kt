@@ -2,11 +2,8 @@ package com.coradec.coradeck.ctrl.module
 
 import com.coradec.coradeck.com.model.Request
 import com.coradec.coradeck.core.model.Origin
-import com.coradec.coradeck.ctrl.ctrl.Agent
-import com.coradec.coradeck.ctrl.ctrl.AgentPool
-import com.coradec.coradeck.ctrl.ctrl.EMS
-import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgentPool
-import com.coradec.coradeck.ctrl.ctrl.impl.CEMS
+import com.coradec.coradeck.ctrl.ctrl.IMMEX
+import com.coradec.coradeck.ctrl.ctrl.impl.CIMMEX
 import com.coradec.coradeck.ctrl.model.CentralMarketSpace
 import com.coradec.coradeck.ctrl.model.MarketSpace
 import com.coradec.coradeck.ctrl.model.RequestList
@@ -16,14 +13,11 @@ import com.coradec.coradeck.ctrl.model.impl.BasicRequestSet
 
 class CoraControlImpl : CoraControlAPI {
     override val Market: MarketSpace = CentralMarketSpace
-    override val EMS: EMS get() = CEMS
+    override val IMMEX: IMMEX get() = CIMMEX
 
     override fun createRequestSet(origin: Origin, vararg requests: Request): RequestSet =
         BasicRequestSet(origin, Sequence { requests.iterator() })
 
     override fun createRequestList(origin: Origin, vararg requests: Request): RequestList =
         BasicRequestList(origin, Sequence { requests.iterator() })
-
-    override fun <A: Agent> createAgentPool(lowWaterMark: Int, highWaterMark: Int, newAgent: () -> A): AgentPool<A> =
-        BasicAgentPool(lowWaterMark, highWaterMark, newAgent)
 }

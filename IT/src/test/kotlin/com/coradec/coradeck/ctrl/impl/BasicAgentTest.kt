@@ -1,5 +1,6 @@
 package com.coradec.coradeck.ctrl.impl
 
+import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.com.model.impl.BasicCommand
 import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.com.module.CoraComImpl
@@ -7,6 +8,7 @@ import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
+import com.coradec.coradeck.ctrl.module.CoraControl
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
 import com.coradec.coradeck.ctrl.trouble.CommandNotApprovedException
 import com.coradec.coradeck.ctrl.trouble.NoRouteForMessageException
@@ -19,6 +21,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 internal class BasicAgentTest {
+    val IMMEX = CoraControl.IMMEX
     @Test fun testRoutes() {
         // given:
         val testee = object: BasicAgent() {
@@ -59,8 +62,9 @@ internal class BasicAgentTest {
     @Test fun testApproved() {
         // given:
         var received = 0
-        class TestRouteCommand(origin: Origin): BasicCommand(origin) {
-            override val copy: TestRouteCommand get() = TestRouteCommand(origin)
+        class TestRouteCommand(origin: Origin, target: Recipient? = null): BasicCommand(origin, target = target) {
+            override val copy: TestRouteCommand get() = TestRouteCommand(origin, recipient)
+            override fun copy(recipient: Recipient): BasicCommand = TestRouteCommand(origin, recipient)
 
             override fun execute() {
                 ++received
@@ -85,8 +89,9 @@ internal class BasicAgentTest {
     @Test fun testUnapproved() {
         // given:
         var received = 0
-        class TestRouteCommand(origin: Origin): BasicCommand(origin) {
-            override val copy: TestRouteCommand get() = TestRouteCommand(origin)
+        class TestRouteCommand(origin: Origin, target: Recipient? = null): BasicCommand(origin, target = target) {
+            override val copy: TestRouteCommand get() = TestRouteCommand(origin, recipient)
+            override fun copy(recipient: Recipient): BasicCommand = TestRouteCommand(origin, recipient)
 
             override fun execute() {
                 ++received

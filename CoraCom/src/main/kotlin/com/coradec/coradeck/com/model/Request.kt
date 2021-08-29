@@ -22,7 +22,7 @@ interface Request: Message {
     /** Mark the request as cancelled for the specified optional reason. */
     fun cancel(reason: Throwable? = null)
     /** Wait until the request has finished (i. e. has been successful, cancelled, or failed). */
-    fun standBy()
+    fun standBy(): Request
     /** Add an action to perform when the request was successful. */
     fun onSuccess(action: Request.() -> Unit): Request
     /** Add an action to perform when the request failed. */

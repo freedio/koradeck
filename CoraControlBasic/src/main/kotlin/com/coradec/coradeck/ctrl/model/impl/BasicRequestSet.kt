@@ -9,6 +9,7 @@ import com.coradec.coradeck.core.model.Expiration
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.ctrl.model.RequestSet
+import com.coradec.coradeck.ctrl.module.CoraControl.IMMEX
 import com.coradec.coradeck.session.model.Session
 import com.coradec.coradeck.text.model.LocalText
 import java.time.ZonedDateTime
@@ -23,6 +24,8 @@ class BasicRequestSet(
     target: Recipient? = null
 ) : BasicRequest(origin, urgent, created, session, expires, target = target), RequestSet {
     constructor(origin: Origin, requests: List<Request>) : this(origin, requests.asSequence())
+    override val copy get() = BasicRequestSet(origin, requests, urgent, createdAt, session, expires, recipient)
+    override fun copy(recipient: Recipient) = BasicRequestSet(origin, requests, urgent, createdAt, session, expires, recipient)
 
     var outstanding = 0
     var endState: State = SUCCESSFUL
@@ -32,9 +35,8 @@ class BasicRequestSet(
         if (requests.none()) succeed()
         requests.forEach { request ->
             if (!complete) {
-                if (recipient == null) throw IllegalStateException("Cannot execute when recipient is not set!")
                 if (request.enregister(this)) ++outstanding
-                if (request.complete) process(request, request.state) else if (!request.enqueued) recipient!!.inject(request)
+                if (request.complete) process(request, request.state) else if (!request.enqueued) IMMEX.inject(request)
             }
         }
     }

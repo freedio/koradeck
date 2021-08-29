@@ -6,9 +6,7 @@ package com.coradec.coradeck.ctrl.module
 
 import com.coradec.coradeck.com.model.Request
 import com.coradec.coradeck.core.model.Origin
-import com.coradec.coradeck.ctrl.ctrl.Agent
-import com.coradec.coradeck.ctrl.ctrl.AgentPool
-import com.coradec.coradeck.ctrl.ctrl.EMS
+import com.coradec.coradeck.ctrl.ctrl.IMMEX
 import com.coradec.coradeck.ctrl.model.MarketSpace
 import com.coradec.coradeck.ctrl.model.RequestList
 import com.coradec.coradeck.ctrl.model.RequestSet
@@ -16,7 +14,7 @@ import com.coradec.coradeck.dir.model.module.CoraModule
 
 object CoraControl : CoraModule<CoraControlAPI>() {
     val Market: MarketSpace = impl.Market
-    val EMS: EMS = impl.EMS
+    val IMMEX: IMMEX = impl.IMMEX
 
     /**
      * Creates a request set for the specified requests; injecting the set will trigger all requests at once and be successful
@@ -33,8 +31,4 @@ object CoraControl : CoraModule<CoraControlAPI>() {
      */
     fun createRequestList(origin: Origin, vararg requests: Request): RequestList =
             impl.createRequestList(origin, *requests)
-
-    /** Creates a pool of agents of type A with a predefined minimum and maximum pool size and the specified agent creator funtion. */
-    fun <A: Agent> createAgentPool(lowWaterMark: Int, highWaterMark: Int, newAgent: () -> A): AgentPool<A> =
-        impl.createAgentPool(lowWaterMark, highWaterMark, newAgent)
 }

@@ -1,4 +1,0 @@
-# Localized text base for default locale of class CEMSUT
-BroadcastNotImplemented: Broadcast function is not yet implemented!  Would broadcast «%s».
-InvalidObjectType: Information of object type ‹%s› cannot be processed!  Message was «%s».
-ExecutionAborted1: Execution of «%s» aborted!
