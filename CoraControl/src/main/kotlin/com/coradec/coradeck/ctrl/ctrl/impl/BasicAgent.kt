@@ -30,7 +30,7 @@ open class BasicAgent(override val capacity: Int = 1024) : Logger(), Agent {
         AGENTS[index] = this
     }
 
-    fun <M: Message> inject(message: M): M = IMMEX.inject(message.withDefaultRecipient(this)) as M
+    override fun <I: Information> inject(message: I): I = IMMEX.inject(message.withDefaultRecipient(this)) as I
 
     override fun synchronize() {
         val sync = Semaphore(0)

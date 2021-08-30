@@ -88,7 +88,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
     }
 
     private fun addWorker() {
-        if (workers.size > workers.size && workers.size < PROP_MAX_WORKERS.value) startWorker()
+        if (inqueue.size > workers.size && workers.size < PROP_MAX_WORKERS.value) startWorker()
     }
 
     private fun startExecutor() {
@@ -97,7 +97,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
     }
 
     private fun addExecutor() {
-        if (executors.size > workers.size && workers.size < PROP_MAX_EXECUTORS.value) startExecutor()
+        if (taskqueue.size > executors.size && workers.size < PROP_MAX_EXECUTORS.value) startExecutor()
     }
 
     override fun execute(task: Runnable) {
@@ -223,6 +223,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
                 try {
                     item.delivered()
                     recipient.onMessage(item)
+                    item.processed()
                 } catch (e: Exception) {
                     error(TEXT_EXECUTION_ABORTED, item)
                     if (item is Request) item.fail(e)

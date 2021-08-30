@@ -4,6 +4,6 @@ TaskQueueSize: 1000         # Size of the task queue
 MinExecutors: 3             # Minimum number of executors running at all times
 MaxExecutors: 10            # Maximum number of executors running at all times
 MinWorkers: 3               # Minimum number of delivery agents running at all times
-MaxWorkers: 10              # Maximum number of delivery agents running at all times
+MaxWorkers: 20              # Maximum number of delivery agents running at all times
 Patience: 3s                # Time to wait for an entry in the queue before giving up
 ShutdownAllowance: 10s      # Time to wait after shutdown for all queues to be consumed before the CIMEX is killed

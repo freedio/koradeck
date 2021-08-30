@@ -73,10 +73,24 @@ interface Information {
     fun delivered(): Information
 
     /**
+     * Marks the information as processed.
+     * @return the same information for chaining.
+     */
+    fun processed(): Information
+
+    /**
      * Marks the information as lost.
      * @return the same information for chaining.
      */
     fun miss(): Information
+
+    /** Triggers the specified action whenever the specified state is reached. */
+    fun whenState(state: State, action: () -> Unit)
+
+    /** Wraps this information into a message to the specified recipient. */
+    fun withDefaultRecipient(target: Recipient?): Message
+    /** Wraps this information into a message to the specified recipient. */
+    fun withRecipient(target: Recipient): Message
 
     companion object {
         val LOST_ITEMS = LinkedBlockingQueue<Information>()

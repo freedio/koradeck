@@ -2,7 +2,9 @@ package com.coradec.coradeck.ctrl.module
 
 import com.coradec.coradeck.com.model.Request
 import com.coradec.coradeck.core.model.Origin
+import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.ctrl.IMMEX
+import com.coradec.coradeck.ctrl.model.AgentPool
 import com.coradec.coradeck.ctrl.model.MarketSpace
 import com.coradec.coradeck.ctrl.model.RequestList
 import com.coradec.coradeck.ctrl.model.RequestSet
@@ -25,4 +27,9 @@ interface CoraControlAPI: CoraModuleAPI {
      * rest is skipped and the list fails; if any request is cancelled, the rest is skipped and the list is cancelled.
      */
     fun createRequestList(origin: Origin, vararg requests: Request): RequestList
+
+    /**
+     * Creates and returns an agent pool of the specified agent type, with the specified low and high watermark and agent generator.
+     */
+    fun <AgentType: Agent> createAgentPool(low: Int, high: Int, generator: () -> AgentType): AgentPool
 }
