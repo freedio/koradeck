@@ -80,7 +80,7 @@ class AdvancedLineParser(
         }
 
         input.forEach { line ->
-            if (line.endsWith('\\')) lineCollector.append(line.substringBeforeLast('\'').trim())
+            if (line.endsWith('\\')) lineCollector.append(line.substringBeforeLast('\\').trim())
             else {
                 lineCollector.append(line.trim())
                 var skipRest = false
