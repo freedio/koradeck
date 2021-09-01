@@ -8,7 +8,7 @@ import com.coradec.coradeck.session.model.Session
 import java.time.ZonedDateTime
 import java.util.concurrent.CountDownLatch
 
-class BasicVoucher<V>(
+open class BasicVoucher<V>(
     origin: Origin,
     urgent: Boolean = false,
     created: ZonedDateTime = ZonedDateTime.now(),
@@ -26,6 +26,7 @@ class BasicVoucher<V>(
         }
 
     init {
+        @Suppress("LeakingThis")
         if (initialValue != null) value = initialValue
     }
 }

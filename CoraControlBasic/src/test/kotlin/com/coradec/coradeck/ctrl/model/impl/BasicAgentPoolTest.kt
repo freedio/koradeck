@@ -33,6 +33,7 @@ internal class BasicAgentPoolTest {
         val testee = BasicAgentPool(0, 3) { TestAgent(evaluation) }
         // when:
         IntRange(0, 1000).forEach { _ -> testee.inject(TestMessage(here)) }
+        testee.synchronize()
         // then:
         assertThat(evaluation.messages).hasSize(3)
     }
@@ -43,6 +44,7 @@ internal class BasicAgentPoolTest {
         val testee = BasicAgentPool(0, 10) { TestAgent(evaluation) }
         // when:
         IntRange(0, 20000).forEach { _ -> testee.inject(TestMessage(here)) }
+        testee.synchronize()
         // then:
         assertThat(evaluation.messages).hasSize(10)
     }
@@ -53,6 +55,7 @@ internal class BasicAgentPoolTest {
         val testee = BasicAgentPool(0, 200) { TestAgent(evaluation) }
         // when:
         IntRange(0, 20000).forEach { _ -> testee.inject(TestMessage(here)) }
+        testee.synchronize()
         // then:
         assertThat(evaluation.messages).hasSize(200)
     }

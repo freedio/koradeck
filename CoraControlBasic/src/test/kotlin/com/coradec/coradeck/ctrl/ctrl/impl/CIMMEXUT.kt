@@ -56,6 +56,7 @@ internal class CIMMEXUT {
         // when
         CIMMEX.inject(message)
         CIMMEX.synchronize()
+        agent.synchronize()
         // then
         assertThat(agent.gotMessage).isTrue()
         assertThat(LOST_ITEMS).doesNotContain(message)
