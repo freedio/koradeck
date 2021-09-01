@@ -8,6 +8,7 @@ import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.impl.ClassOrigin
 import kotlin.reflect.KClass
 import kotlin.reflect.full.isSubclassOf
+import kotlin.reflect.full.memberProperties
 
 val KClass<*>.classname: String
     get() = (qualifiedName ?: throw IllegalStateException("Class $this has no qualified name!"))
@@ -19,6 +20,8 @@ val Any.classname: String get() = this::class.classname
 val Any.shortClassname: String get() = this::class.shortClassname
 val KClass<*>.asOrigin: Origin get() = ClassOrigin(this)
 val Any.asOrigin: Origin get() = this::class.asOrigin
+val Any.properties: Map<String, Any?> get() =
+    this::class.memberProperties.associate { prop -> Pair(prop.name, prop.call(this@properties)) }
 operator fun KClass<*>.contains(other: KClass<*>) = isSubclassOf(other)
 operator fun KClass<*>.contains(instance: Any) = isInstance(instance)
 operator fun Set<Class<*>>.contains(instance: Any) = any { it.isInstance(instance) }

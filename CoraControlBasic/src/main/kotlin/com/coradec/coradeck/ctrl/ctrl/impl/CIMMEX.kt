@@ -35,6 +35,8 @@ object CIMMEX : Logger(), IMMEX, Recipient {
     private val TEXT_CANT_DISPATCH = LocalText("CantDispatch1")
     private val TEXT_MESSAGE_NOT_UNDERSTOOD = LocalText("MessageNotUnderstood2")
     private val TEXT_NO_RECIPIENTS = LocalText("NoRecipients2")
+    private val TEXT_SHUTTING_DOWN = LocalText("ShuttingDown")
+    private val TEXT_SHUT_DOWN = LocalText("ShutDown")
     private val PROP_INQUEUE_SIZE = LocalProperty("InQueueSize", 4000)
     private val PROP_TASKQUEUE_SIZE = LocalProperty("TaskQueueSize", 1000)
     private val PROP_MIN_WORKERS = LocalProperty("MinWorkers", 3)
@@ -72,6 +74,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
     }
 
     private fun shutdown() {
+        info(TEXT_SHUTTING_DOWN)
         val shutdownAllowance: Timespan = PROP_SHUTDOWN_ALLOWANCE.value
         val end = System.nanoTime() + shutdownAllowance.let { it.unit.toNanos(it.amount) }
         enabled = false
@@ -80,6 +83,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
             warn(TEXT_NOT_FINISHED, shutdownAllowance.representation, inqueue.size, taskqueue.size, undeliveredCount)
         val shutdownEvent = ShutdownCompleteEvent(here)
         finishTriggers.forEach { observer -> observer.notify(shutdownEvent) }
+        info(TEXT_SHUT_DOWN)
     }
 
     private fun startWorker() {
@@ -88,7 +92,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
     }
 
     private fun addWorker() {
-        if (inqueue.size > workers.size && workers.size < PROP_MAX_WORKERS.value) startWorker()
+        if (enabled && inqueue.size > workers.size && workers.size < PROP_MAX_WORKERS.value) startWorker()
     }
 
     private fun startExecutor() {
@@ -97,7 +101,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
     }
 
     private fun addExecutor() {
-        if (taskqueue.size > executors.size && workers.size < PROP_MAX_EXECUTORS.value) startExecutor()
+        if (enabled && taskqueue.size > executors.size && workers.size < PROP_MAX_EXECUTORS.value) startExecutor()
     }
 
     override fun execute(task: Runnable) {
@@ -222,7 +226,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
             if (item != null) {
                 try {
                     item.delivered()
-                    recipient.onMessage(item)
+                    execute { recipient.onMessage(item) }
                     item.processed()
                 } catch (e: Exception) {
                     error(TEXT_EXECUTION_ABORTED, item)

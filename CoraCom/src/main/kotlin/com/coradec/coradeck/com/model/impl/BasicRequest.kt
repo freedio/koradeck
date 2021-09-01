@@ -35,7 +35,7 @@ open class BasicRequest(
     private val cancellationActions: MutableList<Request.() -> Unit> = mutableListOf()
     private val postActionSemaphore = Semaphore(1)
 
-    override val copy: BasicRequest get() = BasicRequest(origin, urgent, createdAt, session, expires, recipient)
+    override val copy: Request get() = BasicRequest(origin, urgent, createdAt, session, expires, recipient)
     override fun copy(recipient: Recipient) = BasicRequest(origin, urgent, createdAt, session, expires, recipient)
 
     override fun succeed() {

@@ -24,7 +24,7 @@ open class BasicMessage(
             value -> relax()
             else -> throw IllegalRequestException("Cannot change recipient!")
         }
-    override val copy: BasicMessage get() = BasicMessage(origin, urgent, createdAt, session, expires, recipient)
+    override val copy: Message get() = BasicMessage(origin, urgent, createdAt, session, expires, recipient)
     override fun copy(recipient: Recipient) = BasicMessage(origin, urgent, createdAt, session, expires, recipient)
     override fun withRecipient(target: Recipient) =
         if (recipient == null) this.also { recipient = target } else copy(recipient = target)

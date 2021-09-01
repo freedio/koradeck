@@ -38,6 +38,7 @@ internal class BasicRequestListTest {
         // when
         agent.inject(testee).standBy()
         // then
+        Thread.sleep(100)
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()

@@ -91,6 +91,7 @@ interface Information {
     fun withDefaultRecipient(target: Recipient?): Message
     /** Wraps this information into a message to the specified recipient. */
     fun withRecipient(target: Recipient): Message
+    override fun toString(): String
 
     companion object {
         val LOST_ITEMS = LinkedBlockingQueue<Information>()

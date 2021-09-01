@@ -8,12 +8,12 @@ import com.coradec.coradeck.core.model.Null
 
 val Any?.formatted: String
     get() {
-        val repr = toString()
         return when (this) {
-            is String -> "\"$repr\""
+            is Map<*, *> -> entries.joinToString(", ", "[", "]") { (key, value) -> "$key: ${value.formatted}" }
+            is String -> "\"${toString()}\""
             null -> "«null»"
             is Null -> "«null»"
-            else -> repr
+            else -> toString()
         }
     }
 

@@ -30,7 +30,7 @@ open class BasicAgent(override val capacity: Int = 1024) : Logger(), Agent {
         AGENTS[index] = this
     }
 
-    override fun <I: Information> inject(message: I): I = IMMEX.inject(message.withDefaultRecipient(this)) as I
+    override fun <I : Information> inject(message: I): I = IMMEX.inject(message.withDefaultRecipient(this)) as I
 
     override fun synchronize() {
         val sync = Semaphore(0)
@@ -67,7 +67,7 @@ open class BasicAgent(override val capacity: Int = 1024) : Logger(), Agent {
                     }
                 else {
                     message.fail(CommandNotApprovedException(message))
-                    error(TEXT_MESSAGE_NOT_APPROVED, message)
+                    error(TEXT_MESSAGE_NOT_APPROVED, message.classname, message)
                 }
             is Synchronization -> {
                 debug("Synchronization point «%s» reached", message)
@@ -77,13 +77,13 @@ open class BasicAgent(override val capacity: Int = 1024) : Logger(), Agent {
                 try {
                     invoke(message)
                 } catch (e: Throwable) {
-                    error(e, TEXT_MESSAGE_FAILED, message::class.classname, e.toString())
+                    error(e, TEXT_MESSAGE_FAILED, message.classname, e.toString())
                     if (message is Request) message.fail(e)
                 }
             }
             else -> {
                 if (message is Request) message.fail(NoRouteForMessageException(message))
-                error(TEXT_MESSAGE_NOT_UNDERSTOOD, message)
+                error(TEXT_MESSAGE_NOT_UNDERSTOOD, message.classname, message)
             }
         }
     }
@@ -118,8 +118,8 @@ open class BasicAgent(override val capacity: Int = 1024) : Logger(), Agent {
     companion object {
         private val AGENTS = ConcurrentHashMap<Int, Agent>()
         private val NEXT = AtomicInteger(0)
-        private val TEXT_MESSAGE_NOT_UNDERSTOOD = LocalText("MessageNotUnderstood1")
-        private val TEXT_MESSAGE_NOT_APPROVED = LocalText("MessageNotApproved1")
+        private val TEXT_MESSAGE_NOT_UNDERSTOOD = LocalText("MessageNotUnderstood2")
+        private val TEXT_MESSAGE_NOT_APPROVED = LocalText("MessageNotApproved2")
         private val TEXT_COMMAND_FAILED = LocalText("CommandFailed2")
         private val TEXT_MESSAGE_FAILED = LocalText("MessageFailed2")
         private val INTERNAL_COMMANDS = listOf(
