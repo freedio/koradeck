@@ -221,19 +221,21 @@ object CIMMEX : Logger(), IMMEX, Recipient {
             debug("Worker %d stopped.", id)
         }
 
-        private fun process(recipient: Recipient) = synchronized(dispatcher) {
-            val item: Information? = dispatchTable[recipient]?.poll()
+        private fun process(recipient: Recipient) {
+            val item: Information? = synchronized(dispatcher) {
+                dispatchTable[recipient]?.poll().also { if (it == null) dispatchTable -= recipient }
+            }
             if (item != null) {
                 try {
                     item.delivered()
-                    execute { recipient.onMessage(item) }
+                    recipient.onMessage(item)
                     item.processed()
                 } catch (e: Exception) {
                     error(TEXT_EXECUTION_ABORTED, item)
                     if (item is Request) item.fail(e)
                 }
                 dispatchOrder.put(recipient)
-            } else dispatchTable -= recipient
+            }
         }
     }
 
