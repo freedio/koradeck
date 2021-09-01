@@ -11,10 +11,7 @@ import com.coradec.coradeck.com.model.StateObserver
 import com.coradec.coradeck.core.model.Expiration
 import com.coradec.coradeck.core.model.Expiration.Companion.never_expires
 import com.coradec.coradeck.core.model.Origin
-import com.coradec.coradeck.core.util.formatted
-import com.coradec.coradeck.core.util.here
-import com.coradec.coradeck.core.util.properties
-import com.coradec.coradeck.core.util.shortClassname
+import com.coradec.coradeck.core.util.*
 import com.coradec.coradeck.session.model.Session
 import java.time.ZonedDateTime
 import java.util.*
@@ -43,11 +40,14 @@ open class BasicInformation(
         set(state) {
             fun invert(i: Int): Int = if (i < 0) -i-1 else i
             fun addState(newstate: State) { myStates.add(invert(binarySearch(myStates, newstate)), newstate) }
+            interceptSetState(state)
             if (state !in myStates) {
                 val event = StateChangedEvent(here, this, myStates.last(), state.apply { addState(this) })
                 stateRegistry.forEach { if (it.notify(event)) stateRegistry.remove(it) }
             }
         }
+
+    protected open fun interceptSetState(state: State) = relax()
 
     override fun withDefaultRecipient(target: Recipient?) = BasicMessage(origin, urgent, createdAt, session, expires, target)
     override fun withRecipient(target: Recipient) = withDefaultRecipient(target)
