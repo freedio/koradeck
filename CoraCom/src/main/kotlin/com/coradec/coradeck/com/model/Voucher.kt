@@ -4,4 +4,7 @@
 
 package com.coradec.coradeck.com.model
 
-interface Voucher<V>: Request
+interface Voucher<V>: Request {
+    val current: V?
+    val value: V?
+}
