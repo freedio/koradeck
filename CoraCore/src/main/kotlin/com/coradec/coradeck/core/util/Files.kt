@@ -10,6 +10,9 @@ import java.nio.file.FileVisitResult.CONTINUE
 import java.nio.file.FileVisitResult.TERMINATE
 import java.nio.file.Files
 import java.nio.file.attribute.BasicFileAttributes
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.isSymbolicLink
 
 object Files {
 
@@ -37,25 +40,30 @@ enum class FileType(val formatted: String) {
     UNKNOWN("U");
 
     companion object {
-        operator fun invoke(type: String): FileType = when (type) {
-            "ff" -> REGULAR
-            "dd" -> DIRECTORY
-            "ss" -> SOCKET
-            "bb" -> BLOCKDEVICE
-            "cc" -> CHARDEVICE
-            "pp" -> PIPE
-            "DD" -> DOOR
-            "lf" -> SYMLINK
-            "ld" -> SYMLINK
-            "ls" -> SYMLINK
-            "lb" -> SYMLINK
-            "lc" -> SYMLINK
-            "lp" -> SYMLINK
-            "l?" -> SYMLINK
-            "lD" -> SYMLINK
-            "lL" -> LOOP_LINK
-            "lN" -> LOST_LINK
-            else -> throw IllegalArgumentException("Unknown file type: ‹$type›!")
+        val Path.type: FileType get() = when {
+            isDirectory() -> DIRECTORY
+            isRegularFile() -> REGULAR
+            isSymbolicLink() -> SYMLINK
+            else -> {
+                if (System.getProperty("os.name") == "Linux") {
+                    Runtime.getRuntime().exec("ls -ld ${toString()}").let { process ->
+                        with (process) {
+                            inputStream.bufferedReader().readText().let { line ->
+                                when (line[0]) {
+                                    '-' -> REGULAR
+                                    'd' -> DIRECTORY
+                                    'c' -> CHARDEVICE
+                                    'b' -> BLOCKDEVICE
+                                    's' -> SOCKET
+                                    'p' -> PIPE
+                                    'l' -> SYMLINK
+                                    else -> UNKNOWN
+                                }
+                            }.also { waitFor() }
+                        }
+                    }
+                } else UNKNOWN
+            }
         }
     }
 }
