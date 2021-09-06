@@ -70,7 +70,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
     init {
         dispatcher.start()
         for (i in 1..PROP_MIN_WORKERS.value) startWorker()
-        Runtime.getRuntime().addShutdownHook(Thread(::shutdown, "Terminator"))
+        Runtime.getRuntime().addShutdownHook(Thread(::shutdown, "T-850"))
     }
 
     private fun shutdown() {
@@ -78,12 +78,20 @@ object CIMMEX : Logger(), IMMEX, Recipient {
         val shutdownAllowance: Timespan = PROP_SHUTDOWN_ALLOWANCE.value
         val end = System.nanoTime() + shutdownAllowance.let { it.unit.toNanos(it.amount) }
         enabled = false
-        while (!finished && System.nanoTime() < end) Thread.yield()
+        while (!finished && System.nanoTime() < end) cleanout()
         if (!finished)
             warn(TEXT_NOT_FINISHED, shutdownAllowance.representation, inqueue.size, taskqueue.size, undeliveredCount)
         val shutdownEvent = ShutdownCompleteEvent(here)
         finishTriggers.forEach { observer -> observer.notify(shutdownEvent) }
         info(TEXT_SHUT_DOWN)
+    }
+
+    private fun cleanout() {
+        synchronized(dispatcher) {
+            val emptyRecipients = ArrayList<Recipient>()
+            dispatchTable.forEach { (recipient, rqueue) -> if (rqueue.isEmpty()) emptyRecipients += recipient }
+            emptyRecipients.forEach { dispatchTable.remove(it) }
+        }
     }
 
     private fun startWorker() {
@@ -134,7 +142,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
         else -> error(TEXT_MESSAGE_NOT_UNDERSTOOD, message.classname, message)
     }
 
-    private class Dispatcher : Thread("Dispatcher") {
+    private class Dispatcher : Thread("Dispatch") {
         override fun run() {
             val patience = PROP_PATIENCE.value
             while (!interrupted() && enabled) {
