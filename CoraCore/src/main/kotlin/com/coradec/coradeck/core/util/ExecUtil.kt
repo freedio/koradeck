@@ -36,5 +36,8 @@ fun Thread.whenTerminated(action: (Thread) -> Unit) {
 }
 
 fun Any?.swallow() {}
+fun execute(action: () -> Any?) {
+    action.invoke()
+}
 
 fun resource(klass: KClass<*>, ext: String) = ClassPathResource(klass, ext)
