@@ -104,9 +104,8 @@ open class BasicAgent(override val capacity: Int = 1024) : Logger(), Agent {
         routes -= type.java
     }
 
-    private inner class Synchronization(val sync: Semaphore, target: Recipient = this) : BasicCommand(caller, target = target) {
-        override val copy: BasicCommand get() = Synchronization(sync)
-        override fun copy(recipient: Recipient): BasicCommand = Synchronization(sync, target = recipient)
+    private inner class Synchronization(val sync: Semaphore, target: Recipient? = this) : BasicCommand(caller, target = target) {
+        override fun copy(recipient: Recipient?) = Synchronization(sync, target = recipient)
 
         override fun execute() {
             debug("Synchronization point reached")

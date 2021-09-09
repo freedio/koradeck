@@ -12,5 +12,5 @@ interface Message: Event {
     /** Enqueues this message with the specified target recipient. */
     fun enqueue(target: Recipient)
     /** Creates a copy of this message with the specified recipient. */
-    fun copy(recipient: Recipient): BasicMessage
+    fun copy(recipient: Recipient?): BasicMessage
 }

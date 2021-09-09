@@ -5,7 +5,6 @@ import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.com.model.State.NEW
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
-import com.coradec.coradeck.core.model.Expiration.Companion.never_expires
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.StackFrame
 import com.coradec.coradeck.core.trouble.BasicException
@@ -19,6 +18,8 @@ import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import org.assertj.core.api.SoftAssertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 internal class BasicRequestTest {
@@ -41,7 +42,8 @@ internal class BasicRequestTest {
         val finished = ZonedDateTime.now()
         softly.assertThat(request.createdAt).isBetween(started, finished)
         softly.assertThat(request.reason).isNull()
-        softly.assertThat(request.expires).isEqualTo(never_expires)
+        softly.assertThat(request.validFrom).isEqualTo(request.createdAt)
+        softly.assertThat(request.validUpTo).isEqualTo(ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC))
         softly.assertThat(request.observerCount).isEqualTo(0)
         softly.assertThat(request.state).isEqualTo(NEW)
         softly.assertThat(request.states).containsExactly(NEW)
@@ -146,22 +148,22 @@ internal class BasicRequestTest {
 
     class SuccessfulTestRequest(origin: Origin, target: Recipient? = null) : BasicRequest(origin, target = target) {
         override val copy get() = SuccessfulTestRequest(origin, recipient)
-        override fun copy(recipient: Recipient) = SuccessfulTestRequest(origin, recipient)
+        override fun copy(recipient: Recipient?) = SuccessfulTestRequest(origin, recipient)
     }
 
     class FailedTestRequest(origin: Origin, recipient: Recipient? =null) : BasicRequest(origin, target = recipient) {
         override val copy get() = FailedTestRequest(origin, recipient)
-        override fun copy(recipient: Recipient) = FailedTestRequest(origin, recipient)
+        override fun copy(recipient: Recipient?) = FailedTestRequest(origin, recipient)
     }
 
     class CancelledTestRequest(origin: Origin, recipient: Recipient? = null) : BasicRequest(origin, target = recipient) {
         override val copy get() = CancelledTestRequest(origin, recipient)
-        override fun copy(recipient: Recipient) = CancelledTestRequest(origin, recipient)
+        override fun copy(recipient: Recipient?) = CancelledTestRequest(origin, recipient)
     }
 
     class CancelledTestRequest2(origin: Origin, recipient: Recipient? = null) : BasicRequest(origin, target = recipient) {
         override val copy get() = CancelledTestRequest2(origin, recipient)
-        override fun copy(recipient: Recipient) = CancelledTestRequest2(origin, recipient)
+        override fun copy(recipient: Recipient?) = CancelledTestRequest2(origin, recipient)
     }
 
     class TestFailureException: BasicException()

@@ -5,13 +5,13 @@
 package com.coradec.coradeck.com.model
 
 import com.coradec.coradeck.com.ctrl.Observer
-import com.coradec.coradeck.core.model.Expiration
+import com.coradec.coradeck.core.model.Formattable
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.session.model.Session
 import java.time.ZonedDateTime
 import java.util.concurrent.LinkedBlockingQueue
 
-interface Information {
+interface Information: Formattable {
     /** Who or what sent the information, or where does it come from. */
     val origin: Origin
 
@@ -24,8 +24,11 @@ interface Information {
     /** Whether the information is urgent. */
     val urgent: Boolean
 
+    /** As of when the information is valid.  The information will be deferred until it becomes valid. */
+    val validFrom: ZonedDateTime
+
     /** How long the information is valid, if at all. */
-    val expires: Expiration
+    val validUpTo: ZonedDateTime
 
     /** The state of the information. */
     val state: State

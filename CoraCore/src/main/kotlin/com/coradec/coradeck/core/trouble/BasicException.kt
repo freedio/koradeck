@@ -22,6 +22,13 @@ open class BasicException(message: String?, problem: Throwable?) : Exception(mes
             if (properties.isNotEmpty()) result.append('(').append(properties).append(')')
             return result.toString()
         }
+    fun message(known: Set<Any?>): String {
+        val properties = listProperties().map { "${it.key}: ${it.value.formatted(known)}"}.joinToString()
+        val result = StringBuilder()
+        if (superMessage != null) result.append('"').append(superMessage).append("\" ")
+        if (properties.isNotEmpty()) result.append('(').append(properties).append(')')
+        return result.toString()
+    }
 
     private fun listProperties(): Map<String, Any> = javaClass.methods
             .filterNot { method -> method.name in IRRELEVANT_METHODS }

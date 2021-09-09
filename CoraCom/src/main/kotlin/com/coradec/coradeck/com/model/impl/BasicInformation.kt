@@ -8,11 +8,11 @@ import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.com.model.State
 import com.coradec.coradeck.com.model.State.*
 import com.coradec.coradeck.com.model.StateObserver
-import com.coradec.coradeck.core.model.Expiration
-import com.coradec.coradeck.core.model.Expiration.Companion.never_expires
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.util.*
 import com.coradec.coradeck.session.model.Session
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.util.*
 import java.util.Collections.binarySearch
@@ -25,7 +25,8 @@ open class BasicInformation(
     override val urgent: Boolean = false,
     override val createdAt: ZonedDateTime = ZonedDateTime.now(),
     override val session: Session = Session.current,
-    override val expires: Expiration = never_expires
+    override val validFrom: ZonedDateTime = createdAt,
+    override val validUpTo: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
 ) : Logger(), Information {
     private val stateRegistry = CopyOnWriteArraySet<Observer>()
     private val myStates = CopyOnWriteArrayList<State>().apply { add(NEW) }
@@ -49,7 +50,7 @@ open class BasicInformation(
 
     protected open fun interceptSetState(state: State) = relax()
 
-    override fun withDefaultRecipient(target: Recipient?) = BasicMessage(origin, urgent, createdAt, session, expires, target)
+    override fun withDefaultRecipient(target: Recipient?) = BasicMessage(origin, urgent, createdAt, session, target, validFrom, validUpTo)
     override fun withRecipient(target: Recipient) = withDefaultRecipient(target)
 
     override fun enregister(observer: Observer) = stateRegistry.add(observer)
@@ -65,7 +66,11 @@ open class BasicInformation(
     }
 
     override fun toString(): String =
-        "%s(%s)".format(shortClassname, this.properties.filterNot { it.key == "copy" }.formatted)
+        "%s(%s)".format(shortClassname, properties.filterNot { it.key == "copy" }.formatted)
+
+    override fun format(known: Set<Any?>): String =
+        "%s(%s)".format(shortClassname, properties.filterNot { it.key == "copy" }.formatted(known))
+
     override fun whenState(state: State, action: () -> Unit) {
         stateRegistry.add(StateObserver(state, action))
     }

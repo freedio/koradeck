@@ -4,10 +4,11 @@ import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.com.model.State
 import com.coradec.coradeck.com.model.State.SUCCESSFUL
 import com.coradec.coradeck.com.model.Voucher
-import com.coradec.coradeck.core.model.Expiration
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Timespan
 import com.coradec.coradeck.session.model.Session
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeoutException
@@ -15,12 +16,13 @@ import java.util.concurrent.TimeoutException
 open class BasicVoucher<V>(
     origin: Origin,
     urgent: Boolean = false,
-    created: ZonedDateTime = ZonedDateTime.now(),
+    createdAt: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
-    expires: Expiration = Expiration.never_expires,
     target: Recipient? = null,
+    validFrom: ZonedDateTime = createdAt,
+    validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC),
     initialValue: V? = null
-) : BasicRequest(origin, urgent, created, session, expires, target), Voucher<V> {
+) : BasicRequest(origin, urgent, createdAt, session, target, validFrom, validUpto), Voucher<V> {
     private val valueSemaphore = CountDownLatch(1)
     private var valueSet = false
     override var current: V? = initialValue

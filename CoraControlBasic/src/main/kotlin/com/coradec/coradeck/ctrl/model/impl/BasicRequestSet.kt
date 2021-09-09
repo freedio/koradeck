@@ -5,27 +5,29 @@ import com.coradec.coradeck.com.model.State.*
 import com.coradec.coradeck.com.model.State.Companion.FINISHED
 import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.com.model.impl.StateChangedEvent
-import com.coradec.coradeck.core.model.Expiration
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.ctrl.model.RequestSet
 import com.coradec.coradeck.ctrl.module.CoraControl.IMMEX
 import com.coradec.coradeck.session.model.Session
 import com.coradec.coradeck.text.model.LocalText
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 class BasicRequestSet(
     origin: Origin,
     val requests: Sequence<Request>,
     urgent: Boolean = false,
-    created: ZonedDateTime = ZonedDateTime.now(),
+    createdAt: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
-    expires: Expiration = Expiration.never_expires,
-    target: Recipient? = null
-) : BasicRequest(origin, urgent, created, session, expires, target = target), RequestSet {
+    target: Recipient? = null,
+    validFrom: ZonedDateTime = createdAt,
+    validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
+) : BasicRequest(origin, urgent, createdAt, session, target = target, validFrom, validUpto), RequestSet {
     constructor(origin: Origin, requests: List<Request>) : this(origin, requests.asSequence())
-    override val copy get() = BasicRequestSet(origin, requests, urgent, createdAt, session, expires, recipient)
-    override fun copy(recipient: Recipient) = BasicRequestSet(origin, requests, urgent, createdAt, session, expires, recipient)
+    override val copy get() = BasicRequestSet(origin, requests, urgent, createdAt, session, recipient, validFrom, validUpTo)
+    override fun copy(recipient: Recipient?) = BasicRequestSet(origin, requests, urgent, createdAt, session, recipient, validFrom, validUpTo)
 
     var outstanding = 0
     var endState: State = SUCCESSFUL

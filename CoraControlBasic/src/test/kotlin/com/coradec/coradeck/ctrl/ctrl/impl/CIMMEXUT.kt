@@ -21,6 +21,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.time.Duration
+import java.time.ZonedDateTime
+import java.util.concurrent.Semaphore
 
 internal class CIMMEXUT {
 
@@ -30,6 +33,7 @@ internal class CIMMEXUT {
         fun setup() {
             CoraModules.register(CoraConfImpl(), CoraTypeImpl(), CoraComImpl(), CoraTextImpl(), CoraControlImpl())
         }
+
         @AfterAll
         @JvmStatic
         fun cleanup() {
@@ -37,18 +41,20 @@ internal class CIMMEXUT {
         }
     }
 
-    @Test fun testDirectedMessageInjectionCIMMEX() {
+    @Test
+    fun testDirectedMessageInjectionCIMMEX() {
         // given
         val agent = TestAgent1()
         val message = TestMessage1(here, agent)
         // when
         CIMMEX.inject(message)
-        CIMMEX.synchronize()
+        agent.synchronize()
         // then
         assertThat(agent.gotMessage).isTrue()
     }
 
-    @Test fun testBroadcastMessageInjectionCIMMEX() {
+    @Test
+    fun testBroadcastMessageInjectionCIMMEX() {
         // given
         val agent = TestAgent1()
         val message = TestMessage1(here)
@@ -64,7 +70,8 @@ internal class CIMMEXUT {
         CIMMEX.unplug(agent)
     }
 
-    @Test fun testLostBroadcastMessage() {
+    @Test
+    fun testLostBroadcastMessage() {
         // given
         val message = TestMessage1(here)
         // when
@@ -75,7 +82,8 @@ internal class CIMMEXUT {
         assertThat(LOST_ITEMS).contains(message)
     }
 
-    @Test fun testMessageInjectionAgent() {
+    @Test
+    fun testMessageInjectionAgent() {
         // given
         val agent = TestAgent1()
         val message = TestMessage1(here)
@@ -86,15 +94,60 @@ internal class CIMMEXUT {
         assertThat(agent.gotMessage).isTrue()
     }
 
-    class TestMessage1(origin: Origin, target: Recipient? = null) : BasicMessage(origin, target = target) {
-        override val copy get() = TestMessage1(origin, recipient)
-        override fun copy(recipient: Recipient) = TestMessage1(origin, recipient)
+    @Test
+    fun testDelayedMessageInjectionCIMMEX() {
+        // given
+        val then = System.currentTimeMillis()
+        val delay = Duration.ofSeconds(2)
+        val agent = TestAgent2()
+        val message = TestMessage2(here, agent, delay)
+        // when
+        agent.inject(message)
+        agent.synchronize()
+        // then
+        assertThat(agent.gotMessage).isFalse()
+        message.standBy()
+        assertThat(agent.gotMessage).isTrue()
+        assertThat(System.currentTimeMillis()).isGreaterThan(then + delay.toMillis())
     }
 
-    class TestAgent1: BasicAgent() {
+    class TestMessage1(origin: Origin, target: Recipient? = null) : BasicMessage(origin, target = target) {
+        override val copy get() = TestMessage1(origin, recipient)
+        override fun copy(recipient: Recipient?) = TestMessage1(origin, recipient)
+    }
+
+    class TestMessage2(
+        origin: Origin,
+        target: Recipient? = null,
+        delay: Duration
+    ) : BasicMessage(origin, target = target, validFrom = ZonedDateTime.now().plus(delay)) {
+        override val copy get() = TestMessage1(origin, recipient)
+        override fun copy(recipient: Recipient?) = TestMessage1(origin, recipient)
+        private val semaphore = Semaphore(0)
+        fun standBy() {
+            semaphore.acquire()
+        }
+
+        fun done() {
+            semaphore.release()
+        }
+    }
+
+    class TestAgent1 : BasicAgent() {
         var gotMessage: Boolean = false
         override fun onMessage(message: Information) = when (message) {
             is TestMessage1 -> gotMessage = true
+            else -> super.onMessage(message)
+        }
+    }
+
+    class TestAgent2 : BasicAgent() {
+        var gotMessage: Boolean = false
+        override fun onMessage(message: Information) = when (message) {
+            is TestMessage2 -> {
+                gotMessage = true
+                message.done()
+            }
             else -> super.onMessage(message)
         }
     }

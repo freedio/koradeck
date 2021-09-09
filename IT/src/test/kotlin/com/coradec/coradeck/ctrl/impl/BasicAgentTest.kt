@@ -64,7 +64,7 @@ internal class BasicAgentTest {
         var received = 0
         class TestRouteCommand(origin: Origin, target: Recipient? = null): BasicCommand(origin, target = target) {
             override val copy: TestRouteCommand get() = TestRouteCommand(origin, recipient)
-            override fun copy(recipient: Recipient): BasicCommand = TestRouteCommand(origin, recipient)
+            override fun copy(recipient: Recipient?): BasicCommand = TestRouteCommand(origin, recipient)
 
             override fun execute() {
                 ++received
@@ -91,7 +91,7 @@ internal class BasicAgentTest {
         var received = 0
         class TestRouteCommand(origin: Origin, target: Recipient? = null): BasicCommand(origin, target = target) {
             override val copy: TestRouteCommand get() = TestRouteCommand(origin, recipient)
-            override fun copy(recipient: Recipient): BasicCommand = TestRouteCommand(origin, recipient)
+            override fun copy(recipient: Recipient?): BasicCommand = TestRouteCommand(origin, recipient)
 
             override fun execute() {
                 ++received

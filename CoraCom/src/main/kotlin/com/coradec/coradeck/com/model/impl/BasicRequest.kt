@@ -8,9 +8,10 @@ import com.coradec.coradeck.com.model.State.*
 import com.coradec.coradeck.com.model.State.Companion.FINISHED
 import com.coradec.coradeck.com.trouble.RequestCancelledException
 import com.coradec.coradeck.com.trouble.RequestFailedException
-import com.coradec.coradeck.core.model.Expiration
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.session.model.Session
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Semaphore
@@ -18,11 +19,12 @@ import java.util.concurrent.Semaphore
 open class BasicRequest(
     origin: Origin,
     urgent: Boolean = false,
-    created: ZonedDateTime = ZonedDateTime.now(),
+    createdAt: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
-    expires: Expiration = Expiration.never_expires,
-    target: Recipient? = null
-) : BasicMessage(origin, urgent, created, session, expires, target), Request {
+    target: Recipient? = null,
+    validFrom: ZonedDateTime = createdAt,
+    validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
+) : BasicMessage(origin, urgent, createdAt, session, target, validFrom, validUpto), Request {
     private var myReason: Throwable? = null
     private val unfinished = CountDownLatch(1)
     override val reason: Throwable? get() = myReason
@@ -35,8 +37,8 @@ open class BasicRequest(
     private val cancellationActions: MutableList<Request.() -> Unit> = mutableListOf()
     private val postActionSemaphore = Semaphore(1)
 
-    override val copy: Request get() = BasicRequest(origin, urgent, createdAt, session, expires, recipient)
-    override fun copy(recipient: Recipient) = BasicRequest(origin, urgent, createdAt, session, expires, recipient)
+    override val copy: Request get() = copy(recipient)
+    override fun copy(recipient: Recipient?) = BasicRequest(origin, urgent, createdAt, session, recipient, validFrom, validUpTo)
 
     override fun succeed() {
         if (!complete) {

@@ -20,7 +20,7 @@ class BasicRequestList(
     constructor(origin: Origin, requests: List<Request>, target: Recipient? = null) : this(origin, requests.iterator(), target)
 
     override val copy get() = BasicRequestList(origin, requests, recipient)
-    override fun copy(recipient: Recipient) = BasicRequestList(origin, requests, recipient)
+    override fun copy(recipient: Recipient?) = BasicRequestList(origin, requests, recipient)
 
     override fun execute(): Unit = when {
         complete -> relax()

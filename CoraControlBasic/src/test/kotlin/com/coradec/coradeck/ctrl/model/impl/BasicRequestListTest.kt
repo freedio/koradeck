@@ -131,7 +131,7 @@ internal class BasicRequestListTest {
         assertThat(testee.cancelled).isTrue()
         assertThat(agent.sum).isEqualTo(100)
         assertThat(trouble).isNotNull()
-        Thread.yield()
+        Thread.sleep(100)
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)
@@ -173,15 +173,15 @@ internal class BasicRequestListTest {
 
     class TestRequest(val agent: Agent, val value: Int, target: Recipient? = agent): BasicRequest(here, target = target) {
         override val copy get() = TestRequest(agent, value, recipient)
-        override fun copy(recipient: Recipient) = TestRequest(agent, value, recipient)
+        override fun copy(recipient: Recipient?) = TestRequest(agent, value, recipient)
     }
     class FailingRequest(val agent: Agent, val value: Int, target: Recipient? = agent): BasicRequest(here, target = target) {
         override val copy get() = FailingRequest(agent, value, recipient)
-        override fun copy(recipient: Recipient) = FailingRequest(agent, value, recipient)
+        override fun copy(recipient: Recipient?) = FailingRequest(agent, value, recipient)
     }
     class CancellingRequest(val agent: Agent, val value: Int, target: Recipient? = agent): BasicRequest(here, target = target) {
         override val copy get() = CancellingRequest(agent, value, recipient)
-        override fun copy(recipient: Recipient) = CancellingRequest(agent, value, recipient)
+        override fun copy(recipient: Recipient?) = CancellingRequest(agent, value, recipient)
     }
 
     class TestAgent : BasicAgent() {

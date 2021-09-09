@@ -1,17 +1,19 @@
 package com.coradec.coradeck.com.model.impl
 
 import com.coradec.coradeck.com.model.Event
-import com.coradec.coradeck.core.model.Expiration
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.session.model.Session
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 open class BasicEvent(
     origin: Origin,
     urgent: Boolean = false,
-    created: ZonedDateTime = ZonedDateTime.now(),
+    createdAt: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
-    expires: Expiration = Expiration.never_expires
-) : BasicInformation(origin, urgent, created, session, expires), Event {
-    override val copy: BasicEvent get() = BasicEvent(origin, urgent, createdAt, session, expires)
+    validFrom: ZonedDateTime = createdAt,
+    validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
+) : BasicInformation(origin, urgent, createdAt, session, validFrom, validUpto), Event {
+    override val copy: BasicEvent get() = BasicEvent(origin, urgent, createdAt, session, validFrom, validUpTo)
 }
