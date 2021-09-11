@@ -4,6 +4,8 @@ import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.module.CoraControl
 
 interface AgentPool: Agent {
+    val stats: String
+
     companion object {
         operator fun <AgentType : Agent> invoke(low: Int, high: Int, generator: () -> AgentType) =
             CoraControl.createAgentPool(low, high, generator)
