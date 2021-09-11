@@ -102,6 +102,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
         synchronized(dispatcher) {
             dispatchTable.filterValues { it.isEmpty() }.keys.forEach { dispatchTable.remove(it) }
         }
+        Thread.yield()
     }
 
     private fun startWorker() {

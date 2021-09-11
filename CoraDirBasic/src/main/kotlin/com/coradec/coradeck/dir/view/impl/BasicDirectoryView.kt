@@ -39,12 +39,12 @@ class BasicDirectoryView(override val rootPath: String, root: Directory) : Basic
     private val readlocks = mutableSetOf<Path>()
     private val writelocks = mutableSetOf<Path>()
 
-    override fun get(path: Path): DirectoryEntry? = realPath(path).let { path ->
-        when (path) {
+    override fun get(path: Path): DirectoryEntry? = realPath(path).let { realPath ->
+        when (realPath) {
             in removedEntries -> null
-            in addedEntries -> addedEntries[path]
+            in addedEntries -> addedEntries[realPath]
             else -> try {
-                rootDir[path]?.apply { readLock(session); readlocks += path }
+                rootDir[realPath]?.apply { readLock(session); readlocks += realPath }
             } catch (e: PathUnresolvableException) {
                 null
             }
@@ -54,18 +54,18 @@ class BasicDirectoryView(override val rootPath: String, root: Directory) : Basic
     override fun set(path: Path, value: Any) = set(path, ValueDirectoryEntryTemplate(value))
 
     override fun set(path: Path, entry: DirectoryEntry) {
-        realPath(path).let { path ->
-            if (path in removedEntries) removedEntries.remove(path)
-            val dir = get(path)
-            if (dir is Directory && isOutside(dir, rootDir)) throw DirectoryEntryAlreadyExistsException(path)
-            rootDir[path]?.apply { writeLock(session) }
-            val parentCheck = parentExists(rootDir, "", path)
+        realPath(path).let { realPath ->
+            if (realPath in removedEntries) removedEntries.remove(realPath)
+            val dir = get(realPath)
+            if (dir is Directory && isOutside(dir, rootDir)) throw DirectoryEntryAlreadyExistsException(realPath)
+            rootDir[realPath]?.apply { writeLock(session) }
+            val parentCheck = parentExists(rootDir, "", realPath)
             if (!parentCheck.exists)
                 throw DirectoryNotFoundException(parentCheck.path)
-            addedEntries[path] = entry
-            rootDir.createLock(session, path)
-            changes += EntryAdded(path, entry)
-            writelocks += path
+            addedEntries[realPath] = entry
+            rootDir.createLock(session, realPath)
+            changes += EntryAdded(realPath, entry)
+            writelocks += realPath
         }
     }
 
