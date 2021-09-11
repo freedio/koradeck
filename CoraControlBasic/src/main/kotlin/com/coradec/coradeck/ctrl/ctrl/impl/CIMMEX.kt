@@ -15,7 +15,6 @@ import com.coradec.coradeck.com.model.impl.BasicEvent
 import com.coradec.coradeck.conf.model.LocalProperty
 import com.coradec.coradeck.core.model.*
 import com.coradec.coradeck.core.model.Priority.B3
-import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
 import com.coradec.coradeck.core.util.classname
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.relax
@@ -231,7 +230,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
         error(TEXT_CANT_DISPATCH, item)
     }
 
-    private val Recipient.prio: Priority get() = dispatchTable[this]?.peek()?.priority ?: defaultPriority
+    private val Recipient.order get() = dispatchTable[this]?.peek()
 
     private class Executor(val id: Int) : Thread("Exec-%03d".format(id)) {
         override fun run() {
@@ -305,7 +304,17 @@ object CIMMEX : Logger(), IMMEX, Recipient {
                 o1 == null && o2 == null -> 0
                 o1 == null -> 1
                 o2 == null -> -1
-                else -> o1.prio.compareTo(o2.prio)
+                else -> {
+                    val i1 = o1.order
+                    val i2 = o2.order
+                    when {
+                        i1 == null && i2 == null -> 0
+                        i1 == null -> 1
+                        i2 == null -> -1
+                        i1.priority == i2.priority -> i1.due.toInstant().toEpochMilli().compareTo(i2.due.toInstant().toEpochMilli())
+                        else -> i2.priority.ordinal - i1.priority.ordinal
+                    }
+                }
             }
     }
 
