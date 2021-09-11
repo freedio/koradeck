@@ -1,6 +1,8 @@
 ---
 MessageQueueSize: 4000      # Size of the message queue
 TaskQueueSize: 1000         # Size of the task queue
+DeferringQueueSize: 1000    # Size of the deferring queue
+MaxRecipients: 1000         # Number of concurrent recipients.
 MinExecutors: 3             # Minimum number of executors running at all times
 MaxExecutors: 10            # Maximum number of executors running at all times
 MinWorkers: 3               # Minimum number of delivery agents running at all times

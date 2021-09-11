@@ -5,6 +5,8 @@ import com.coradec.coradeck.com.model.State
 import com.coradec.coradeck.com.model.State.SUCCESSFUL
 import com.coradec.coradeck.com.model.Voucher
 import com.coradec.coradeck.core.model.Origin
+import com.coradec.coradeck.core.model.Priority
+import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
 import com.coradec.coradeck.core.model.Timespan
 import com.coradec.coradeck.session.model.Session
 import java.time.LocalDateTime
@@ -15,14 +17,14 @@ import java.util.concurrent.TimeoutException
 
 open class BasicVoucher<V>(
     origin: Origin,
-    urgent: Boolean = false,
+    priority: Priority = defaultPriority,
     createdAt: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
     target: Recipient? = null,
     validFrom: ZonedDateTime = createdAt,
     validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC),
     initialValue: V? = null
-) : BasicRequest(origin, urgent, createdAt, session, target, validFrom, validUpto), Voucher<V> {
+) : BasicRequest(origin, priority, createdAt, session, target, validFrom, validUpto), Voucher<V> {
     private val valueSemaphore = CountDownLatch(1)
     private var valueSet = false
     override var current: V? = initialValue
@@ -40,6 +42,7 @@ open class BasicVoucher<V>(
         if (initialValue != null) value = initialValue
     }
 
+    override fun copy(recipient: Recipient?)= BasicVoucher<V>(origin, priority, createdAt, session, recipient)
     override fun interceptSetState(state: State) {
         if (state == SUCCESSFUL)
             if (valueSet) valueSemaphore.countDown() else throw IllegalStateException("To be successful, state must be set!")

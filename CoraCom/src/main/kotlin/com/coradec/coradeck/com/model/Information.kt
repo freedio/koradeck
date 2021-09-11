@@ -5,13 +5,14 @@
 package com.coradec.coradeck.com.model
 
 import com.coradec.coradeck.com.ctrl.Observer
+import com.coradec.coradeck.core.model.Deferred
 import com.coradec.coradeck.core.model.Formattable
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.session.model.Session
 import java.time.ZonedDateTime
 import java.util.concurrent.LinkedBlockingQueue
 
-interface Information: Formattable {
+interface Information: Formattable, Deferred {
     /** Who or what sent the information, or where does it come from. */
     val origin: Origin
 
@@ -20,9 +21,6 @@ interface Information: Formattable {
 
     /** When exactly the information was created. */
     val createdAt: ZonedDateTime
-
-    /** Whether the information is urgent. */
-    val urgent: Boolean
 
     /** As of when the information is valid.  The information will be deferred until it becomes valid. */
     val validFrom: ZonedDateTime

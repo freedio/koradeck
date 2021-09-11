@@ -116,6 +116,7 @@ internal class BasicRequestSetTest {
         assertThat(testee.cancelled).isTrue()
         assertThat(agent.sum.get()).isIn(100, 101)
         assertThat(trouble).isNotNull()
+        Thread.yield()
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)

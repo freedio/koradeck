@@ -8,6 +8,7 @@ import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
+import com.coradec.coradeck.ctrl.module.CoraControl
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
 import com.coradec.coradeck.dir.model.module.CoraModules
 import com.coradec.coradeck.text.module.CoraTextImpl
@@ -19,6 +20,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 internal class BasicAgentPoolTest {
+    val IMMEX = CoraControl.IMMEX
 
     companion object {
         @BeforeAll
@@ -29,10 +31,12 @@ internal class BasicAgentPoolTest {
 
     @Test fun testEasySmallPool() {
         // given:
+        IMMEX.synchronize()
         val evaluation = TestEvaluation()
         val testee = BasicAgentPool(0, 3) { TestAgent(evaluation) }
         // when:
         IntRange(0, 1000).forEach { _ -> testee.inject(TestMessage(here)) }
+        testee.close()
         testee.synchronize()
         // then:
         assertThat(evaluation.messages).hasSize(3)
@@ -40,10 +44,12 @@ internal class BasicAgentPoolTest {
 
     @Test fun testHeavyMediumPool() {
         // given:
+        IMMEX.synchronize()
         val evaluation = TestEvaluation()
         val testee = BasicAgentPool(0, 10) { TestAgent(evaluation) }
         // when:
-        IntRange(0, 20000).forEach { _ -> testee.inject(TestMessage(here)) }
+        IntRange(0, 10000).forEach { _ -> testee.inject(TestMessage(here)) }
+        testee.close()
         testee.synchronize()
         // then:
         assertThat(evaluation.messages).hasSize(10)
@@ -51,13 +57,15 @@ internal class BasicAgentPoolTest {
 
     @Test fun testHeavyBigPool() {
         // given:
+        IMMEX.synchronize()
         val evaluation = TestEvaluation()
-        val testee = BasicAgentPool(0, 200) { TestAgent(evaluation) }
+        val testee = BasicAgentPool(0, 2000) { TestAgent(evaluation) }
         // when:
         IntRange(0, 20000).forEach { _ -> testee.inject(TestMessage(here)) }
+        testee.close()
         testee.synchronize()
         // then:
-        assertThat(evaluation.messages).hasSize(200)
+        assertThat(evaluation.messages).hasSize(2000)
     }
 
     class TestEvaluation {
@@ -80,5 +88,4 @@ internal class BasicAgentPoolTest {
     }
 
     class TestMessage(origin: Origin) : BasicMessage(origin)
-
 }

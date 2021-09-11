@@ -13,20 +13,19 @@ import com.coradec.coradeck.com.model.Request
 import com.coradec.coradeck.com.model.impl.BasicCommand
 import com.coradec.coradeck.com.model.impl.BasicEvent
 import com.coradec.coradeck.conf.model.LocalProperty
-import com.coradec.coradeck.core.model.Deferred
-import com.coradec.coradeck.core.model.Origin
-import com.coradec.coradeck.core.model.Timespan
+import com.coradec.coradeck.core.model.*
+import com.coradec.coradeck.core.model.Priority.B3
+import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
 import com.coradec.coradeck.core.util.classname
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.ctrl.ctrl.IMMEX
+import com.coradec.coradeck.ctrl.model.Task
 import com.coradec.coradeck.text.model.LocalText
-import java.time.Duration
-import java.time.ZonedDateTime
 import java.util.*
 import java.util.concurrent.*
-import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.TimeUnit.SECONDS
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
 
 /** Central information, market, messaging, event-handling and execution service. */
@@ -41,8 +40,11 @@ object CIMMEX : Logger(), IMMEX, Recipient {
     private val TEXT_NO_RECIPIENTS = LocalText("NoRecipients2")
     private val TEXT_SHUTTING_DOWN = LocalText("ShuttingDown")
     private val TEXT_SHUT_DOWN = LocalText("ShutDown")
+    private val TEXT_DISPATCHER_INTERRUPTED = LocalText("DispatcherInterrupted")
     private val PROP_INQUEUE_SIZE = LocalProperty("InQueueSize", 4000)
     private val PROP_TASKQUEUE_SIZE = LocalProperty("TaskQueueSize", 1000)
+    private val PROP_DEFERRINGQUEUE_SIZE = LocalProperty("DeferringQueueSize", 1000)
+    private val PROP_MAX_RECIPIENTS = LocalProperty("MaxRecipients", 1000)
     private val PROP_MIN_WORKERS = LocalProperty("MinWorkers", 3)
     private val PROP_MAX_WORKERS = LocalProperty("MaxWorkers", 12)
     private val PROP_MIN_EXECUTORS = LocalProperty("MinExecutors", 3)
@@ -52,19 +54,20 @@ object CIMMEX : Logger(), IMMEX, Recipient {
 
     private val dispatcher = Dispatcher()
     private val timer = Timer()
-    private val inqueue = LinkedBlockingDeque<Any>(PROP_INQUEUE_SIZE.value)
-    private val taskqueue = LinkedBlockingQueue<Any>(PROP_TASKQUEUE_SIZE.value)
-    private val delayQueue = DelayQueue<Delayed>()
+    private val inqueue = PriorityBlockingQueue<Prioritized>(PROP_INQUEUE_SIZE.value)
+    private val taskqueue = PriorityBlockingQueue<Task>(PROP_TASKQUEUE_SIZE.value)
+    private val delayQueue = DeferringQueue()
     private val executors = ConcurrentHashMap<Int, Executor>()
     private val workers = ConcurrentHashMap<Int, Worker>()
-    private val dispatchTable = LinkedHashMap<Recipient, BlockingQueue<Information>>()
-    private val dispatchOrder = LinkedBlockingQueue<Recipient>()
-    private val undeliveredCount get() = dispatchTable.values.sumOf { it.size }
+    private val dispatchTable = LinkedHashMap<Recipient, PriorityBlockingQueue<Information>>()
+    private val dispatchOrder = PriorityBlockingQueue(PROP_MAX_RECIPIENTS.value, RecipientComparator())
+    private val undeliveredCount get() = dispatchTable.flatMap { it.value }.size
     private val registry = ConcurrentHashMap<KClass<*>, MutableSet<Recipient>>()
 
     private val finishTriggers = HashSet<Observer>()
-    private var enabled = true
-    private val finished: Boolean get() = !enabled && inqueue.isEmpty() && taskqueue.isEmpty() && dispatchTable.isEmpty()
+    private var enabled = AtomicBoolean(true)
+    private val finished: Boolean get() = !enabled.get() && inqueue.isEmpty() && taskqueue.isEmpty() && dispatchTable.isEmpty()
+    override val load: Int = inqueue.size + taskqueue.size + delayQueue.size + undeliveredCount
 
     override val capacity: Int = 16
 
@@ -84,7 +87,9 @@ object CIMMEX : Logger(), IMMEX, Recipient {
         info(TEXT_SHUTTING_DOWN)
         val shutdownAllowance: Timespan = PROP_SHUTDOWN_ALLOWANCE.value
         val end = System.nanoTime() + shutdownAllowance.let { it.unit.toNanos(it.amount) }
-        enabled = false
+        enabled.set(false)
+        timer.interrupt()
+        dispatcher.interrupt()
         while (!finished && System.nanoTime() < end) cleanout()
         if (!finished)
             warn(TEXT_NOT_FINISHED, shutdownAllowance.representation, inqueue.size, taskqueue.size, undeliveredCount)
@@ -95,9 +100,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
 
     private fun cleanout() {
         synchronized(dispatcher) {
-            val emptyRecipients = ArrayList<Recipient>()
-            dispatchTable.forEach { (recipient, rqueue) -> if (rqueue.isEmpty()) emptyRecipients += recipient }
-            emptyRecipients.forEach { dispatchTable.remove(it) }
+            dispatchTable.filterValues { it.isEmpty() }.keys.forEach { dispatchTable.remove(it) }
         }
     }
 
@@ -107,7 +110,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
     }
 
     private fun addWorker() {
-        if (enabled && inqueue.size > workers.size && workers.size < PROP_MAX_WORKERS.value) startWorker()
+        if (enabled.get() && inqueue.size > workers.size && workers.size < PROP_MAX_WORKERS.value) startWorker()
     }
 
     private fun startExecutor() {
@@ -116,19 +119,18 @@ object CIMMEX : Logger(), IMMEX, Recipient {
     }
 
     private fun addExecutor() {
-        if (enabled && taskqueue.size > executors.size && workers.size < PROP_MAX_EXECUTORS.value) startExecutor()
+        if (enabled.get() && taskqueue.size > executors.size && workers.size < PROP_MAX_EXECUTORS.value) startExecutor()
     }
 
-    private fun deferred(task: Runnable) = task is Deferred && task.due
-    private fun deferred(info: Information) = info.validFrom.toInstant().toEpochMilli() > System.currentTimeMillis()
-
-    override fun execute(task: Runnable) {
-        if (deferred(task)) delayQueue.put(TimeCapsule(task as Deferred)) else taskqueue.put(task)
+    override fun execute(executable: Runnable) = execute(executable, B3)
+    override fun execute(executable: Runnable, prio: Priority) = execute(Task(executable, prio))
+    override fun execute(task: Task) {
+        if (task.deferred) delayQueue.put(task) else taskqueue.put(task)
         addExecutor()
     }
 
     override fun <I : Information> inject(message: I): I = message.also {
-        if (deferred(it)) delayQueue.put(TimeCapsule(it)) else if (it.urgent) inqueue.putFirst(it) else inqueue.putLast(it)
+        if (it.deferred) delayQueue.put(it) else inqueue.put(it)
         it.enqueue()
         addWorker()
     }
@@ -154,26 +156,42 @@ object CIMMEX : Logger(), IMMEX, Recipient {
 
     private class Dispatcher : Thread("Dispatch") {
         override fun run() {
-            while (!interrupted() && enabled) {
-                dispatch(inqueue)
+            debug("Dispatcher started.")
+            while (!interrupted() && enabled.get()) {
+                try {
+                    dispatch(inqueue)
+                } catch (e: InterruptedException) {
+                    if (enabled.get()) warn(TEXT_DISPATCHER_INTERRUPTED)
+                }
             }
+            debug("Dispatcher stopped.")
         }
     }
 
     private class Timer : Thread("Timer") {
         override fun run() {
-            while (!interrupted() && enabled) {
-                dispatch(delayQueue)
+            debug("Timer started.")
+            while (enabled.get()) {
+                val sleep = delayQueue.peek()?.delayMs ?: Long.MAX_VALUE
+                debug("Timer sleeping for $sleep ms.")
+                try {
+                    sleep(sleep)
+                    debug("Timer awoke.")
+                    dispatch(delayQueue)
+                } catch (e: InterruptedException) {
+                    trace("Timer rescheduled.")
+                }
             }
+            debug("Timer stopped.")
         }
     }
 
-    private fun <T: Any> dispatch(q: BlockingQueue<T>) {
-        val item = q.take().let { if (it is TimeCapsule) it.content else it }
+    private fun <T : Any> dispatch(q: BlockingQueue<T>) {
+        val item = q.take()
         try {
             when (item) {
                 null -> relax()
-                is Runnable -> taskqueue.offer(item) || inqueue.offer(item) || cantDispatch(item)
+                is Task -> taskqueue.offer(item) || inqueue.offer(item) || cantDispatch(item)
                 is Message -> {
                     val recipient = item.recipient
                     if (recipient == null) broadcast(item) else dispatch(recipient, item)
@@ -190,7 +208,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
         var added = false
         val queue = dispatchTable.computeIfAbsent(recipient) {
             added = true
-            LinkedBlockingQueue(recipient.capacity)
+            PriorityBlockingQueue(recipient.capacity)
         }
         if (queue.offer(item) || inqueue.offer(item)) item.dispatch() else cantDispatch(item)
         if (added) dispatchOrder.put(recipient)
@@ -212,18 +230,20 @@ object CIMMEX : Logger(), IMMEX, Recipient {
         error(TEXT_CANT_DISPATCH, item)
     }
 
+    private val Recipient.prio: Priority get() = dispatchTable[this]?.peek()?.priority ?: defaultPriority
+
     private class Executor(val id: Int) : Thread("Exec-%03d".format(id)) {
         override fun run() {
             executors[id] = this
             val patience = PROP_PATIENCE.value
             debug("Executor %d starting, patience = %s", id, patience.representation)
-            while (!interrupted() && enabled) {
+            while (!interrupted() && enabled.get()) {
                 val item = taskqueue.poll(patience.amount, patience.unit)
                 try {
+                    @Suppress("USELESS_IS_CHECK")
                     when (item) {
                         null -> if (executors.size > PROP_MIN_EXECUTORS.value) break
-                        is Runnable -> item.run()
-                        else -> error(TEXT_NOT_EXECUTABLE, item.classname, item)
+                        is Task -> item.run()
                     }
                 } catch (e: Exception) {
                     error(TEXT_EXECUTION_ABORTED, item!!)
@@ -240,7 +260,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
             workers[id] = this
             val patience = PROP_PATIENCE.value
             debug("Worker %d starting, patience = %s", id, patience.representation)
-            while (!interrupted() && enabled) {
+            while (!interrupted() && enabled.get()) {
                 val recipient = dispatchOrder.poll(patience.amount, patience.unit)
                 if (recipient != null) process(recipient)
                 else if (workers.size > PROP_MIN_WORKERS.value) break
@@ -278,14 +298,25 @@ object CIMMEX : Logger(), IMMEX, Recipient {
         }
     }
 
-    class TimeCapsule(private val executionTime: Long, val content: Any) : Delayed {
+    class RecipientComparator : Comparator<Recipient> {
+        override fun compare(o1: Recipient?, o2: Recipient?): Int =
+            when {
+                o1 == null && o2 == null -> 0
+                o1 == null -> 1
+                o2 == null -> -1
+                else -> o1.prio.compareTo(o2.prio)
+            }
+    }
 
-        constructor(time: ZonedDateTime, content: Any): this(time.toInstant().toEpochMilli(), content)
-        constructor(task: Deferred) : this(task.executesAt, task)
-        constructor(info: Information) : this(info.validFrom, info)
+    class DeferringQueue : PriorityBlockingQueue<Deferred>(PROP_DEFERRINGQUEUE_SIZE.value) {
+        override fun put(e: Deferred) {
+            super.put(e)
+            timer.interrupt()
+        }
 
-        override fun compareTo(other: Delayed): Int = getDelay(MILLISECONDS).compareTo(other.getDelay(MILLISECONDS))
-        override fun getDelay(unit: TimeUnit): Long = unit.convert(Duration.ofMillis(executionTime-System.currentTimeMillis()))
+        override fun take(): Deferred {
+            return super.take().also { timer.interrupt() }
+        }
     }
 
     private class ShutdownCompleteEvent(origin: Origin) : BasicEvent(origin)

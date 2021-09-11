@@ -8,7 +8,11 @@ import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.com.model.State
 import com.coradec.coradeck.com.model.State.*
 import com.coradec.coradeck.com.model.StateObserver
+import com.coradec.coradeck.core.model.Deferred
 import com.coradec.coradeck.core.model.Origin
+import com.coradec.coradeck.core.model.Prioritized
+import com.coradec.coradeck.core.model.Priority
+import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
 import com.coradec.coradeck.core.util.*
 import com.coradec.coradeck.session.model.Session
 import java.time.LocalDateTime
@@ -22,7 +26,7 @@ import java.util.concurrent.CopyOnWriteArraySet
 @Suppress("UNCHECKED_CAST")
 open class BasicInformation(
     override val origin: Origin,
-    override val urgent: Boolean = false,
+    override val priority: Priority = defaultPriority,
     override val createdAt: ZonedDateTime = ZonedDateTime.now(),
     override val session: Session = Session.current,
     override val validFrom: ZonedDateTime = createdAt,
@@ -30,6 +34,7 @@ open class BasicInformation(
 ) : Logger(), Information {
     private val stateRegistry = CopyOnWriteArraySet<Observer>()
     private val myStates = CopyOnWriteArrayList<State>().apply { add(NEW) }
+    override val due: ZonedDateTime get() = validFrom
     override val states: List<State> = Collections.unmodifiableList(myStates)
     override val new: Boolean get() = states.singleOrNull() == NEW
     override val enqueued: Boolean get() = ENQUEUED in states
@@ -50,7 +55,7 @@ open class BasicInformation(
 
     protected open fun interceptSetState(state: State) = relax()
 
-    override fun withDefaultRecipient(target: Recipient?) = BasicMessage(origin, urgent, createdAt, session, target, validFrom, validUpTo)
+    override fun withDefaultRecipient(target: Recipient?) = BasicMessage(origin, priority, createdAt, session, target, validFrom, validUpTo)
     override fun withRecipient(target: Recipient) = withDefaultRecipient(target)
 
     override fun enregister(observer: Observer) = stateRegistry.add(observer)
@@ -70,6 +75,11 @@ open class BasicInformation(
 
     override fun format(known: Set<Any?>): String =
         "%s(%s)".format(shortClassname, properties.filterNot { it.key == "copy" }.formatted(known))
+
+    override fun compareTo(other: Prioritized): Int = priority.compareTo(other.priority)
+    override fun compareTo(other: Deferred): Int {
+        TODO("Not yet implemented")
+    }
 
     override fun whenState(state: State, action: () -> Unit) {
         stateRegistry.add(StateObserver(state, action))

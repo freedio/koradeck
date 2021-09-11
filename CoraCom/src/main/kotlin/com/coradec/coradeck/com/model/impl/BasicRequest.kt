@@ -9,6 +9,8 @@ import com.coradec.coradeck.com.model.State.Companion.FINISHED
 import com.coradec.coradeck.com.trouble.RequestCancelledException
 import com.coradec.coradeck.com.trouble.RequestFailedException
 import com.coradec.coradeck.core.model.Origin
+import com.coradec.coradeck.core.model.Priority
+import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
 import com.coradec.coradeck.session.model.Session
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -18,13 +20,13 @@ import java.util.concurrent.Semaphore
 
 open class BasicRequest(
     origin: Origin,
-    urgent: Boolean = false,
+    priority: Priority = defaultPriority,
     createdAt: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
     target: Recipient? = null,
     validFrom: ZonedDateTime = createdAt,
     validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
-) : BasicMessage(origin, urgent, createdAt, session, target, validFrom, validUpto), Request {
+) : BasicMessage(origin, priority, createdAt, session, target, validFrom, validUpto), Request {
     private var myReason: Throwable? = null
     private val unfinished = CountDownLatch(1)
     override val reason: Throwable? get() = myReason
@@ -38,7 +40,7 @@ open class BasicRequest(
     private val postActionSemaphore = Semaphore(1)
 
     override val copy: Request get() = copy(recipient)
-    override fun copy(recipient: Recipient?) = BasicRequest(origin, urgent, createdAt, session, recipient, validFrom, validUpTo)
+    override fun copy(recipient: Recipient?) = BasicRequest(origin, priority, createdAt, session, recipient, validFrom, validUpTo)
 
     override fun succeed() {
         if (!complete) {

@@ -6,6 +6,8 @@ import com.coradec.coradeck.com.model.State.Companion.FINISHED
 import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.com.model.impl.StateChangedEvent
 import com.coradec.coradeck.core.model.Origin
+import com.coradec.coradeck.core.model.Priority
+import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
 import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.ctrl.model.RequestSet
 import com.coradec.coradeck.ctrl.module.CoraControl.IMMEX
@@ -18,20 +20,20 @@ import java.time.ZonedDateTime
 class BasicRequestSet(
     origin: Origin,
     val requests: Sequence<Request>,
-    urgent: Boolean = false,
+    priority: Priority = defaultPriority,
     createdAt: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
     target: Recipient? = null,
     validFrom: ZonedDateTime = createdAt,
     validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
-) : BasicRequest(origin, urgent, createdAt, session, target = target, validFrom, validUpto), RequestSet {
+) : BasicRequest(origin, priority, createdAt, session, target = target, validFrom, validUpto), RequestSet {
     constructor(origin: Origin, requests: List<Request>) : this(origin, requests.asSequence())
-    override val copy get() = BasicRequestSet(origin, requests, urgent, createdAt, session, recipient, validFrom, validUpTo)
-    override fun copy(recipient: Recipient?) = BasicRequestSet(origin, requests, urgent, createdAt, session, recipient, validFrom, validUpTo)
 
     var outstanding = 0
     var endState: State = SUCCESSFUL
     var endProblem: Throwable? = null
+
+    override fun copy(recipient: Recipient?) = BasicRequestSet(origin, requests, priority, createdAt, session, recipient, validFrom, validUpTo)
 
     override fun execute() {
         if (requests.none()) succeed()

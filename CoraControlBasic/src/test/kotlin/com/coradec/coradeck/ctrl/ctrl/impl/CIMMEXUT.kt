@@ -18,7 +18,6 @@ import com.coradec.coradeck.dir.model.module.CoraModules
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.time.Duration
@@ -32,12 +31,6 @@ internal class CIMMEXUT {
         @JvmStatic
         fun setup() {
             CoraModules.register(CoraConfImpl(), CoraTypeImpl(), CoraComImpl(), CoraTextImpl(), CoraControlImpl())
-        }
-
-        @AfterAll
-        @JvmStatic
-        fun cleanup() {
-            CoraModules.initialize()
         }
     }
 
@@ -119,10 +112,9 @@ internal class CIMMEXUT {
     class TestMessage2(
         origin: Origin,
         target: Recipient? = null,
-        delay: Duration
+        private val delay: Duration
     ) : BasicMessage(origin, target = target, validFrom = ZonedDateTime.now().plus(delay)) {
-        override val copy get() = TestMessage1(origin, recipient)
-        override fun copy(recipient: Recipient?) = TestMessage1(origin, recipient)
+        override fun copy(recipient: Recipient?) = TestMessage2(origin, recipient, delay)
         private val semaphore = Semaphore(0)
         fun standBy() {
             semaphore.acquire()

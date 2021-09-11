@@ -6,12 +6,10 @@ package com.coradec.coradeck.ctrl.module
 
 import com.coradec.coradeck.com.model.Request
 import com.coradec.coradeck.core.model.Origin
+import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.ctrl.IMMEX
-import com.coradec.coradeck.ctrl.model.AgentPool
-import com.coradec.coradeck.ctrl.model.MarketSpace
-import com.coradec.coradeck.ctrl.model.RequestList
-import com.coradec.coradeck.ctrl.model.RequestSet
+import com.coradec.coradeck.ctrl.model.*
 import com.coradec.coradeck.dir.model.module.CoraModule
 
 object CoraControl : CoraModule<CoraControlAPI>() {
@@ -39,4 +37,7 @@ object CoraControl : CoraModule<CoraControlAPI>() {
      */
     fun <AgentType: Agent> createAgentPool(low: Int, high: Int, generator: () -> AgentType): AgentPool =
         impl.createAgentPool(low, high, generator)
+
+    /** Creates a task from the specified executable with the specified priority. */
+    fun taskOf(executable: Runnable, prio: Priority): Task = impl.taskOf(executable, prio)
 }

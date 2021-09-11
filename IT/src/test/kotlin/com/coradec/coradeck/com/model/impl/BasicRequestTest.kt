@@ -6,6 +6,7 @@ import com.coradec.coradeck.com.model.State.NEW
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.model.Origin
+import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
 import com.coradec.coradeck.core.model.StackFrame
 import com.coradec.coradeck.core.trouble.BasicException
 import com.coradec.coradeck.core.util.classname
@@ -38,7 +39,7 @@ internal class BasicRequestTest {
         softly.assertThat(request.successful).isFalse()
         softly.assertThat(request.failed).isFalse()
         softly.assertThat(request.cancelled).isFalse()
-        softly.assertThat(request.urgent).isFalse()
+        softly.assertThat(request.priority).isEqualTo(defaultPriority)
         val finished = ZonedDateTime.now()
         softly.assertThat(request.createdAt).isBetween(started, finished)
         softly.assertThat(request.reason).isNull()

@@ -2,6 +2,7 @@ package com.coradec.coradeck.ctrl.module
 
 import com.coradec.coradeck.com.model.Request
 import com.coradec.coradeck.core.model.Origin
+import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.ctrl.IMMEX
 import com.coradec.coradeck.ctrl.ctrl.impl.CIMMEX
@@ -9,6 +10,7 @@ import com.coradec.coradeck.ctrl.model.*
 import com.coradec.coradeck.ctrl.model.impl.BasicAgentPool
 import com.coradec.coradeck.ctrl.model.impl.BasicRequestList
 import com.coradec.coradeck.ctrl.model.impl.BasicRequestSet
+import com.coradec.coradeck.ctrl.model.impl.BasicTask
 
 class CoraControlImpl : CoraControlAPI {
     override val Market: MarketSpace = CentralMarketSpace
@@ -22,4 +24,6 @@ class CoraControlImpl : CoraControlAPI {
 
     override fun <AgentType : Agent> createAgentPool(low: Int, high: Int, generator: () -> AgentType): AgentPool =
         BasicAgentPool(low, high, generator)
+
+    override fun taskOf(executable: Runnable, prio: Priority): Task = BasicTask(executable, prio)
 }
