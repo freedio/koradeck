@@ -9,7 +9,6 @@ import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.model.Priority.A2
-import com.coradec.coradeck.core.model.Priority.C2
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
@@ -69,44 +68,35 @@ internal class BasicMessageTest {
         assertThat(r1.state).isEqualTo(PROCESSED)
         assertThat(testee.state).isEqualTo(PROCESSED)
         assertThat(r1.origin).isEqualTo(testee.origin)
-        assertThat(r1.createdAt).isAfter(testee.createdAt)
+        assertThat(r2.createdAt).isAfter(testee.createdAt)
         assertThat(testee.validFrom).isEqualTo(testee.createdAt)
-        assertThat(r1.validFrom).isEqualTo(testee.validFrom)
+        assertThat(r2.validFrom).isEqualTo(testee.validFrom)
         assertThat(testee.validUpTo).isEqualTo(ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC))
-        assertThat(r1.validUpTo).isEqualTo(ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC))
+        assertThat(r2.validUpTo).isEqualTo(ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC))
         assertThat(testee.due).isEqualTo(testee.createdAt)
-        assertThat(r1.due).isEqualTo(testee.due)
+        assertThat(r2.due).isEqualTo(testee.due)
         assertThat(testee.priority).isEqualTo(A2)
-        assertThat(r1.priority).isEqualTo(C2)
+        assertThat(r2.priority).isEqualTo(A2)
         assertThat(testee.new).isFalse()
-        assertThat(r1.new).isTrue()
+        assertThat(r2.new).isFalse()
         assertThat(testee.enqueued).isTrue()
-        assertThat(r1.enqueued).isFalse()
+        assertThat(r2.enqueued).isTrue()
         assertThat(testee.dispatched).isTrue()
-        assertThat(r1.dispatched).isFalse()
+        assertThat(r2.dispatched).isTrue()
         assertThat(testee.delivered).isTrue()
-        assertThat(r1.delivered).isFalse()
+        assertThat(r2.delivered).isTrue()
         assertThat(testee.processed).isTrue()
-        assertThat(r1.processed).isFalse()
+        assertThat(r2.processed).isTrue()
         assertThat(testee.observerCount).isEqualTo(0)
-        assertThat(r1.observerCount).isEqualTo(testee.observerCount)
+        assertThat(r2.observerCount).isEqualTo(testee.observerCount)
         assertThat(testee.deferred).isFalse()
-        assertThat(r1.deferred).isEqualTo(testee.deferred)
-        assertThat(r1.session).isEqualTo(testee.session)
+        assertThat(r2.deferred).isEqualTo(testee.deferred)
+        assertThat(r2.session).isEqualTo(testee.session)
         assertThat(testee.delayMs).isEqualTo(0)
-        assertThat(r1.delayMs).isEqualTo(testee.delayMs)
+        assertThat(r2.delayMs).isEqualTo(testee.delayMs)
         assertThat(testee.content).isEqualTo("BarrelCopy")
-        assertThat(r1.content).isEqualTo("ParametrizedCopy")
+        assertThat(r2.content).isEqualTo("BarrelCopy")
     }
-
-    class TestInformation(
-        origin: Origin,
-        priority: Priority,
-        val content: String,
-        createdAt: ZonedDateTime = now(),
-        validFrom: ZonedDateTime = createdAt,
-        validUpTo: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
-    ) : BasicInformation(origin, priority, createdAt, Session.new, validFrom, validUpTo)
 
     class TestMessage(
         origin: Origin,
