@@ -8,8 +8,8 @@ import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
 
-fun String.toSqlObjectName() = replace(Regex("([A-Z])"), "_$1").toUpperCase().trimStart('_')
-val <T : Any> KClass<T>.fields: Map<String, KProperty1<T, *>> get() = memberProperties.map { Pair(it.name, it) }.toMap()
+fun String.toSqlObjectName() = replace(Regex("([A-Z])"), "_$1").uppercase().trimStart('_')
+val <T : Any> KClass<T>.fields: Map<String, KProperty1<T, *>> get() = memberProperties.associateBy { it.name }
 fun <T: Any> ResultSet.streamOf(klass: KClass<T>): Stream<T> = StreamSupport.stream(ResultSetSpliterator(this, klass), false)
 fun Any?.toSqlFieldValue(): Any? = when (this) {
     is java.sql.Date -> toLocalDate()
