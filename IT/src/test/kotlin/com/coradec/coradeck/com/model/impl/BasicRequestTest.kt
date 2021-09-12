@@ -75,6 +75,52 @@ internal class BasicRequestTest {
         softly.assertAll()
     }
 
+    @Test fun unqualifiedInjection() {
+        // given:
+        val started = ZonedDateTime.now()
+        val agent = TestAgent()
+        val request = SuccessfulTestRequest(here)
+        // when:
+        agent.inject(request).standBy()
+        val finished = ZonedDateTime.now()
+        // then:
+        val softly = SoftAssertions()
+        softly.assertThat(request.enqueued).isTrue()
+        softly.assertThat(request.enqueued).isTrue()
+        softly.assertThat(request.complete).isTrue()
+        softly.assertThat(request.successful).isTrue()
+        softly.assertThat(request.createdAt).isBetween(started, finished)
+        softly.assertThat(request.cancelled).isFalse()
+        softly.assertThat(request.failed).isFalse()
+        softly.assertThat(request.reason).isNull()
+        softly.assertAll()
+    }
+
+    @Test fun reinjectionOfUnqualified() {
+        // given:
+        val started = ZonedDateTime.now()
+        val agent = TestAgent()
+        val request = SuccessfulTestRequest(here)
+        val agent2 = TestAgent()
+        // when:
+        val r1 = agent.inject(request).standBy()
+        val r2 = agent2.inject(r1).standBy()
+        val finished = ZonedDateTime.now()
+        // then:
+        val softly = SoftAssertions()
+        softly.assertThat(request.enqueued).isTrue()
+        softly.assertThat(request.enqueued).isTrue()
+        softly.assertThat(request.complete).isTrue()
+        softly.assertThat(request.successful).isTrue()
+        softly.assertThat(request.createdAt).isBetween(started, finished)
+        softly.assertThat(request.cancelled).isFalse()
+        softly.assertThat(request.failed).isFalse()
+        softly.assertThat(request.reason).isNull()
+        softly.assertThat(r1).isSameAs(request)
+        softly.assertThat(r2).isNotSameAs(r1)
+        softly.assertAll()
+    }
+
     @Test fun failedSimpleRequest() {
         // given:
         val started = ZonedDateTime.now()
@@ -147,29 +193,12 @@ internal class BasicRequestTest {
         softly.assertAll()
     }
 
-    class SuccessfulTestRequest(origin: Origin, target: Recipient? = null) : BasicRequest(origin, target = target) {
-        override val copy get() = SuccessfulTestRequest(origin, recipient)
-        override fun copy(recipient: Recipient?) = SuccessfulTestRequest(origin, recipient)
-    }
-
-    class FailedTestRequest(origin: Origin, recipient: Recipient? =null) : BasicRequest(origin, target = recipient) {
-        override val copy get() = FailedTestRequest(origin, recipient)
-        override fun copy(recipient: Recipient?) = FailedTestRequest(origin, recipient)
-    }
-
-    class CancelledTestRequest(origin: Origin, recipient: Recipient? = null) : BasicRequest(origin, target = recipient) {
-        override val copy get() = CancelledTestRequest(origin, recipient)
-        override fun copy(recipient: Recipient?) = CancelledTestRequest(origin, recipient)
-    }
-
-    class CancelledTestRequest2(origin: Origin, recipient: Recipient? = null) : BasicRequest(origin, target = recipient) {
-        override val copy get() = CancelledTestRequest2(origin, recipient)
-        override fun copy(recipient: Recipient?) = CancelledTestRequest2(origin, recipient)
-    }
-
+    class SuccessfulTestRequest(origin: Origin, target: Recipient? = null) : BasicRequest(origin, target = target)
+    class FailedTestRequest(origin: Origin, recipient: Recipient? =null) : BasicRequest(origin, target = recipient)
+    class CancelledTestRequest(origin: Origin, recipient: Recipient? = null) : BasicRequest(origin, target = recipient)
+    class CancelledTestRequest2(origin: Origin, recipient: Recipient? = null) : BasicRequest(origin, target = recipient)
     class TestFailureException: BasicException()
     class CancelReason : BasicException()
-
     class TestAgent : BasicAgent() {
         override fun onMessage(message: Information) = when(message) {
             is SuccessfulTestRequest -> message.succeed()

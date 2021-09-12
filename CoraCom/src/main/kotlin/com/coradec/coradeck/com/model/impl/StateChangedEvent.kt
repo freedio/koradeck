@@ -20,7 +20,4 @@ class StateChangedEvent(
     session: Session = Session.current,
     validFrom: ZonedDateTime = createdAt,
     validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
-) : BasicEvent(origin, priority, createdAt, session, validFrom, validUpto) {
-    override val copy: StateChangedEvent get() =
-        StateChangedEvent(origin, source, previous, current, priority, createdAt, session, validUpTo)
-}
+) : BasicEvent(origin, priority, createdAt, session, validFrom, validUpto)

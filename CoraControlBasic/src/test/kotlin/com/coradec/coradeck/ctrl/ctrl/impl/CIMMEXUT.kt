@@ -104,17 +104,13 @@ internal class CIMMEXUT {
         assertThat(System.currentTimeMillis()).isGreaterThan(then + delay.toMillis())
     }
 
-    class TestMessage1(origin: Origin, target: Recipient? = null) : BasicMessage(origin, target = target) {
-        override val copy get() = TestMessage1(origin, recipient)
-        override fun copy(recipient: Recipient?) = TestMessage1(origin, recipient)
-    }
+    class TestMessage1(origin: Origin, target: Recipient? = null) : BasicMessage(origin, target = target)
 
     class TestMessage2(
         origin: Origin,
         target: Recipient? = null,
         private val delay: Duration
     ) : BasicMessage(origin, target = target, validFrom = ZonedDateTime.now().plus(delay)) {
-        override fun copy(recipient: Recipient?) = TestMessage2(origin, recipient, delay)
         private val semaphore = Semaphore(0)
         fun standBy() {
             semaphore.acquire()

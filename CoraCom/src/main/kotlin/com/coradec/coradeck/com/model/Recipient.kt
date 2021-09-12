@@ -5,7 +5,7 @@ interface Recipient: Target {
     val capacity: Int
 
     /** Injects the specified information to the recipient's message queue (in the IMMEX). */
-    fun <I : Information> inject(message: I): I
+    fun <M : Message> inject(message: M): M
     /** Delivers the specified message to the recipient. */
     fun onMessage(message: Information)
 }

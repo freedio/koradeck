@@ -2,6 +2,7 @@ package com.coradec.coradeck.com.model.impl
 
 import com.coradec.coradeck.com.model.Message
 import com.coradec.coradeck.com.model.Recipient
+import com.coradec.coradeck.com.model.State.NEW
 import com.coradec.coradeck.com.trouble.IllegalRequestException
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
@@ -19,20 +20,21 @@ open class BasicMessage(
     session: Session = Session.current,
     target: Recipient? = null,
     validFrom: ZonedDateTime = createdAt,
-    validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
-) : BasicInformation(origin, priority, createdAt, session, validFrom, validUpto), Message {
+    validUpTo: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
+) : BasicInformation(origin, priority, createdAt, session, validFrom, validUpTo), Message {
     override var recipient: Recipient? = target
         set(value) = when (field) {
             null -> field = value
             value -> relax()
             else -> throw IllegalRequestException("Cannot change recipient!")
         }
-    override val copy: Message get() = copy(recipient)
-    override fun copy(recipient: Recipient?) = BasicMessage(origin, priority, createdAt, session, recipient, validFrom, validUpTo)
     override fun withRecipient(target: Recipient) =
-        if (recipient == null) this.also { recipient = target } else copy(target)
-    override fun withDefaultRecipient(target: Recipient?) =
-        if (recipient == null) this.also { recipient = target } else this
+        if (recipient == null) this.also { recipient = target } else copy("target" to target)
+    override fun withDefaultRecipient(target: Recipient?) = when {
+        recipient == null -> this.apply { recipient = target }
+        state == NEW -> this
+        else -> copy("target" to recipient)
+    }
 
     override fun enqueue(target: Recipient) {
         super.enqueue()

@@ -171,18 +171,9 @@ internal class BasicRequestListTest {
         assertThat(req9.observerCount).isEqualTo(0)
     }
 
-    class TestRequest(val agent: Agent, val value: Int, target: Recipient? = agent): BasicRequest(here, target = target) {
-        override val copy get() = TestRequest(agent, value, recipient)
-        override fun copy(recipient: Recipient?) = TestRequest(agent, value, recipient)
-    }
-    class FailingRequest(val agent: Agent, val value: Int, target: Recipient? = agent): BasicRequest(here, target = target) {
-        override val copy get() = FailingRequest(agent, value, recipient)
-        override fun copy(recipient: Recipient?) = FailingRequest(agent, value, recipient)
-    }
-    class CancellingRequest(val agent: Agent, val value: Int, target: Recipient? = agent): BasicRequest(here, target = target) {
-        override val copy get() = CancellingRequest(agent, value, recipient)
-        override fun copy(recipient: Recipient?) = CancellingRequest(agent, value, recipient)
-    }
+    class TestRequest(val agent: Agent, val value: Int, target: Recipient? = agent): BasicRequest(here, target = target)
+    class FailingRequest(val agent: Agent, val value: Int, target: Recipient? = agent): BasicRequest(here, target = target)
+    class CancellingRequest(val agent: Agent, val value: Int, target: Recipient? = agent): BasicRequest(here, target = target)
 
     class TestAgent : BasicAgent() {
         var sum = 0

@@ -30,7 +30,7 @@ open class BasicAgent(override val capacity: Int = 1024) : Logger(), Agent {
         AGENTS[index] = this
     }
 
-    override fun <I : Information> inject(message: I): I = IMMEX.inject(message.withDefaultRecipient(this)) as I
+    override fun <M : Message> inject(message: M): M = IMMEX.inject(message.withDefaultRecipient(this)) as M
 
     override fun synchronize() {
         val sync = Semaphore(0)
@@ -104,9 +104,7 @@ open class BasicAgent(override val capacity: Int = 1024) : Logger(), Agent {
         routes -= type.java
     }
 
-    private inner class Synchronization(val sync: Semaphore, target: Recipient? = this) : BasicCommand(caller, target = target) {
-        override fun copy(recipient: Recipient?) = Synchronization(sync, target = recipient)
-
+    private inner class Synchronization(val sync: Semaphore, target: Recipient? = this@BasicAgent) : BasicCommand(caller, target = target) {
         override fun execute() {
             debug("Synchronization point reached")
             sync.release()

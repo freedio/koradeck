@@ -135,6 +135,12 @@ object CIMMEX : Logger(), IMMEX, Recipient {
         addWorker()
     }
 
+    override fun <M : Message> inject(message: M): M = message.also {
+        if (it.deferred) delayQueue.put(it) else inqueue.put(it)
+        it.enqueue()
+        addWorker()
+    }
+
     override fun synchronize() {
         val sync = Semaphore(0)
         inject(Synchronization(sync))
@@ -276,9 +282,9 @@ object CIMMEX : Logger(), IMMEX, Recipient {
             }
             if (item != null) {
                 try {
-                    item.delivered()
+                    item.deliver()
                     recipient.onMessage(item)
-                    item.processed()
+                    item.process()
                 } catch (e: Exception) {
                     error(TEXT_EXECUTION_ABORTED, item)
                     if (item is Request) item.fail(e)
@@ -288,10 +294,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
         }
     }
 
-    private class Synchronization(val sync: Semaphore, target: Recipient? = this) : BasicCommand(here, target = target) {
-        override val copy: BasicCommand get() = Synchronization(sync, recipient)
-        override fun copy(recipient: Recipient?): BasicCommand = Synchronization(sync, recipient)
-
+    private class Synchronization(val sync: Semaphore, target: Recipient? = CIMMEX) : BasicCommand(here, target = target) {
         override fun execute() {
             sync.release()
             succeed()

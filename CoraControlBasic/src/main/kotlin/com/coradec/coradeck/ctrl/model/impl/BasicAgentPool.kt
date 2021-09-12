@@ -1,6 +1,6 @@
 package com.coradec.coradeck.ctrl.model.impl
 
-import com.coradec.coradeck.com.model.Information
+import com.coradec.coradeck.com.model.Message
 import com.coradec.coradeck.com.model.State.PROCESSED
 import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
@@ -24,15 +24,15 @@ class BasicAgentPool<AgentType : Agent>(
     private val enabled = AtomicBoolean(true)
     private var used = 0
     private var submitted = AtomicLong(0L)
-    private var processed = AtomicLong(0L)
+    private var digested = AtomicLong(0L)
 
-    override val stats: String get() = "Low: $low, High: $high, Agents Used: $used, Messages submitted: $submitted & processed: $processed"
+    override val stats: String get() = "Low: $low, High: $high, Agents Used: $used, Messages submitted: $submitted & processed: $digested"
 
-    override fun <I : Information> inject(message: I): I = with(agents.poll() ?: makeOrWaitForAgent()) {
+    override fun <M : Message> inject(message: M): M = with(agents.poll() ?: makeOrWaitForAgent()) {
         used = max(used, processing.incrementAndGet())
         submitted.incrementAndGet()
         inject(message.apply { whenState(PROCESSED) {
-            processed.incrementAndGet()
+            digested.incrementAndGet()
             if (processing.getAndDecrement() >= agentCount.get() || agents.size < high || agents.size == 0) agents.put(this@with)
             if (!enabled.get() && processing.get() == 0) done.release()
         } })

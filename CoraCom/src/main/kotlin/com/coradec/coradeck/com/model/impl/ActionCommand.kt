@@ -19,10 +19,6 @@ class ActionCommand(
     validFrom: ZonedDateTime = createdAt,
     validUpTo: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
 ): BasicCommand(origin, priority, createdAt, session, target, validFrom, validUpTo) {
-    override val copy: ActionCommand get() = ActionCommand(origin, action, priority, createdAt,session, recipient, validFrom, validUpTo)
-    override fun copy(recipient: Recipient?): ActionCommand =
-        ActionCommand(origin, action, priority, createdAt,session, recipient, validFrom, validUpTo)
-
     override fun execute() {
         try {
             action.invoke()

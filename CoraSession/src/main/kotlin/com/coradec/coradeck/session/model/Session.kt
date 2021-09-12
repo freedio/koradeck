@@ -4,7 +4,6 @@
 
 package com.coradec.coradeck.session.model
 
-import com.coradec.coradeck.core.ctrl.ThreadMonitor
 import com.coradec.coradeck.core.util.whenTerminated
 import com.coradec.coradeck.session.model.impl.BasicSession
 import com.coradec.coradeck.session.model.impl.SecureSession
@@ -14,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
 interface Session {
     val user: String
     val authenticated: Boolean
+    val createdOn: Thread
 
     companion object {
         val secureSessions = System.getProperty("cora.sessions")?.let {
@@ -30,10 +30,10 @@ interface Session {
                 thread.whenTerminated { sessions.remove(it) }
             }
         }
-        val new: Session get() = BasicSession(currentUser)
-        val secure: Session get() = SecureSession(currentUser)
+        val new: Session get() = BasicSession(currentUser, Thread.currentThread())
+        val secure: Session get() = SecureSession(currentUser, Thread.currentThread())
 
-        fun new(user: String) = BasicSession(user)
-        fun secure(user: String) = SecureSession(user)
+        fun new(user: String) = BasicSession(user, Thread.currentThread())
+        fun secure(user: String) = SecureSession(user, Thread.currentThread())
     }
 }

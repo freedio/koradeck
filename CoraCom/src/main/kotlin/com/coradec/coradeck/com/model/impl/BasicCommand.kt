@@ -18,6 +18,4 @@ abstract class BasicCommand(
     target: Recipient? = null,
     validFrom: ZonedDateTime = createdAt,
     validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
-): BasicRequest(origin, priority, createdAt, session, target, validFrom, validUpto), Command {
-    abstract override fun copy(recipient: Recipient?): BasicCommand
-}
+): BasicRequest(origin, priority, createdAt, session, target, validFrom, validUpto), Command

@@ -4,7 +4,6 @@ import com.coradec.coradeck.com.ctrl.Observer
 import com.coradec.coradeck.com.ctrl.impl.Logger
 import com.coradec.coradeck.com.model.Information
 import com.coradec.coradeck.com.model.Information.Companion.LOST_ITEMS
-import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.com.model.State
 import com.coradec.coradeck.com.model.State.*
 import com.coradec.coradeck.com.model.StateObserver
@@ -15,6 +14,7 @@ import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
 import com.coradec.coradeck.core.util.*
 import com.coradec.coradeck.session.model.Session
+import com.coradec.coradeck.text.model.LocalText
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
@@ -22,6 +22,9 @@ import java.util.*
 import java.util.Collections.binarySearch
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CopyOnWriteArraySet
+import kotlin.reflect.KClass
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.full.primaryConstructor
 
 @Suppress("UNCHECKED_CAST")
 open class BasicInformation(
@@ -39,13 +42,57 @@ open class BasicInformation(
     override val new: Boolean get() = states.singleOrNull() == NEW
     override val enqueued: Boolean get() = ENQUEUED in states
     override val dispatched: Boolean get() = DISPATCHED in states
+    override val delivered: Boolean get() = DELIVERED in states
+    override val processed: Boolean get() = PROCESSED in states
     override val observerCount: Int get() = stateRegistry.size
-    override val copy: Information get() = this
+    override fun <I : Information> copy(vararg substitute: Pair<String, Any?>): I = copy(substitute.toMap())
+    override fun <I : Information> copy(substitute: Map<String, Any?>): I {
+        val automatic = listOf("createdAt")
+        val klass = this::class as KClass<I>
+        val primaryConstructor = klass.primaryConstructor ?: throw IllegalStateException("Can't copy a $classname")
+        val parameters = primaryConstructor.parameters
+            .associateBy { para -> para.name }
+            .removeNullKeys()
+            .filterKeys { it !in automatic }
+
+        val args = klass.memberProperties
+            .associate { prop -> Pair(parameters[prop.name], prop.getter.call(this)) }
+            .removeNullKeys()
+            .let { map ->
+                if (substitute.isNotEmpty()) {
+                    val mutableMap = map.toMutableMap()
+                    substitute
+                        .filter { (key, value) ->
+                            val found = key in parameters
+                            val valid = found && (parameters[key]?.type?.classifier as? KClass<*>)?.isInstance(value) ?: false
+                            if (!found) warn(TEXT_ARGUMENT_NOT_FOUND, key, klass.classname)
+                            else if (!valid) warn(
+                                TEXT_INVALID_ARGUMENT,
+                                key,
+                                klass.classname,
+                                parameters[key]?.type?.name ?: "unknown"
+                            )
+                            found && valid
+                        }
+                        .filterKeys { key ->
+                            key in parameters && key !in automatic
+                        }
+                        .forEach { (name, value) ->
+                            mutableMap[parameters[name]!!] = value
+                        }
+                    mutableMap
+                } else map
+            }
+        return primaryConstructor.callBy(args)
+    }
+
     override var state: State
         get() = myStates.last()
         set(state) {
-            fun invert(i: Int): Int = if (i < 0) -i-1 else i
-            fun addState(newstate: State) { myStates.add(invert(binarySearch(myStates, newstate)), newstate) }
+            fun invert(i: Int): Int = if (i < 0) -i - 1 else i
+            fun addState(newstate: State) {
+                myStates.add(invert(binarySearch(myStates, newstate)), newstate)
+            }
             interceptSetState(state)
             if (state !in myStates) {
                 val event = StateChangedEvent(here, this, myStates.last(), state.apply { addState(this) })
@@ -54,16 +101,12 @@ open class BasicInformation(
         }
 
     protected open fun interceptSetState(state: State) = relax()
-
-    override fun withDefaultRecipient(target: Recipient?) = BasicMessage(origin, priority, createdAt, session, target, validFrom, validUpTo)
-    override fun withRecipient(target: Recipient) = withDefaultRecipient(target)
-
     override fun enregister(observer: Observer) = stateRegistry.add(observer)
     override fun deregister(observer: Observer) = stateRegistry.remove(observer)
     override fun enqueue() = also { state = ENQUEUED }
     override fun dispatch() = also { state = DISPATCHED }
-    override fun delivered() = also { state = DELIVERED }
-    override fun processed() = also { state = PROCESSED }
+    override fun deliver() = also { state = DELIVERED }
+    override fun process() = also { state = PROCESSED }
 
     override fun miss() = also {
         state = LOST
@@ -83,5 +126,10 @@ open class BasicInformation(
 
     override fun whenState(state: State, action: () -> Unit) {
         stateRegistry.add(StateObserver(state, action))
+    }
+
+    companion object {
+        private val TEXT_ARGUMENT_NOT_FOUND = LocalText("ArgumentNotFound2")
+        private val TEXT_INVALID_ARGUMENT = LocalText("InvalidArgument3")
     }
 }

@@ -19,9 +19,6 @@ class BasicRequestList(
     constructor(origin: Origin, requests: Sequence<Request>, target: Recipient? = null) : this(origin, requests.iterator(), target)
     constructor(origin: Origin, requests: List<Request>, target: Recipient? = null) : this(origin, requests.iterator(), target)
 
-    override val copy get() = BasicRequestList(origin, requests, recipient)
-    override fun copy(recipient: Recipient?) = BasicRequestList(origin, requests, recipient)
-
     override fun execute(): Unit = when {
         complete -> relax()
         requests.hasNext() -> requests.next().let { request ->

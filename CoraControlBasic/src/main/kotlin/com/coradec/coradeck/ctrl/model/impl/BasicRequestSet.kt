@@ -33,8 +33,6 @@ class BasicRequestSet(
     var endState: State = SUCCESSFUL
     var endProblem: Throwable? = null
 
-    override fun copy(recipient: Recipient?) = BasicRequestSet(origin, requests, priority, createdAt, session, recipient, validFrom, validUpTo)
-
     override fun execute() {
         if (requests.none()) succeed()
         requests.forEach { request ->

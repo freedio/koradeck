@@ -43,11 +43,20 @@ interface Information: Formattable, Deferred {
     /** Whether the information was ever dispatched. */
     val dispatched: Boolean
 
+    /** Whether the information was ever delivered. */
+    val delivered: Boolean
+
+    /** Whether the information was ever processed. */
+    val processed: Boolean
+
     /** Number of ovservers attached to the information. */
     val observerCount: Int
 
     /** A fresh copy of this information. */
-    val copy: Information
+    fun <I: Information> copy(substitute: Map<String, Any?>): I
+
+    /** A fresh copy of this information. */
+    fun <I: Information> copy(vararg substitute: Pair<String, Any?>): I
 
     /** Registers the specified observer for state changes. @return `true` if the observer was enregistered. */
     fun enregister(observer: Observer): Boolean
@@ -71,13 +80,13 @@ interface Information: Formattable, Deferred {
      * Marks the information as delivered.
      * @return the same information for chaining.
      */
-    fun delivered(): Information
+    fun deliver(): Information
 
     /**
      * Marks the information as processed.
      * @return the same information for chaining.
      */
-    fun processed(): Information
+    fun process(): Information
 
     /**
      * Marks the information as lost.
@@ -88,10 +97,6 @@ interface Information: Formattable, Deferred {
     /** Triggers the specified action whenever the specified state is reached. */
     fun whenState(state: State, action: () -> Unit)
 
-    /** Wraps this information into a message to the specified recipient. */
-    fun withDefaultRecipient(target: Recipient?): Message
-    /** Wraps this information into a message to the specified recipient. */
-    fun withRecipient(target: Recipient): Message
     override fun toString(): String
 
     companion object {

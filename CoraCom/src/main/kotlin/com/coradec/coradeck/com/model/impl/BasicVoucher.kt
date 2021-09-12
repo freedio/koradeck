@@ -42,7 +42,6 @@ open class BasicVoucher<V>(
         if (initialValue != null) value = initialValue
     }
 
-    override fun copy(recipient: Recipient?)= BasicVoucher<V>(origin, priority, createdAt, session, recipient)
     override fun interceptSetState(state: State) {
         if (state == SUCCESSFUL)
             if (valueSet) valueSemaphore.countDown() else throw IllegalStateException("To be successful, state must be set!")

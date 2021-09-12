@@ -16,6 +16,4 @@ open class BasicEvent(
     session: Session = Session.current,
     validFrom: ZonedDateTime = createdAt,
     validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
-) : BasicInformation(origin, priority, createdAt, session, validFrom, validUpto), Event {
-    override val copy: BasicEvent get() = BasicEvent(origin, priority, createdAt, session, validFrom, validUpTo)
-}
+) : BasicInformation(origin, priority, createdAt, session, validFrom, validUpto), Event
