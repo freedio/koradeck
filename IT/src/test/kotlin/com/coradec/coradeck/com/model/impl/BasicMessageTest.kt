@@ -9,6 +9,7 @@ import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.model.Priority.A2
+import com.coradec.coradeck.core.util.formatted
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
@@ -96,6 +97,15 @@ internal class BasicMessageTest {
         assertThat(r2.delayMs).isEqualTo(testee.delayMs)
         assertThat(testee.content).isEqualTo("BarrelCopy")
         assertThat(r2.content).isEqualTo("BarrelCopy")
+    }
+
+    @Test fun testFormatted() {
+        // given
+        val testee = TestMessage(here, A2, "Hello, world!")
+        // when
+        val r1 = testee.formatted
+        // then
+        assertThat(r1).isEqualTo("")
     }
 
     class TestMessage(

@@ -114,10 +114,10 @@ open class BasicInformation(
     }
 
     override fun toString(): String =
-        "%s(%s)".format(shortClassname, properties.filterNot { it.key == "copy" }.formatted)
+        "%s(%s)".format(shortClassname, properties.formatted)
 
     override fun format(known: Set<Any?>): String =
-        "%s(%s)".format(shortClassname, properties.filterNot { it.key == "copy" }.formatted(known))
+        "%s(%s)".format(shortClassname, properties.formatted(known))
 
     override fun compareTo(other: Prioritized): Int = priority.compareTo(other.priority)
     override fun compareTo(other: Deferred): Int {
