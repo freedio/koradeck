@@ -1,3 +1,5 @@
 # Localized text base for default locale of class BasicInformation
 ArgumentNotFound2: Argument ‹%s› does not refer to an existing property of type ‹%s›! → ignored.
 InvalidArgument3: Argument ‹%s› has an incompatible type according to the specification of type ‹%s›! → ignored.
+PrivateProperty2: Property ‹%s› in class ‹%s› is private, so ‹copy› cannot access it: avoid private properties in \
+    classes of the Information hierarchy, as this can cause downstream problems! → property skipped.

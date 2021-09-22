@@ -23,6 +23,7 @@ import java.util.Collections.binarySearch
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.reflect.KClass
+import kotlin.reflect.KVisibility.PRIVATE
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.full.primaryConstructor
 
@@ -56,6 +57,9 @@ open class BasicInformation(
             .filterKeys { it !in automatic }
 
         val args = klass.memberProperties
+            .filter { prop ->
+                (prop.visibility != PRIVATE).also { if (!it) warn(TEXT_PRIVATE_PROPERTY, prop.name, classname) }
+            }
             .associate { prop -> Pair(parameters[prop.name], prop.getter.call(this)) }
             .removeNullKeys()
             .let { map ->
@@ -131,5 +135,6 @@ open class BasicInformation(
     companion object {
         private val TEXT_ARGUMENT_NOT_FOUND = LocalText("ArgumentNotFound2")
         private val TEXT_INVALID_ARGUMENT = LocalText("InvalidArgument3")
+        private val TEXT_PRIVATE_PROPERTY = LocalText("PrivateProperty2")
     }
 }
