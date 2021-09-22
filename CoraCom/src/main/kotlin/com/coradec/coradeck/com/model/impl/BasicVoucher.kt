@@ -50,7 +50,7 @@ open class BasicVoucher<V>(
 
     override fun interceptSetState(state: State) {
         if (state == SUCCESSFUL)
-            if (valueSet) valueSemaphore.countDown() else throw IllegalStateException("To be successful, state must be set!")
+            if (valueSet) valueSemaphore.countDown() else throw IllegalStateException("To be successful, value must be set first!")
         super.interceptSetState(state)
     }
 
