@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 by Coradec LLC.  All rights reserved.
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
  */
 
 package com.coradec.coradeck.ctrl.ctrl.impl
@@ -109,7 +109,7 @@ internal class CIMMEXUT {
     class TestMessage2(
         origin: Origin,
         target: Recipient? = null,
-        private val delay: Duration
+        delay: Duration
     ) : BasicMessage(origin, target = target, validFrom = ZonedDateTime.now().plus(delay)) {
         private val semaphore = Semaphore(0)
         fun standBy() {

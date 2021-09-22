@@ -1,14 +1,18 @@
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
+
 package com.coradec.module.db.ctrl.impl
 
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
+import com.coradec.coradeck.db.ctrl.Selection
+import com.coradec.coradeck.db.ctrl.impl.BasicSqlEngine
+import com.coradec.coradeck.db.ctrl.impl.SqlSelection
 import com.coradec.coradeck.dir.model.module.CoraModules.register
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import com.coradec.module.db.annot.Size
-import com.coradec.coradeck.db.ctrl.Selection
-import com.coradec.coradeck.db.ctrl.impl.BasicSqlEngine
-import com.coradec.coradeck.db.ctrl.impl.SqlSelection
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test

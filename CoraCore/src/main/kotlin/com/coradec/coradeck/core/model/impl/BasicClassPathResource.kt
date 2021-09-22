@@ -1,3 +1,7 @@
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
+
 package com.coradec.coradeck.core.model.impl
 
 import com.coradec.coradeck.core.model.ClassPathResource
@@ -6,7 +10,6 @@ import java.io.File
 import java.io.InputStream
 import java.net.URL
 import java.nio.charset.Charset
-import javax.swing.text.ChangedCharSetException
 
 class BasicClassPathResource(override val path: String, val encoding: Charset = Charsets.UTF_8) : ClassPathResource {
     private val resource: URL? by lazy { Thread.currentThread().contextClassLoader.getResource(path) }

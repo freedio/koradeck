@@ -1,8 +1,11 @@
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
+
 package com.coradec.coradeck.conf.model.impl
 
 import com.coradec.coradeck.conf.model.Configuration
 import com.coradec.coradeck.conf.model.Property
-import com.coradec.coradeck.core.util.caller
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 

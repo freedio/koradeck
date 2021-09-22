@@ -1,14 +1,12 @@
 /*
- * Copyright © 2020 by Coradec LLC.  All rights reserved.
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
  */
 
 package com.coradec.coradeck.core.util
 
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
-import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.isSubtypeOf
-import kotlin.reflect.full.isSuperclassOf
 import kotlin.reflect.jvm.jvmErasure
 
 val KType.name: String

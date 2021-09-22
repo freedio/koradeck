@@ -1,11 +1,11 @@
 /*
- * Copyright © 2020 by Coradec LLC.  All rights reserved.
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
  */
 
 package com.coradec.coradeck.dir
 
-import com.coradec.coradeck.dir.model.module.CoraModules
 import com.coradec.coradeck.dir.model.TypeDirectory
+import com.coradec.coradeck.dir.model.module.CoraModules
 import com.coradec.coradeck.dir.module.CoraDirImpl
 import com.coradec.coradeck.dir.view.DirectoryView
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl

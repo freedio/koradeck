@@ -1,16 +1,11 @@
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
+
 package com.coradec.coradeck.com.ctrl
 
 import com.coradec.coradeck.com.model.LogEntry
-import com.coradec.coradeck.com.model.LogLevel.ALERT
-import com.coradec.coradeck.com.model.LogLevel.DEBUG
-import com.coradec.coradeck.com.model.LogLevel.DETAIL
-import com.coradec.coradeck.com.model.LogLevel.ERROR
-import com.coradec.coradeck.com.model.LogLevel.FATAL
-import com.coradec.coradeck.com.model.LogLevel.INFORMATION
-import com.coradec.coradeck.com.model.LogLevel.INFRA
-import com.coradec.coradeck.com.model.LogLevel.SUBTRACE
-import com.coradec.coradeck.com.model.LogLevel.TRACE
-import com.coradec.coradeck.com.model.LogLevel.WARNING
+import com.coradec.coradeck.com.model.LogLevel.*
 import com.coradec.coradeck.com.model.ProblemLogEntry
 import com.coradec.coradeck.com.model.StringLogEntry
 import com.coradec.coradeck.com.model.TextLogEntry

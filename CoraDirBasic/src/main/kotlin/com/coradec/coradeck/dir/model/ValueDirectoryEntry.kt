@@ -1,6 +1,8 @@
-package com.coradec.coradeck.dir.model
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
 
-import com.coradec.coradeck.dir.model.impl.BasicDirectoryEntry
+package com.coradec.coradeck.dir.model
 
 interface ValueDirectoryEntry<V>: DirectoryEntry {
     val value: V

@@ -1,11 +1,11 @@
 /*
- * Copyright © 2020 by Coradec LLC.  All rights reserved.
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
  */
 
 package com.coradec.coradeck.core.ctrl
 
 import com.coradec.coradeck.core.util.whenTerminated
-import org.assertj.core.api.Assertions.*
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 internal class ThreadMonitorTest {

@@ -1,10 +1,9 @@
 /*
- * Copyright © 2020 by Coradec LLC.  All rights reserved.
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
  */
 
 package com.coradec.coradeck.dir.model.module
 
-import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.createType

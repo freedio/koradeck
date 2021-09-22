@@ -1,3 +1,7 @@
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
+
 package com.coradec.coradeck.type.model
 
 import com.coradec.coradeck.core.util.classname
@@ -7,7 +11,6 @@ import com.coradec.coradeck.type.trouble.NonCompliantTypeConverterException
 import com.coradec.coradeck.type.trouble.TypeConverterNotFoundException
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
-import kotlin.reflect.jvm.jvmName
 
 @Suppress("UNCHECKED_CAST")
 object TypeConverters {

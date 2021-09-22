@@ -1,37 +1,27 @@
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
+
 package com.coradec.coradeck.db.ctrl.impl
 
 import com.coradec.coradeck.com.ctrl.impl.Logger
-import com.coradec.coradeck.com.module.CoraCom
 import com.coradec.coradeck.conf.model.LocalProperty
-import com.coradec.coradeck.core.util.formatted
-import com.coradec.module.db.annot.Size
 import com.coradec.coradeck.db.ctrl.Selection
 import com.coradec.coradeck.db.ctrl.SqlEngine
 import com.coradec.coradeck.db.util.checkedSingleOf
 import com.coradec.coradeck.db.util.listOf
 import com.coradec.coradeck.db.util.streamOf
 import com.coradec.coradeck.db.util.toSqlObjectName
-import com.coradec.module.db.trouble.ExcessResultsException
+import com.coradec.module.db.annot.Size
 import java.math.BigDecimal
 import java.sql.DriverManager
-import java.sql.ResultSet
-import java.sql.SQLException
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import java.util.*
-import java.util.Spliterator.IMMUTABLE
-import java.util.Spliterator.ORDERED
-import java.util.function.Consumer
 import java.util.stream.Stream
-import java.util.stream.StreamSupport
-import kotlin.NoSuchElementException
 import kotlin.reflect.KClass
-import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
-import kotlin.reflect.full.primaryConstructor
-import kotlin.reflect.full.valueParameters
 
 class BasicSqlEngine<T : Any>(val klass: KClass<out T>) : Logger(), SqlEngine<T>, AutoCloseable {
     private val connection = DriverManager.getConnection(dbUrlProperty.value, usernameProperty.value, passwordProperty.value)

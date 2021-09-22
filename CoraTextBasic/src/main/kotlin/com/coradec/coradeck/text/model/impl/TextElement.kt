@@ -1,5 +1,7 @@
-package com.coradec.coradeck.text.model.impl
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
 
-import com.coradec.coradeck.text.model.NamedText
+package com.coradec.coradeck.text.model.impl
 
 data class TextElement(val base: String, val context: String, val name: String, val content: String)

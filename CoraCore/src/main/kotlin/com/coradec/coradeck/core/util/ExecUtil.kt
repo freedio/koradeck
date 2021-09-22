@@ -1,9 +1,5 @@
 /*
- * Copyright ⓒ 2021 by Coradec LLC.  All rights reserved.
- */
-
-/*
- * Copyright © 2020 by Coradec LLC.  All rights reserved.
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
  */
 
 package com.coradec.coradeck.core.util

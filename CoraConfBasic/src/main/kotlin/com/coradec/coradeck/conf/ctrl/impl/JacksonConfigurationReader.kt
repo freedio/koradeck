@@ -1,3 +1,7 @@
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
+
 package com.coradec.coradeck.conf.ctrl.impl
 
 import com.coradec.coradeck.conf.trouble.UnknownJsonNodeTypeException
@@ -5,21 +9,7 @@ import com.coradec.coradeck.text.model.LocalText
 import com.coradec.coradeck.text.model.Text
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.ArrayNode
-import com.fasterxml.jackson.databind.node.BigIntegerNode
-import com.fasterxml.jackson.databind.node.BinaryNode
-import com.fasterxml.jackson.databind.node.BooleanNode
-import com.fasterxml.jackson.databind.node.DecimalNode
-import com.fasterxml.jackson.databind.node.DoubleNode
-import com.fasterxml.jackson.databind.node.FloatNode
-import com.fasterxml.jackson.databind.node.IntNode
-import com.fasterxml.jackson.databind.node.LongNode
-import com.fasterxml.jackson.databind.node.MissingNode
-import com.fasterxml.jackson.databind.node.NullNode
-import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.databind.node.POJONode
-import com.fasterxml.jackson.databind.node.ShortNode
-import com.fasterxml.jackson.databind.node.TextNode
+import com.fasterxml.jackson.databind.node.*
 import java.net.URL
 
 abstract class JacksonConfigurationReader : BasicConfigurationReader() {

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 by Coradec LLC.  All rights reserved.
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
  */
 
 package com.coradec.coradeck.conf.ctrl.impl
@@ -15,13 +15,11 @@ import com.fasterxml.jackson.databind.node.NullNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.math.BigDecimal
 import java.math.BigInteger
-import java.util.*
 
 internal class JsonConfigurationReaderUT {
     val myConfig = resource(this@JsonConfigurationReaderUT::class, ".json").location

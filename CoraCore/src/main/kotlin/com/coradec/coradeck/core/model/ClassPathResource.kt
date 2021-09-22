@@ -1,10 +1,13 @@
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
+
 package com.coradec.coradeck.core.model
 
 import com.coradec.coradeck.core.model.impl.BasicClassPathResource
 import java.io.File
 import java.io.InputStream
 import java.net.URL
-import java.nio.file.Path
 import kotlin.reflect.KClass
 
 interface ClassPathResource {

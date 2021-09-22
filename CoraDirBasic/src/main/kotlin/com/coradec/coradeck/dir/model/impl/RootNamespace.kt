@@ -1,8 +1,7 @@
-package com.coradec.coradeck.dir.model.impl
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
 
-import com.coradec.coradeck.dir.model.Body
-import com.coradec.coradeck.dir.model.DirectoryNamespace
-import com.coradec.coradeck.dir.model.Head
-import com.coradec.coradeck.dir.model.Path
+package com.coradec.coradeck.dir.model.impl
 
 object RootNamespace : BasicDirectoryNamespace("/", "./", "../")

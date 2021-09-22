@@ -1,5 +1,5 @@
 /*
- * Copyright ⓒ 2019 by Coradec GmbH. All rights reserved.
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
  */
 
 package com.coradec.coradeck.com.model

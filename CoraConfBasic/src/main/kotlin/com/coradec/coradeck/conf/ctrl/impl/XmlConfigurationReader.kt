@@ -1,11 +1,9 @@
 /*
- * Copyright © 2020 by Coradec LLC.  All rights reserved.
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
  */
 
 package com.coradec.coradeck.conf.ctrl.impl
 
-import com.coradec.coradeck.conf.module.CoraConf
-import com.fasterxml.jackson.databind.ObjectMapper
 import java.net.URL
 
 object XmlConfigurationReader : BasicConfigurationReader() {

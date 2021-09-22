@@ -1,7 +1,10 @@
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
+
 package com.coradec.conf.model
 
 import com.coradec.coradeck.com.module.CoraComImpl
-import com.coradec.coradeck.conf.ctrl.impl.JsonConfigurationReaderUT
 import com.coradec.coradeck.conf.model.LocalProperty
 import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.dir.model.module.CoraModules

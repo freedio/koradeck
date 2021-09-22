@@ -1,3 +1,7 @@
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
+
 package com.coradec.coradeck.dir
 
 import com.coradec.coradeck.dir.model.Directory
@@ -10,7 +14,7 @@ import com.coradec.coradeck.dir.module.CoraDirImpl
 import com.coradec.coradeck.dir.trouble.DirectoryEntryAlreadyExistsException
 import com.coradec.coradeck.dir.trouble.DirectoryNotFoundException
 import com.coradec.coradeck.dir.view.DirectoryView
-import org.assertj.core.api.Assertions.*
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test

@@ -1,4 +1,8 @@
 <?xml version="1.0"?>
+<!--
+  ~ Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+  -->
+
 <ObjectNode>
     <TextProperty type="String">String Value</TextProperty>
     <BooleanValue type="Boolean">true</BooleanValue>

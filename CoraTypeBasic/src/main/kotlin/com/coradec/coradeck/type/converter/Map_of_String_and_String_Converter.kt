@@ -1,3 +1,7 @@
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
+
 package com.coradec.coradeck.type.converter
 
 import com.coradec.coradeck.core.util.LETTER_ESCAPES
@@ -7,8 +11,6 @@ import com.coradec.coradeck.core.util.text
 import com.coradec.coradeck.type.ctrl.impl.BasicTypeConverter
 import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import kotlin.IllegalArgumentException
-import kotlin.IllegalStateException
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.KVariance
 import kotlin.reflect.full.createType

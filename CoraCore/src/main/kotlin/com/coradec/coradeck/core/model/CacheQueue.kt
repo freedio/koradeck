@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 by Coradec LLC.  All rights reserved.
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
  */
 
 package com.coradec.coradeck.core.model
@@ -7,7 +7,6 @@ package com.coradec.coradeck.core.model
 import java.lang.ref.ReferenceQueue
 import java.lang.ref.SoftReference
 import java.util.*
-import kotlin.NoSuchElementException
 
 class CacheQueue<E> : Queue<E> {
     val softcache = LinkedList<SoftReference<E>>()

@@ -1,6 +1,8 @@
-package com.coradec.coradeck.db.ctrl
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
 
-import com.coradec.coradeck.core.util.trimIfBlank
+package com.coradec.coradeck.db.ctrl
 
 interface Selection {
     /** The limits: OFFSET, LIMIT. */

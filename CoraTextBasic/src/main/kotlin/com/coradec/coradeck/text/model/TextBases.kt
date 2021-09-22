@@ -1,10 +1,13 @@
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
+
 package com.coradec.coradeck.text.model
 
 import com.coradec.coradeck.com.ctrl.impl.Logger
 import com.coradec.coradeck.core.model.ClassPathResource
 import com.coradec.coradeck.text.ctrl.TextbaseReader
 import com.coradec.coradeck.text.model.impl.GeneralTextBase
-import com.coradec.coradeck.text.model.impl.LocalizedTextBase
 import com.coradec.coradeck.text.model.impl.TextElement
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap

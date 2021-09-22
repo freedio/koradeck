@@ -1,6 +1,8 @@
-package com.coradec.coradeck.core.trouble
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
 
-import com.coradec.coradeck.core.trouble.BasicException
+package com.coradec.coradeck.core.trouble
 
 class ClassPathResourceNotFoundException(val path: String, val workDir: String = System.getProperty("user.dir")) :
         BasicException("Resource not found on the class path!")

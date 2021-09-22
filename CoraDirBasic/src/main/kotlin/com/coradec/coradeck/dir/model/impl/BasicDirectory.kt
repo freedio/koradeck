@@ -1,14 +1,11 @@
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
+
 package com.coradec.coradeck.dir.model.impl
 
 import com.coradec.coradeck.core.util.swallow
-import com.coradec.coradeck.dir.model.Body
-import com.coradec.coradeck.dir.model.Directory
-import com.coradec.coradeck.dir.model.DirectoryEntry
-import com.coradec.coradeck.dir.model.DirectoryEntryTemplate
-import com.coradec.coradeck.dir.model.DirectoryNamespace
-import com.coradec.coradeck.dir.model.DirectoryTemplate
-import com.coradec.coradeck.dir.model.Head
-import com.coradec.coradeck.dir.model.Path
+import com.coradec.coradeck.dir.model.*
 import com.coradec.coradeck.dir.trouble.CreateLockFailedException
 import com.coradec.coradeck.dir.trouble.DirectoryEntryAlreadyExistsException
 import com.coradec.coradeck.dir.trouble.OperationWithoutLockException

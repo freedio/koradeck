@@ -1,7 +1,14 @@
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
+
 package com.coradec.coradeck.com.module
 
 import com.coradec.coradeck.com.ctrl.Log
-import com.coradec.coradeck.com.model.*
+import com.coradec.coradeck.com.model.LogLevel
+import com.coradec.coradeck.com.model.ProblemLogEntry
+import com.coradec.coradeck.com.model.StringLogEntry
+import com.coradec.coradeck.com.model.TextLogEntry
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.dir.model.module.CoraModuleAPI
 import com.coradec.coradeck.text.model.Text

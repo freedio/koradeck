@@ -1,15 +1,19 @@
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
+
 package com.coradec.coradeck.type.ctrl.impl
 
+import com.coradec.coradeck.core.util.contains
 import com.coradec.coradeck.core.util.formatted
+import com.coradec.coradeck.core.util.name
 import com.coradec.coradeck.type.ctrl.TypeConverter
 import com.coradec.coradeck.type.trouble.TypeConversionException
 import kotlin.reflect.KClass
-import kotlin.reflect.full.isSuperclassOf
-import com.coradec.coradeck.core.util.contains
-import com.coradec.coradeck.core.util.name
 import kotlin.reflect.KType
 import kotlin.reflect.KTypeProjection
 import kotlin.reflect.full.createType
+import kotlin.reflect.full.isSuperclassOf
 import kotlin.reflect.full.isSupertypeOf
 
 @Suppress("UNCHECKED_CAST")

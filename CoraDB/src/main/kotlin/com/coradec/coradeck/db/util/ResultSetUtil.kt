@@ -1,3 +1,7 @@
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
+
 package com.coradec.coradeck.db.util
 
 import com.coradec.coradeck.com.module.CoraCom
@@ -7,7 +11,6 @@ import java.sql.ResultSet
 import java.sql.SQLException
 import java.util.*
 import java.util.function.Consumer
-import kotlin.NoSuchElementException
 import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
 import kotlin.reflect.full.valueParameters

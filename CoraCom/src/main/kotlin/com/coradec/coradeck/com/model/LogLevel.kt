@@ -1,13 +1,10 @@
 /*
- * Copyright ⓒ 2017−2020 by Coradec GmbH. All rights reserved.
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
  */
 
 package com.coradec.coradeck.com.model
 
-import com.coradec.coradeck.com.model.Severity.CRITICAL
-import com.coradec.coradeck.com.model.Severity.INFORMATIONAL
-import com.coradec.coradeck.com.model.Severity.SEVERE
-import com.coradec.coradeck.com.model.Severity.SUBLIMINAL
+import com.coradec.coradeck.com.model.Severity.*
 
 enum class LogLevel(val severity: Severity, val letter: Char, val abbrev: String) {
     ALL(SUBLIMINAL, '*', "ANY"), // if you want to see everything in the log, regardless of how irrelevant

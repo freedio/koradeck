@@ -1,9 +1,12 @@
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
+
 package com.coradec.coradeck.com.model.impl
 
 import com.coradec.coradeck.com.ctrl.Log
 import com.coradec.coradeck.com.model.LogEntry
 import com.coradec.coradeck.com.model.LogLevel
-import com.coradec.coradeck.com.model.Severity
 
 object Syslog : Log {
     const val FORMAT = "%tF %<tT.%<tL %-8.8s %-5.5s %s%n\t%s"
