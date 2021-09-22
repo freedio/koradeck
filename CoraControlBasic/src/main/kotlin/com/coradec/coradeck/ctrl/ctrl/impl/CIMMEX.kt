@@ -206,7 +206,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
                 else -> error(TEXT_INVALID_OBJECT_TYPE, item::class.java, item)
             }
         } catch (e: Exception) {
-            error(TEXT_DISPATCH_FAILED, item)
+            error(e, TEXT_DISPATCH_FAILED, item)
         }
     }
 
@@ -252,7 +252,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
                         is Task -> item.run()
                     }
                 } catch (e: Exception) {
-                    error(TEXT_EXECUTION_ABORTED, item!!)
+                    error(e, TEXT_EXECUTION_ABORTED, item!!)
                 }
             }
             EXCTOR_ID_GEN.clear(id)
@@ -286,7 +286,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
                     recipient.onMessage(item)
                     item.process()
                 } catch (e: Exception) {
-                    error(TEXT_EXECUTION_ABORTED, item)
+                    error(e, TEXT_EXECUTION_ABORTED, item)
                     if (item is Request) item.fail(e)
                 }
                 dispatchOrder.put(recipient)
