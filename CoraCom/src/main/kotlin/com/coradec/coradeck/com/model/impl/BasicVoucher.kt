@@ -4,6 +4,7 @@ import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.com.model.State
 import com.coradec.coradeck.com.model.State.SUCCESSFUL
 import com.coradec.coradeck.com.model.Voucher
+import com.coradec.coradeck.core.annot.NonRepresentable
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
@@ -29,6 +30,7 @@ open class BasicVoucher<V>(
     private var valueSet = false
     override var current: V? = initialValue
     @Suppress("UNCHECKED_CAST")
+    @NonRepresentable
     override var value: V
         get() = valueSemaphore.await().let { current as V }
         set(value) {
