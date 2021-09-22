@@ -1,4 +1,8 @@
 /*
+ * Copyright ⓒ 2021 by Coradec LLC.  All rights reserved.
+ */
+
+/*
  * Copyright © 2020 by Coradec LLC.  All rights reserved.
  */
 
@@ -35,8 +39,9 @@ fun Thread.whenTerminated(action: (Thread) -> Unit) {
     ThreadMonitor.registerTerminationHook(this, action)
 }
 
+@Suppress("unused")
 fun Any?.swallow() {}
-fun execute(action: () -> Any?) {
+fun execute(action: () -> Unit) {
     action.invoke()
 }
 
