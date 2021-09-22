@@ -105,7 +105,9 @@ internal class BasicMessageTest {
         // when
         val r1 = testee.formatted
         // then
-        assertThat(r1).isEqualTo("")
+        assertThat(r1).startsWith("TestMessage([")
+        assertThat(r1).contains("content: \"Hello, world!\"")
+        assertThat(r1).contains("priority: A2")
     }
 
     class TestMessage(
