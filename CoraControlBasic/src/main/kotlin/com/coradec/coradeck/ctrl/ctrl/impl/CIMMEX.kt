@@ -58,7 +58,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
     private val delayQueue = DeferringQueue()
     private val executors = ConcurrentHashMap<Int, Executor>()
     private val workers = ConcurrentHashMap<Int, Worker>()
-    private val dispatchTable = LinkedHashMap<Recipient, PriorityBlockingQueue<Information>>()
+    private val dispatchTable = ConcurrentHashMap<Recipient, PriorityBlockingQueue<Information>>()
     private val dispatchOrder = PriorityBlockingQueue(PROP_MAX_RECIPIENTS.value, RecipientComparator())
     private val undeliveredCount get() = dispatchTable.flatMap { it.value }.size
     private val registry = ConcurrentHashMap<KClass<*>, MutableSet<Recipient>>()
@@ -66,7 +66,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
     private val finishTriggers = HashSet<Observer>()
     private var enabled = AtomicBoolean(true)
     private val finished: Boolean get() = !enabled.get() && inqueue.isEmpty() && taskqueue.isEmpty() && dispatchTable.isEmpty()
-    override val load: Int = inqueue.size + taskqueue.size + delayQueue.size + undeliveredCount
+    override val load: Int get() = inqueue.size + taskqueue.size + delayQueue.size + undeliveredCount
 
     override val capacity: Int = 16
 
@@ -179,10 +179,10 @@ object CIMMEX : Logger(), IMMEX, Recipient {
             debug("Timer started.")
             while (enabled.get()) {
                 val sleep = delayQueue.peek()?.delayMs ?: Long.MAX_VALUE
-                debug("Timer sleeping for $sleep ms.")
+                trace("Timer sleeping for $sleep ms.")
                 try {
                     sleep(sleep)
-                    debug("Timer awoke.")
+                    trace("Timer awoke.")
                     dispatch(delayQueue)
                 } catch (e: InterruptedException) {
                     trace("Timer rescheduled.")
