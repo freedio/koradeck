@@ -11,3 +11,5 @@ NoRecipients2: Nobody was interested in ‹%s› message «%s» → Message drop
 DispatcherInterrupted: Dispatcher was interrupted!
 ShuttingDown: Shutting down CIMMEX...
 ShutDown: CIMMEX shut down.
+CimmexDisabled: CIMMEX is disabled! → Message dropped.
+RemainingItems1: Remaining items in CIMMEX: %s.

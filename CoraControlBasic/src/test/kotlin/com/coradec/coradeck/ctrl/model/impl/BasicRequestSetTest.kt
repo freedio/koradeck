@@ -43,7 +43,7 @@ internal class BasicRequestSetTest {
         val agent = TestAgent()
         val testee = BasicRequestSet(here, listOf())
         // when
-        agent.inject(testee).standBy()
+        agent.inject(testee).standby()
         // then
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
@@ -60,7 +60,7 @@ internal class BasicRequestSetTest {
         val req3 = TestRequest(agent, 1)
         val testee = BasicRequestSet(here, listOf(req1, req2, req3))
         // when:
-        agent.inject(testee).standBy()
+        agent.inject(testee).standby()
         // then:
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
@@ -81,7 +81,7 @@ internal class BasicRequestSetTest {
         val testee = BasicRequestSet(here, listOf(req1, req2, req3))
         // when:
         val trouble = try {
-            agent.inject(testee).standBy()
+            agent.inject(testee).standby()
             null
         } catch (e: Exception) {
             e
@@ -109,7 +109,7 @@ internal class BasicRequestSetTest {
         val testee = BasicRequestSet(here, listOf(req1, req2, req3))
         // when:
         val trouble = try {
-            agent.inject(testee).standBy()
+            agent.inject(testee).standby()
             null
         } catch (e: Exception) {
             e
@@ -142,7 +142,7 @@ internal class BasicRequestSetTest {
         val req9 = TestRequest(agent, 'i'.code)
         val testee = BasicRequestSet(here, listOf(req1, req2, req3, req4, req5, req6, req7, req8, req9))
         // when:
-        agent.inject(testee).standBy()
+        agent.inject(testee).standby()
         // then:
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()

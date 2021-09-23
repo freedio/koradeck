@@ -15,12 +15,15 @@ import com.coradec.coradeck.com.model.impl.BasicEvent
 import com.coradec.coradeck.conf.model.LocalProperty
 import com.coradec.coradeck.core.model.*
 import com.coradec.coradeck.core.model.Priority.B3
+import com.coradec.coradeck.core.trouble.StandbyTimeoutException
 import com.coradec.coradeck.core.util.classname
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.ctrl.ctrl.IMMEX
 import com.coradec.coradeck.ctrl.model.Task
 import com.coradec.coradeck.text.model.LocalText
+import java.io.PrintWriter
+import java.io.StringWriter
 import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.TimeUnit.SECONDS
@@ -40,6 +43,8 @@ object CIMMEX : Logger(), IMMEX, Recipient {
     private val TEXT_SHUTTING_DOWN = LocalText("ShuttingDown")
     private val TEXT_SHUT_DOWN = LocalText("ShutDown")
     private val TEXT_DISPATCHER_INTERRUPTED = LocalText("DispatcherInterrupted")
+    private val TEXT_CIMMEX_DISABLED = LocalText("CimmexDisabled")
+    private val TEXT_REMAINING_ITEMS = LocalText("RemainingItems1")
     private val PROP_INQUEUE_SIZE = LocalProperty("InQueueSize", 4000)
     private val PROP_TASKQUEUE_SIZE = LocalProperty("TaskQueueSize", 1000)
     private val PROP_DEFERRINGQUEUE_SIZE = LocalProperty("DeferringQueueSize", 1000)
@@ -65,7 +70,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
 
     private val finishTriggers = HashSet<Observer>()
     private var enabled = AtomicBoolean(true)
-    private val finished: Boolean get() = !enabled.get() && inqueue.isEmpty() && taskqueue.isEmpty() && dispatchTable.isEmpty()
+    private val clear: Boolean get() = inqueue.isEmpty() && taskqueue.isEmpty() && dispatchTable.isEmpty()
     override val load: Int get() = inqueue.size + taskqueue.size + delayQueue.size + undeliveredCount
 
     override val capacity: Int = 16
@@ -89,8 +94,8 @@ object CIMMEX : Logger(), IMMEX, Recipient {
         enabled.set(false)
         timer.interrupt()
         dispatcher.interrupt()
-        while (!finished && System.nanoTime() < end) cleanout()
-        if (!finished)
+        while (!clear && System.nanoTime() < end) cleanout()
+        if (!clear)
             warn(TEXT_NOT_FINISHED, shutdownAllowance.representation, inqueue.size, taskqueue.size, undeliveredCount)
         val shutdownEvent = ShutdownCompleteEvent(here)
         finishTriggers.forEach { observer -> observer.notify(shutdownEvent) }
@@ -130,21 +135,38 @@ object CIMMEX : Logger(), IMMEX, Recipient {
     }
 
     override fun <I : Information> inject(message: I): I = message.also {
-        if (it.deferred) delayQueue.put(it) else inqueue.put(it)
-        it.enqueue()
-        addWorker()
+        if (enabled.get()) {
+            if (it.deferred) delayQueue.put(it) else inqueue.put(it)
+            it.enqueue()
+            addWorker()
+        } else error(TEXT_CIMMEX_DISABLED)
     }
 
     override fun <M : Message> inject(message: M): M = message.also {
-        if (it.deferred) delayQueue.put(it) else inqueue.put(it)
-        it.enqueue()
-        addWorker()
+        if (enabled.get()) {
+            if (it.deferred) delayQueue.put(it) else inqueue.put(it)
+            it.enqueue()
+            addWorker()
+        } else error(TEXT_CIMMEX_DISABLED)
     }
 
     override fun synchronize() {
-        val sync = Semaphore(0)
-        inject(Synchronization(sync))
-        sync.acquire()
+        if (enabled.get()) {
+            val sync = Semaphore(0)
+            inject(Synchronization(sync))
+            sync.acquire()
+        } else error(TEXT_CIMMEX_DISABLED)
+    }
+
+    override fun standby() = standby(PROP_SHUTDOWN_ALLOWANCE.value)
+    override fun standby(delay: Timespan) {
+        val end = System.nanoTime() + delay.let { it.unit.toNanos(it.amount) }
+        while (!clear && System.nanoTime() < end) cleanout()
+        if (!clear) {
+            warn(TEXT_REMAINING_ITEMS, showRemaining())
+            throw StandbyTimeoutException(delay)
+        }
+        Thread.sleep(10)
     }
 
     override fun plugin(klass: KClass<out Information>, vararg listener: Recipient) {
@@ -160,10 +182,21 @@ object CIMMEX : Logger(), IMMEX, Recipient {
         else -> error(TEXT_MESSAGE_NOT_UNDERSTOOD, message.classname, message)
     }
 
+    private fun showRemaining(): String {
+        val collector = StringWriter()
+        PrintWriter(collector).use { out ->
+            out.println("         Enabled: ${enabled.get()} (should be ‹false›)")
+            out.println("         Inqueue: $inqueue")
+            out.println("       TaskQueue: $taskqueue")
+            out.println("Dispatcher Table: $dispatchTable")
+        }
+        return collector.toString()
+    }
+
     private class Dispatcher : Thread("Dispatch") {
         override fun run() {
             debug("Dispatcher started.")
-            while (!interrupted() && enabled.get()) {
+            while (!interrupted()) {
                 try {
                     dispatch(inqueue)
                 } catch (e: InterruptedException) {
@@ -216,7 +249,8 @@ object CIMMEX : Logger(), IMMEX, Recipient {
             added = true
             PriorityBlockingQueue(recipient.capacity)
         }
-        if (queue.offer(item) || inqueue.offer(item)) item.dispatch() else cantDispatch(item)
+        if (queue.offer(item)) item.dispatch()
+        else if (!inqueue.offer(item)) cantDispatch(item)
         if (added) dispatchOrder.put(recipient)
     }
 

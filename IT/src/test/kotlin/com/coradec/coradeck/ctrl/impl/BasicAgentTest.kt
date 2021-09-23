@@ -42,7 +42,7 @@ internal class BasicAgentTest {
         }
         // when:
         testee.inject(TestRouteRequest(here))
-        testee.inject(TestRouteRequest(here)).standBy()
+        testee.inject(TestRouteRequest(here)).standby()
         Thread.sleep(100)
         // then:
         assertThat(testee.received).isEqualTo(2)
@@ -55,7 +55,7 @@ internal class BasicAgentTest {
         }
         // when:
         try {
-            testee.inject(TestRouteRequest(here)).standBy()
+            testee.inject(TestRouteRequest(here)).standby()
             // then:
             fail("Expected RequestCancelledException!")
         } catch (e: NoRouteForMessageException) {
@@ -81,7 +81,7 @@ internal class BasicAgentTest {
         }
         // when:
         testee.inject(TestRouteCommand(here))
-        testee.inject(TestRouteCommand(here)).standBy()
+        testee.inject(TestRouteCommand(here)).standby()
         Thread.sleep(100)
         // then:
         assertThat(received).isEqualTo(2)
@@ -100,7 +100,7 @@ internal class BasicAgentTest {
         val testee = BasicAgent()
         // when:
         try {
-            testee.inject(TestRouteCommand(here)).standBy()
+            testee.inject(TestRouteCommand(here)).standby()
             // then:
             fail("Expected CommandNotApprovedException!")
         } catch (e: CommandNotApprovedException) {

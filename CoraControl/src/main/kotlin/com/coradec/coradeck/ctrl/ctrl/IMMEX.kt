@@ -7,6 +7,7 @@ package com.coradec.coradeck.ctrl.ctrl
 import com.coradec.coradeck.com.model.Information
 import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.core.model.Priority
+import com.coradec.coradeck.core.model.Timespan
 import com.coradec.coradeck.ctrl.model.Task
 import kotlin.reflect.KClass
 
@@ -29,4 +30,8 @@ interface IMMEX {
     fun plugin(klass: KClass<out Information>, vararg listener: Recipient)
     /** Unregisters a number of listeners from broadcast reception. */
     fun unplug(vararg listener: Recipient)
+    /** Wait until there are no more pending messages in CIMMEX. */
+    fun standby()
+    /** Wait for at most delay until there are no more pending messages in CIMMEX. */
+    fun standby(delay: Timespan)
 }

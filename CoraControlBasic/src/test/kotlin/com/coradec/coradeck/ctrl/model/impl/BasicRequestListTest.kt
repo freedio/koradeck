@@ -40,7 +40,7 @@ internal class BasicRequestListTest {
         val agent = TestAgent()
         val testee = BasicRequestList(here, listOf(), agent)
         // when
-        agent.inject(testee).standBy()
+        agent.inject(testee).standby()
         // then
         Thread.sleep(100)
         assertThat(testee.successful).isTrue()
@@ -58,7 +58,7 @@ internal class BasicRequestListTest {
         val req3 = TestRequest(agent, 1)
         val testee = BasicRequestList(here, listOf(req1, req2, req3))
         // when:
-        agent.inject(testee).standBy()
+        agent.inject(testee).standby()
         // then:
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
@@ -80,7 +80,7 @@ internal class BasicRequestListTest {
         val testee = BasicRequestList(here, listOf(req1, req2, req3))
         // when:
         val trouble = try {
-            agent.inject(testee).standBy()
+            agent.inject(testee).standby()
             null
         } catch (e: Exception) {
             e
@@ -104,7 +104,7 @@ internal class BasicRequestListTest {
         val req1 = TestRequest(agent, 100)
         val testee = BasicRequestList(here, listOf(req1))
         // when:
-        agent.inject(testee).standBy()
+        agent.inject(testee).standby()
         // then:
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
@@ -124,7 +124,7 @@ internal class BasicRequestListTest {
         val testee = BasicRequestList(here, listOf(req1, req2, req3))
         // when:
         val trouble = try {
-            agent.inject(testee).standBy()
+            agent.inject(testee).standby()
             null
         } catch (e: Exception) {
             e
@@ -157,7 +157,7 @@ internal class BasicRequestListTest {
         val req9 = TestRequest(agent, 'i'.code)
         val testee = BasicRequestList(here, listOf(req1, req2, req3, req4, req5, req6, req7, req8, req9))
         // when:
-        agent.inject(testee).standBy()
+        agent.inject(testee).standby()
         // then:
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()

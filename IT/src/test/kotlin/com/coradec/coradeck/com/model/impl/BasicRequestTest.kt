@@ -64,7 +64,7 @@ internal class BasicRequestTest {
         val agent = TestAgent()
         val request = SuccessfulTestRequest(here, agent)
         // when:
-        agent.inject(request).standBy()
+        agent.inject(request).standby()
         val finished = ZonedDateTime.now()
         // then:
         val softly = SoftAssertions()
@@ -85,7 +85,7 @@ internal class BasicRequestTest {
         val agent = TestAgent()
         val request = SuccessfulTestRequest(here)
         // when:
-        agent.inject(request).standBy()
+        agent.inject(request).standby()
         val finished = ZonedDateTime.now()
         // then:
         val softly = SoftAssertions()
@@ -107,8 +107,8 @@ internal class BasicRequestTest {
         val request = SuccessfulTestRequest(here)
         val agent2 = TestAgent()
         // when:
-        val r1 = agent.inject(request).standBy()
-        val r2 = agent2.inject(r1).standBy()
+        val r1 = agent.inject(request).standby()
+        val r2 = agent2.inject(r1).standby()
         val finished = ZonedDateTime.now()
         // then:
         val softly = SoftAssertions()
@@ -132,7 +132,7 @@ internal class BasicRequestTest {
         val request = FailedTestRequest(here, agent)
         // when:
         try {
-            agent.inject(request).standBy()
+            agent.inject(request).standby()
         } catch (e: Exception) {
         }
         val finished = ZonedDateTime.now()
@@ -156,7 +156,7 @@ internal class BasicRequestTest {
         val request = CancelledTestRequest(here, agent)
         // when:
         try {
-            agent.inject(request).standBy()
+            agent.inject(request).standby()
         } catch (e: Exception) {
         }
         val finished = ZonedDateTime.now()
@@ -180,7 +180,7 @@ internal class BasicRequestTest {
         val request = CancelledTestRequest2(here, agent)
         // when:
         try {
-            agent.inject(request).standBy()
+            agent.inject(request).standby()
         } catch (e: Exception) {
         }
         val finished = ZonedDateTime.now()

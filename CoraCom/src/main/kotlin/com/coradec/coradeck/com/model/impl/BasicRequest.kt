@@ -15,6 +15,8 @@ import com.coradec.coradeck.com.trouble.RequestFailedException
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
+import com.coradec.coradeck.core.model.Timespan
+import com.coradec.coradeck.core.trouble.StandbyTimeoutException
 import com.coradec.coradeck.session.model.Session
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -66,8 +68,17 @@ open class BasicRequest(
         }
     }
 
-    override fun standBy(): BasicRequest {
+    override fun standby(): BasicRequest {
         unfinished.await()
+        if (reason != null) throw reason!!
+        if (failed) throw RequestFailedException()
+        if (cancelled) throw RequestCancelledException()
+        Thread.yield()
+        return this
+    }
+
+    override fun standby(delay: Timespan): BasicRequest {
+        if (!unfinished.await(delay.amount, delay.unit)) throw StandbyTimeoutException(delay)
         if (reason != null) throw reason!!
         if (failed) throw RequestFailedException()
         if (cancelled) throw RequestCancelledException()

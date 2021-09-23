@@ -4,6 +4,9 @@
 
 package com.coradec.coradeck.com.model
 
+import com.coradec.coradeck.core.model.Timespan
+import com.coradec.coradeck.core.trouble.StandbyTimeoutException
+
 interface Request: Message {
     /** Indicates if the request was successful. */
     val successful: Boolean
@@ -22,7 +25,9 @@ interface Request: Message {
     /** Mark the request as cancelled for the specified optional reason. */
     fun cancel(reason: Throwable? = null)
     /** Wait until the request has finished (i. e. has been successful, cancelled, or failed). */
-    fun standBy(): Request
+    fun standby(): Request
+    /** Wait for at most delay until the request has finished (i. e. has been successful, cancelled, or failed). */
+    @Throws(StandbyTimeoutException::class) fun standby(delay: Timespan): Request
     /** Add an action to perform when the request was successful. */
     fun onSuccess(action: Request.() -> Unit): Request
     /** Add an action to perform when the request failed. */
