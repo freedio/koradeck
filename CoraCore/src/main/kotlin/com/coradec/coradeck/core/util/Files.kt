@@ -26,18 +26,19 @@ object Files {
     }
 }
 
-enum class FileType(val formatted: String) {
-    REGULAR("f"),
-    DIRECTORY("d"),
-    SOCKET("s"),
-    BLOCKDEVICE("b"),
-    CHARDEVICE("c"),
-    PIPE("p"),
-    SYMLINK("l"),
-    DOOR("D"),
-    LOOP_LINK("L"),
-    LOST_LINK("N"),
-    UNKNOWN("U");
+enum class FileType(val formatted: String, val label: String) {
+    REGULAR("f", "Regular"),
+    DIRECTORY("d", "Directory"),
+    SOCKET("s", "Socket"),
+    BLOCKDEVICE("b", "Block Device"),
+    CHARDEVICE("c", "Character Device"),
+    PIPE("p", "Pipe"),
+    SYMLINK("l", "Symbolic Link"),
+    DOOR("D", "Door"),
+    LOOP_LINK("L", "Loop Link"),
+    LOST_LINK("N", "Lost Link"),
+    DIR_LINK("D", "Directory Link"),
+    UNKNOWN("U", "Unknown");
 
     companion object {
         val Path.type: FileType get() = when {
