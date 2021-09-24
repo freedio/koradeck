@@ -27,7 +27,7 @@ class List_of_String_Converter: BasicTypeConverter<List<String>>(
     override fun convertFrom(value: Any): List<String>? = when (value) {
         is ArrayNode -> value.map { it.text }.toList()
         is Collection<*> -> when {
-            value.isEmpty() -> listOf()
+            value.isEmpty() -> emptyList()
             value.first() is String -> (value as Collection<String>).toList()
             else -> value.map {  it.toString() }
         }

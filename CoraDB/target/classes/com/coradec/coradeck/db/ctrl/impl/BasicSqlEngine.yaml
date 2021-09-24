@@ -1,4 +1,0 @@
----
-DbUrl: "jdbc:hsqldb:file:/tmp/dbtest/db"
-Username: "sa"
-Password: ""

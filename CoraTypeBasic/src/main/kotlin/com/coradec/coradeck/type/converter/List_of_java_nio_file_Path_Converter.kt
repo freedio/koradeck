@@ -17,28 +17,28 @@ import kotlin.reflect.KVariance
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.starProjectedType
 
-class Set_of_java_nio_file_Path_Converter: BasicTypeConverter<Set<Path>>(
-    Set::class.createType(listOf(KTypeProjection(KVariance.OUT, Path::class.starProjectedType)))
+class List_of_java_nio_file_Path_Converter: BasicTypeConverter<List<Path>>(
+    List::class.createType(listOf(KTypeProjection(KVariance.OUT, Path::class.starProjectedType)))
 ) {
-    override fun decodeFrom(value: String): Set<Path>? = when {
+    override fun decodeFrom(value: String): List<Path>? = when {
         value.trimStart().startsWith("{") -> decodeStandardStringListSyntax(value.trim())
         else -> null
     }
 
     @Suppress("UNCHECKED_CAST")
-    override fun convertFrom(value: Any): Set<Path>? = when (value) {
-        is ArrayNode -> value.map { Paths.get(it.text) }.toSet()
+    override fun convertFrom(value: Any): List<Path>? = when (value) {
+        is ArrayNode -> value.map { Paths.get(it.text) }.toList()
         is Collection<*> -> when {
-            value.isEmpty() -> emptySet()
-            value.first() is Path -> (value as Collection<Path>).toSet()
-            value.first() is String -> (value as Collection<String>).map { Paths.get(it) }.toSet()
-            else -> value.map {  Paths.get(it.toString()) }.toSet()
+            value.isEmpty() -> emptyList()
+            value.first() is Path -> (value as Collection<Path>).toList()
+            value.first() is String -> (value as Collection<String>).toList().map { Paths.get(it) }
+            else -> value.map {  Paths.get(it.toString()) }
         }
         else -> null
     }
 
 
-    private fun decodeStandardStringListSyntax(input: String): Set<Path> {
+    private fun decodeStandardStringListSyntax(input: String): List<Path> {
         if (input.last() != ']') throw IllegalArgumentException("Standard list representation must end with '}'")
         val x = input.drop(1).dropLast(1)
         var quote = '\u0000'
@@ -79,6 +79,6 @@ class Set_of_java_nio_file_Path_Converter: BasicTypeConverter<Set<Path>>(
             if (quote != '\u0000') throw IllegalStateException("Open quote!")
             if (escaped) throw IllegalStateException("Open escape sequence!")
         }
-        return result.map { Paths.get(it) }.toSet()
+        return result.toList().map { Paths.get(it) }
     }
 }
