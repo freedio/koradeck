@@ -41,6 +41,7 @@ enum class FileType(val formatted: String, val label: String) {
     UNKNOWN("U", "Unknown");
 
     companion object {
+        operator fun invoke(name: String) = values().single { it.name == name || it.formatted == name || it.label == name }
         val Path.type: FileType get() = when {
             isDirectory() -> DIRECTORY
             isRegularFile() -> REGULAR
