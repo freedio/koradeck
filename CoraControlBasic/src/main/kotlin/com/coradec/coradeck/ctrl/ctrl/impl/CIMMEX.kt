@@ -348,8 +348,8 @@ object CIMMEX : Logger(), IMMEX, Recipient {
                         i1 == null && i2 == null -> 0
                         i1 == null -> 1
                         i2 == null -> -1
-                        i1.priority == i2.priority -> i1.due.toInstant().toEpochMilli().compareTo(i2.due.toInstant().toEpochMilli())
-                        else -> i2.priority.ordinal - i1.priority.ordinal
+                        i1.priority == i2.priority -> i1.due.compareTo(i2.due)
+                        else -> i1.priority.ordinal - i2.priority.ordinal
                     }
                 }
             }
