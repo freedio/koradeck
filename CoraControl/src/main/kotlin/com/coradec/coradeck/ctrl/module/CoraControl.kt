@@ -4,6 +4,8 @@
 
 package com.coradec.coradeck.ctrl.module
 
+import com.coradec.coradeck.com.model.Information
+import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.com.model.Request
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
@@ -11,6 +13,7 @@ import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.ctrl.IMMEX
 import com.coradec.coradeck.ctrl.model.*
 import com.coradec.coradeck.dir.model.module.CoraModule
+import kotlin.reflect.KClass
 
 object CoraControl : CoraModule<CoraControlAPI>() {
     val Market: MarketSpace = impl.Market
@@ -41,3 +44,8 @@ object CoraControl : CoraModule<CoraControlAPI>() {
     /** Creates a task from the specified executable with the specified priority. */
     fun taskOf(executable: Runnable, prio: Priority): Task = impl.taskOf(executable, prio)
 }
+
+/** Requests to receive the specified type of information from the CIMMEX. */
+fun Recipient.receive(type: KClass<out Information>) = CoraControl.IMMEX.plugin(type, this)
+/** Ignore further information from the CIMMEX. */
+fun Recipient.ignore() = CoraControl.IMMEX.unplug(this)
