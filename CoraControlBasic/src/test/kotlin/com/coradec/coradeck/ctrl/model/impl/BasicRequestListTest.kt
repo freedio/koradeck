@@ -64,7 +64,7 @@ internal class BasicRequestListTest {
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
         assertThat(agent.sum).isEqualTo(111)
-        Thread.yield()
+        Thread.sleep(10)
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)
