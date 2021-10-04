@@ -17,6 +17,7 @@ import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
 import com.coradec.coradeck.core.model.Timespan
 import com.coradec.coradeck.core.trouble.StandbyTimeoutException
+import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.session.model.Session
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -128,6 +129,15 @@ open class BasicRequest(
         }
     }
 
+    override fun propagateTo(other: Request) = whenFinished {
+        when (state) {
+            SUCCESSFUL -> other.succeed()
+            FAILED -> other.fail(reason)
+            CANCELLED -> other.cancel(reason)
+            else -> relax()
+        }
+    }
+
     private fun runPostActions() {
         if (successful) successActions.forEach { it.invoke(this) }
         if (failed) failureActions.forEach { it.invoke(this) }
@@ -141,10 +151,10 @@ open class BasicRequest(
 
     private inner class PostActionObserver : Observer {
         override fun onNotification(event: Event): Boolean = when (event) {
-                is StateChangedEvent -> (event.current in FINISHED).also { complete ->
-                    if (complete) runPostActions()
-                }
-                else -> false
+            is StateChangedEvent -> (event.current in FINISHED).also { complete ->
+                if (complete) runPostActions()
             }
+            else -> false
+        }
     }
 }

@@ -24,16 +24,18 @@ interface Request: Message {
     fun fail(reason: Throwable? = null)
     /** Mark the request as cancelled for the specified optional reason. */
     fun cancel(reason: Throwable? = null)
-    /** Wait until the request has finished (i. e. has been successful, cancelled, or failed). */
+    /** Wait until the request has finished (i. e. has been successful, cancelled, or failed).  Fluid. */
     fun standby(): Request
-    /** Wait for at most delay until the request has finished (i. e. has been successful, cancelled, or failed). */
+    /** Wait for at most delay until the request has finished (i. e. has been successful, cancelled, or failed).  Fluid. */
     @Throws(StandbyTimeoutException::class) fun standby(delay: Timespan): Request
-    /** Add an action to perform when the request was successful. */
+    /** Add an action to perform when the request was successful.  Fluid. */
     fun onSuccess(action: Request.() -> Unit): Request
-    /** Add an action to perform when the request failed. */
+    /** Add an action to perform when the request failed.  Fluid. */
     fun onFailure(action: Request.() -> Unit): Request
-    /** Add an action to perform when the request was cancelled. */
+    /** Add an action to perform when the request was cancelled. Fluid. */
     fun onCancellation(action: Request.() -> Unit): Request
-    /** Triggers the specified action when the request is finished. */
+    /** Triggers the specified action when the request is finished.  Fluid. */
     fun whenFinished(action: Request.() -> Unit): Request
+    /** Propages the completion state to the specified request.  Fluid. */
+    infix fun propagateTo(other: Request): Request
 }
