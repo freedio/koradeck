@@ -6,10 +6,7 @@ package com.coradec.coradeck.ctrl.ctrl.impl
 
 import com.coradec.coradeck.com.ctrl.Observer
 import com.coradec.coradeck.com.ctrl.impl.Logger
-import com.coradec.coradeck.com.model.Information
-import com.coradec.coradeck.com.model.Message
-import com.coradec.coradeck.com.model.Recipient
-import com.coradec.coradeck.com.model.Request
+import com.coradec.coradeck.com.model.*
 import com.coradec.coradeck.com.model.impl.BasicCommand
 import com.coradec.coradeck.com.model.impl.BasicEvent
 import com.coradec.coradeck.conf.model.LocalProperty
@@ -67,7 +64,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
     private val dispatchOrder = PriorityBlockingQueue(PROP_MAX_RECIPIENTS.value, RecipientComparator())
     private val undeliveredCount get() = dispatchTable.flatMap { it.value }.size
     private val registry = ConcurrentHashMap<KClass<*>, MutableSet<Recipient>>()
-
+    private val defaultAgent = DefaultAgent()
     private val finishTriggers = HashSet<Observer>()
     private var enabled = AtomicBoolean(true)
     private val clear: Boolean get() = inqueue.isEmpty() && taskqueue.isEmpty() && dispatchTable.isEmpty()
@@ -231,6 +228,10 @@ object CIMMEX : Logger(), IMMEX, Recipient {
             when (item) {
                 null -> relax()
                 is Task -> taskqueue.offer(item) || inqueue.offer(item) || cantDispatch(item)
+                is MultiRequest -> {
+                    val recipient: Recipient? = item.recipient
+                    if (recipient == null) defaultAgent.inject(item) else dispatch(recipient, item)
+                }
                 is Message -> {
                     val recipient = item.recipient
                     if (recipient == null) broadcast(item) else dispatch(recipient, item)
@@ -367,4 +368,10 @@ object CIMMEX : Logger(), IMMEX, Recipient {
     }
 
     private class ShutdownCompleteEvent(origin: Origin) : BasicEvent(origin)
+
+    class DefaultAgent: BasicAgent() {
+        init {
+            approve(MultiRequest::class)
+        }
+    }
 }

@@ -51,13 +51,13 @@ open class BasicInformation(
     override val observerCount: Int get() = stateRegistry.size
     override fun <I : Information> copy(vararg substitute: Pair<String, Any?>): I = copy(substitute.toMap())
     override fun <I : Information> copy(substitute: Map<String, Any?>): I {
-        val automatic = listOf("createdAt")
+        val dynamic = listOf("createdAt")
         val klass = this::class as KClass<I>
         val primaryConstructor = klass.primaryConstructor ?: throw IllegalStateException("Can't copy a $classname")
         val parameters = primaryConstructor.parameters
             .associateBy { para -> para.name }
             .removeNullKeys()
-            .filterKeys { it !in automatic }
+            .filterKeys { it !in dynamic }
 
         val args = klass.memberProperties
             .filter { prop ->
@@ -82,7 +82,7 @@ open class BasicInformation(
                             found && valid
                         }
                         .filterKeys { key ->
-                            key in parameters && key !in automatic
+                            key in parameters && key !in dynamic
                         }
                         .forEach { (name, value) ->
                             mutableMap[parameters[name]!!] = value
