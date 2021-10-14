@@ -1,0 +1,127 @@
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
+
+package com.coradec.coradeck.com.model.impl
+
+import com.coradec.coradeck.com.ctrl.Observer
+import com.coradec.coradeck.com.model.*
+import com.coradec.coradeck.com.model.Notification.Companion.LOST_ITEMS
+import com.coradec.coradeck.com.model.State.*
+import com.coradec.coradeck.core.model.Origin
+import com.coradec.coradeck.core.model.Priority
+import com.coradec.coradeck.core.model.Timespan
+import com.coradec.coradeck.core.util.*
+import com.coradec.coradeck.session.model.Session
+import java.time.ZonedDateTime
+import java.util.*
+import java.util.concurrent.CopyOnWriteArraySet
+import java.util.concurrent.CountDownLatch
+
+open class BasicNotification<I: Information>(
+    override val content: I,
+    origin: Origin = content.origin,
+    priority: Priority = content.priority,
+    createdAt: ZonedDateTime = ZonedDateTime.now(),
+    session: Session = Session.current,
+    validFrom: ZonedDateTime = content.validFrom,
+    validUpTo: ZonedDateTime = content.validUpTo
+): BasicInformation(origin, priority, createdAt, session, validFrom, validUpTo), Notification<I> {
+    private val unfinished = CountDownLatch(1)
+    private val stateRegistry = CopyOnWriteArraySet<Observer>()
+    private val myStates = ArrayList<State>().apply { add(NEW) }
+    override val states: EnumSet<State> get() = EnumSet.copyOf(myStates)
+    override val new: Boolean get() = states.singleOrNull() == NEW
+    override val enqueued: Boolean get() = ENQUEUED in myStates
+    override val dispatched: Boolean get() = DISPATCHED in myStates
+    override val delivered: Boolean get() = DELIVERED in myStates
+    override val rejected: Boolean get() = REJECTED in myStates
+    override val processed: Boolean get() = PROCESSED in myStates
+    override val crashed: Boolean get() = CRASHED in myStates
+    override val lost: Boolean get() = LOST in myStates
+    override val complete: Boolean get() = PROCESSED in myStates
+    override var problem: Throwable? = null
+    override val observerCount: Int get() = stateRegistry.size
+    override var state: State
+        get() = synchronized(myStates) { myStates.last() }
+        set(state) {
+            interceptSetState(state)
+            synchronized(myStates) {
+                fun invert(i: Int): Int = if (i < 0) -i - 1 else i
+                fun addState(newstate: State) {
+                    myStates.add(invert(Collections.binarySearch(myStates, newstate)), newstate)
+                }
+                if (state !in myStates) {
+                    val event = StateChangedEvent(here, this, myStates.last(), state.apply { addState(this) })
+                    stateRegistry.forEach { if (it.notify(event)) stateRegistry.remove(it) }
+                }
+            }
+        }
+
+    protected open fun interceptSetState(state: State) = relax()
+    override fun enregister(observer: Observer) =
+        /*if (content is Request) (content as Request).enregister(observer) else*/ stateRegistry.add(observer)
+    override fun deregister(observer: Observer) =
+        /*if (content is Request) (content as Request).deregister(observer) else*/ stateRegistry.remove(observer)
+    override fun enqueue() {
+        if (content is Request) (content as Request).enqueue()
+        state = ENQUEUED
+    }
+    override fun dispatch() {
+        if (content is Request) (content as Request).dispatch()
+        state = DISPATCHED
+    }
+    override fun deliver() {
+        if (content is Request) (content as Request).deliver()
+        state = DELIVERED
+    }
+    override fun reject(reason: Throwable) {
+        problem = reason
+        if (content is Request) (content as Request).fail(reason)
+        state = REJECTED
+    }
+    override fun process() {
+        if (content is Request) (content as Request).process()
+        state = PROCESSED
+        unfinished.countDown()
+    }
+    override fun crash(reason: Throwable) {
+        problem = reason
+        if (content is Request) (content as Request).fail(reason)
+        state = CRASHED
+        unfinished.countDown()
+    }
+    override fun discard() {
+        LOST_ITEMS += this
+        if (content is Request) (content as Request).discard()
+        state = LOST
+        unfinished.countDown()
+    }
+
+    override fun whenState(state: State, action: () -> Unit) {
+        if (synchronized(myStates) {
+            (state in myStates).also { if (!it) stateRegistry.add(StateObserver(state, action)) }
+        }) action.invoke()
+    }
+
+    override fun standby(): Notification<*> = also {
+        when(content) {
+            is Request -> (content as Request).standby()
+            else -> unfinished.await()
+        }
+    }
+
+    override fun standby(delay: Timespan): Notification<*> = also {
+        when(content) {
+            is Request -> (content as Request).standby(delay)
+            else -> unfinished.await(delay.amount, delay.unit)
+        }
+    }
+
+    override fun toString(): String =
+        "%s(%s)".format(shortClassname, properties.formatted)
+
+    override fun andThen(action: () -> Unit) {
+        if (content is Request) (content as Request).whenState(RequestState.SUCCESSFUL, action) else whenState(PROCESSED, action)
+    }
+}

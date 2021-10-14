@@ -4,7 +4,7 @@
 
 package com.coradec.coradeck.com.model.impl
 
-import com.coradec.coradeck.com.model.Information
+import com.coradec.coradeck.com.model.Notification
 import com.coradec.coradeck.com.model.State
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
@@ -16,7 +16,7 @@ import java.time.ZonedDateTime
 
 class StateChangedEvent(
     origin: Origin,
-    val source: Information,
+    val message: Notification<*>,
     val previous: State,
     val current: State,
     priority: Priority = defaultPriority,

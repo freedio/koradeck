@@ -4,11 +4,14 @@
 
 package com.coradec.coradeck.ctrl.model.impl
 
-import com.coradec.coradeck.com.model.*
-import com.coradec.coradeck.com.model.State.*
-import com.coradec.coradeck.com.model.State.Companion.FINISHED
+import com.coradec.coradeck.com.model.Event
+import com.coradec.coradeck.com.model.Recipient
+import com.coradec.coradeck.com.model.Request
+import com.coradec.coradeck.com.model.RequestState
+import com.coradec.coradeck.com.model.RequestState.*
+import com.coradec.coradeck.com.model.RequestState.Companion.FINISHED
 import com.coradec.coradeck.com.model.impl.BasicRequest
-import com.coradec.coradeck.com.model.impl.StateChangedEvent
+import com.coradec.coradeck.com.model.impl.RequestStateChangedEvent
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
@@ -23,35 +26,34 @@ import java.time.ZonedDateTime
 
 class BasicRequestSet(
     origin: Origin,
-    val requests: Sequence<Request>,
+    private val requests: Sequence<Request>,
     priority: Priority = defaultPriority,
     createdAt: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
-    target: Recipient? = null,
     validFrom: ZonedDateTime = createdAt,
-    validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
-) : BasicRequest(origin, priority, createdAt, session, target = target, validFrom, validUpto), RequestSet {
-    constructor(origin: Origin, requests: List<Request>) : this(origin, requests.asSequence())
-
-    var outstanding = 0
-    var endState: State = SUCCESSFUL
-    var endProblem: Throwable? = null
+    validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC),
+    private val processor: Recipient? = null
+) : BasicRequest(origin, priority, createdAt, session, validFrom, validUpto), RequestSet {
+    private var outstanding = 0
+    private var endState: RequestState = SUCCESSFUL
+    private var endProblem: Throwable? = null
 
     override fun execute() {
         if (requests.none()) succeed()
         requests.forEach { request ->
             if (!complete) {
                 if (request.enregister(this)) ++outstanding
-                if (request.complete) process(request, request.state) else if (!request.enqueued) IMMEX.inject(request)
+                if (request.complete) process(request, request.state) else
+                    if (!request.enqueued) processor?.accept(request) ?: IMMEX.inject(request)
             }
         }
     }
 
     override fun onNotification(event: Event): Boolean = when {
             complete -> false
-            event is StateChangedEvent -> {
-                val element: Information = event.source
-                trace("State Changed: %s %s→%s", element, event.previous, event.current)
+            event is RequestStateChangedEvent -> {
+                val element: Request = event.message
+                trace("Request state changed: %s %s→%s", element, event.previous, event.current)
                 val newState = event.current
                 process(element, newState)
                 newState in FINISHED
@@ -59,10 +61,10 @@ class BasicRequestSet(
             else -> false.also { warn(TEXT_EVENT_NOT_UNDERSTOOD, event) }
         }
 
-    private fun process(element: Information, state: State) {
+    private fun process(element: Request, state: RequestState) {
         if (endState == SUCCESSFUL) when (state) {
             FAILED -> {
-                if (element is Request) endProblem = element.reason
+                endProblem = element.reason
                 endState = FAILED
             }
             CANCELLED -> {

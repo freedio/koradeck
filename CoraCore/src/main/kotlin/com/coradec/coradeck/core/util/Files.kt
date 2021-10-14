@@ -9,7 +9,9 @@ import java.nio.file.*
 import java.nio.file.FileVisitResult.CONTINUE
 import java.nio.file.FileVisitResult.TERMINATE
 import java.nio.file.Files
+import java.nio.file.LinkOption.NOFOLLOW_LINKS
 import java.nio.file.attribute.BasicFileAttributes
+import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.isSymbolicLink
@@ -17,7 +19,7 @@ import kotlin.io.path.isSymbolicLink
 object Files {
 
     fun deleteTree(path: Path) {
-        Files.walkFileTree(path, object : FileVisitor<Path> {
+        if (path.exists(NOFOLLOW_LINKS)) Files.walkFileTree(path, object : FileVisitor<Path> {
             override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult = CONTINUE
             override fun visitFile(file: Path, attrs: BasicFileAttributes) = CONTINUE.also { Files.delete(file) }
             override fun visitFileFailed(file: Path, exc: IOException) = TERMINATE.also { exc.printStackTrace() }

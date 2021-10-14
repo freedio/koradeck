@@ -9,15 +9,17 @@ import com.coradec.coradeck.com.ctrl.impl.Logger
 import com.coradec.coradeck.com.model.*
 import com.coradec.coradeck.com.model.impl.BasicCommand
 import com.coradec.coradeck.com.model.impl.BasicEvent
+import com.coradec.coradeck.com.trouble.NotificationRejectedException
 import com.coradec.coradeck.conf.model.LocalProperty
 import com.coradec.coradeck.core.model.*
-import com.coradec.coradeck.core.model.Priority.B3
+import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
 import com.coradec.coradeck.core.trouble.StandbyTimeoutException
 import com.coradec.coradeck.core.util.classname
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.ctrl.ctrl.IMMEX
 import com.coradec.coradeck.ctrl.model.Task
+import com.coradec.coradeck.ctrl.trouble.NotificationAlreadyEnqueuedException
 import com.coradec.coradeck.text.model.LocalText
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -28,14 +30,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
 
 /** Central information, market, messaging, event-handling and execution service. */
-object CIMMEX : Logger(), IMMEX, Recipient {
+object CIMMEX : Logger(), IMMEX {
     private val TEXT_INVALID_OBJECT_TYPE = LocalText("InvalidObjectType2")
-    private val TEXT_NOT_EXECUTABLE = LocalText("NoExecutable2")
     private val TEXT_EXECUTION_ABORTED = LocalText("ExecutionAborted1")
-    private val TEXT_NOT_FINISHED = LocalText("NotFinished4")
+    private val TEXT_NOT_FINISHED = LocalText("NotFinished5")
     private val TEXT_DISPATCH_FAILED = LocalText("DispatchFailed1")
     private val TEXT_CANT_DISPATCH = LocalText("CantDispatch1")
-    private val TEXT_MESSAGE_NOT_UNDERSTOOD = LocalText("MessageNotUnderstood2")
     private val TEXT_NO_RECIPIENTS = LocalText("NoRecipients2")
     private val TEXT_SHUTTING_DOWN = LocalText("ShuttingDown")
     private val TEXT_SHUT_DOWN = LocalText("ShutDown")
@@ -60,17 +60,18 @@ object CIMMEX : Logger(), IMMEX, Recipient {
     private val delayQueue = DeferringQueue()
     private val executors = ConcurrentHashMap<Int, Executor>()
     private val workers = ConcurrentHashMap<Int, Worker>()
-    private val dispatchTable = ConcurrentHashMap<Recipient, PriorityBlockingQueue<Information>>()
-    private val dispatchOrder = PriorityBlockingQueue(PROP_MAX_RECIPIENTS.value, RecipientComparator())
-    private val undeliveredCount get() = dispatchTable.flatMap { it.value }.size
-    private val registry = ConcurrentHashMap<KClass<*>, MutableSet<Recipient>>()
     private val defaultAgent = DefaultAgent()
+    private val dispatchTable = ConcurrentHashMap<Recipient, PriorityBlockingQueue<Notification<*>>>()
+    private val dispatchOrder = PriorityBlockingQueue(PROP_MAX_RECIPIENTS.value, RecipientComparator())
+    private val undeliveredCount get() = dispatchTable.values.sumOf { it.size }
+    private val registry = ConcurrentHashMap<KClass<*>, MutableSet<Recipient>>()
     private val finishTriggers = HashSet<Observer>()
     private var enabled = AtomicBoolean(true)
-    private val clear: Boolean get() = inqueue.isEmpty() && taskqueue.isEmpty() && dispatchTable.isEmpty()
     override val load: Int get() = inqueue.size + taskqueue.size + delayQueue.size + undeliveredCount
-
-    override val capacity: Int = 16
+    private val clear: Boolean get() = load == 0
+    override val stats: String get() = "Enabled: %s, InQueue: %d, TaskQueue: %d, DelayQueue: %d, Undelivered: %d".format(
+        if (enabled.get()) "Yes" else "No", inqueue.size, taskqueue.size, delayQueue.size, undeliveredCount
+    )
 
     private val WORKER_ID_GEN = BitSet(999)
     private val EXCTOR_ID_GEN = BitSet(999)
@@ -93,7 +94,7 @@ object CIMMEX : Logger(), IMMEX, Recipient {
         dispatcher.interrupt()
         while (!clear && System.nanoTime() < end) cleanout()
         if (!clear)
-            warn(TEXT_NOT_FINISHED, shutdownAllowance.representation, inqueue.size, taskqueue.size, undeliveredCount)
+            warn(TEXT_NOT_FINISHED, shutdownAllowance.representation, inqueue.size, taskqueue.size, undeliveredCount, dispatchTable)
         val shutdownEvent = ShutdownCompleteEvent(here)
         finishTriggers.forEach { observer -> observer.notify(shutdownEvent) }
         info(TEXT_SHUT_DOWN)
@@ -124,33 +125,34 @@ object CIMMEX : Logger(), IMMEX, Recipient {
         if (enabled.get() && taskqueue.size > executors.size && workers.size < PROP_MAX_EXECUTORS.value) startExecutor()
     }
 
-    override fun execute(executable: Runnable) = execute(executable, B3)
+    override fun execute(executable: Runnable) = execute(executable, defaultPriority)
     override fun execute(executable: Runnable, prio: Priority) = execute(Task(executable, prio))
     override fun execute(task: Task) {
         if (task.deferred) delayQueue.put(task) else taskqueue.put(task)
         addExecutor()
     }
 
-    override fun <I : Information> inject(message: I): I = message.also {
-        if (enabled.get()) {
-            if (it.deferred) delayQueue.put(it) else inqueue.put(it)
+    override fun <I: Information> inject(info: I): Notification<I> = Notification(info).also {
+        ifEnabled {
+            if (info.deferred) delayQueue.put(it) else inqueue.put(it)
             it.enqueue()
             addWorker()
-        } else error(TEXT_CIMMEX_DISABLED)
+        }
     }
 
-    override fun <M : Message> inject(message: M): M = message.also {
-        if (enabled.get()) {
-            if (it.deferred) delayQueue.put(it) else inqueue.put(it)
-            it.enqueue()
+    override fun <I: Information, N: Notification<I>> inject(notification: N): N = notification.also {
+        ifEnabled {
+            if (notification.enqueued) throw NotificationAlreadyEnqueuedException(notification, notification.states)
+            if (notification.deferred) delayQueue.put(it) else inqueue.put(it)
+            notification.enqueue()
             addWorker()
-        } else error(TEXT_CIMMEX_DISABLED)
+        }
     }
 
     override fun synchronize() {
         if (enabled.get()) {
             val sync = Semaphore(0)
-            inject(Synchronization(sync))
+            defaultAgent.accept(Synchronization(sync))
             sync.acquire()
         } else error(TEXT_CIMMEX_DISABLED)
     }
@@ -174,11 +176,6 @@ object CIMMEX : Logger(), IMMEX, Recipient {
         registry.forEach { it.value.removeAll(listener) }
     }
 
-    override fun onMessage(message: Information) = when (message) {
-        is Synchronization -> message.execute()
-        else -> error(TEXT_MESSAGE_NOT_UNDERSTOOD, message.classname, message)
-    }
-
     private fun showRemaining(): String {
         val collector = StringWriter()
         PrintWriter(collector).use { out ->
@@ -190,18 +187,9 @@ object CIMMEX : Logger(), IMMEX, Recipient {
         return collector.toString()
     }
 
-    private class Dispatcher : Thread("Dispatch") {
-        override fun run() {
-            debug("Dispatcher started.")
-            while (!interrupted()) {
-                try {
-                    dispatch(inqueue)
-                } catch (e: InterruptedException) {
-                    if (enabled.get()) warn(TEXT_DISPATCHER_INTERRUPTED)
-                }
-            }
-            debug("Dispatcher stopped.")
-        }
+    private fun ifEnabled(action: () -> Unit) {
+        if (enabled.get()) action.invoke()
+        else error(TEXT_CIMMEX_DISABLED)
     }
 
     private class Timer : Thread("Timer") {
@@ -222,21 +210,34 @@ object CIMMEX : Logger(), IMMEX, Recipient {
         }
     }
 
+    private class Dispatcher : Thread("Dispatch") {
+        override fun run() {
+            debug("Dispatcher started.")
+            while (!interrupted()) {
+                try {
+                    dispatch(inqueue)
+                } catch (e: InterruptedException) {
+                    if (enabled.get()) warn(TEXT_DISPATCHER_INTERRUPTED)
+                }
+            }
+            debug("Dispatcher stopped.")
+        }
+    }
+
     private fun <T : Any> dispatch(q: BlockingQueue<T>) {
         val item = q.take()
         try {
             when (item) {
                 null -> relax()
                 is Task -> taskqueue.offer(item) || inqueue.offer(item) || cantDispatch(item)
-                is MultiRequest -> {
-                    val recipient: Recipient? = item.recipient
-                    if (recipient == null) defaultAgent.inject(item) else dispatch(recipient, item)
+                is MultiRequest -> try {
+                    item.execute()
+                    item.succeed()
+                } catch (e: Exception) {
+                    item.fail(e)
                 }
-                is Message -> {
-                    val recipient = item.recipient
-                    if (recipient == null) broadcast(item) else dispatch(recipient, item)
-                }
-                is Information -> broadcast(item)
+                is Message<*> -> dispatch(item)
+                is Notification<*> -> broadcast(item)
                 else -> error(TEXT_INVALID_OBJECT_TYPE, item::class.java, item)
             }
         } catch (e: Exception) {
@@ -244,28 +245,34 @@ object CIMMEX : Logger(), IMMEX, Recipient {
         }
     }
 
-    private fun dispatch(recipient: Recipient, item: Information) = synchronized(dispatcher) {
-        var added = false
-        val queue = dispatchTable.computeIfAbsent(recipient) {
-            added = true
-            PriorityBlockingQueue(recipient.capacity)
+    private fun dispatch(message: Message<*>) = dispatch(message, message.recipient)
+    private fun dispatch(notification: Notification<*>, recipient: Recipient) {
+        trace("Dispatching «%s» to ‹%s›", notification, recipient)
+        var action: () -> Unit = { }
+        synchronized(dispatcher) {
+            var added = false
+            val queue = dispatchTable.computeIfAbsent(recipient) {
+                added = true
+                PriorityBlockingQueue()
+            }
+            if (queue.offer(notification)) action = { notification.dispatch() }
+            else if (!inqueue.offer(notification)) action = { cantDispatch(notification) }
+            if (added) dispatchOrder.put(recipient)
         }
-        if (queue.offer(item)) item.dispatch()
-        else if (!inqueue.offer(item)) cantDispatch(item)
-        if (added) dispatchOrder.put(recipient)
+        action.invoke()
     }
 
-    private fun broadcast(item: Information) = registry
-        .filterKeys { type -> type.isInstance(item) }
+    private fun broadcast(item: Notification<*>) = registry
+        .filterKeys { type -> type.isInstance(item.content) }
         .map { it.value }
         .flatten()
         .distinct()
         .ifEmpty {
-            warn(TEXT_NO_RECIPIENTS, item.classname, item)
-            item.miss()
+            warn(TEXT_NO_RECIPIENTS, item.content.classname, item.content)
+            item.discard()
             emptyList()
         }
-        .forEach { dispatch(it, item) }
+        .forEach { recipient -> dispatch(item, recipient) }
 
     private fun cantDispatch(item: Any): Boolean = false.also {
         error(TEXT_CANT_DISPATCH, item)
@@ -312,24 +319,26 @@ object CIMMEX : Logger(), IMMEX, Recipient {
         }
 
         private fun process(recipient: Recipient) {
-            val item: Information? = synchronized(dispatcher) {
+            val item: Notification<*>? = synchronized(dispatcher) {
                 dispatchTable[recipient]?.poll().also { if (it == null) dispatchTable -= recipient }
             }
             if (item != null) {
                 try {
                     item.deliver()
-                    recipient.onMessage(item)
+                    recipient.receive(item)
                     item.process()
+                } catch (e: NotificationRejectedException) {
+                    item.reject(e)
                 } catch (e: Exception) {
                     error(e, TEXT_EXECUTION_ABORTED, item)
-                    if (item is Request) item.fail(e)
+                    if (item is Request) item.fail(e) else item.crash(e)
                 }
                 dispatchOrder.put(recipient)
             }
         }
     }
 
-    private class Synchronization(val sync: Semaphore, target: Recipient? = CIMMEX) : BasicCommand(here, target = target) {
+    private class Synchronization(val sync: Semaphore) : BasicCommand(here) {
         override fun execute() {
             sync.release()
             succeed()
@@ -369,9 +378,9 @@ object CIMMEX : Logger(), IMMEX, Recipient {
 
     private class ShutdownCompleteEvent(origin: Origin) : BasicEvent(origin)
 
-    class DefaultAgent: BasicAgent() {
+    private class DefaultAgent : BasicAgent() {
         init {
-            approve(MultiRequest::class)
+            approve(CIMMEX.Synchronization::class)
         }
     }
 }

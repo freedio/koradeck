@@ -4,10 +4,8 @@
 
 package com.coradec.coradeck.com.model.impl
 
-import com.coradec.coradeck.com.model.Information
-import com.coradec.coradeck.com.model.Recipient
+import com.coradec.coradeck.com.model.Notification
 import com.coradec.coradeck.com.model.Request
-import com.coradec.coradeck.com.model.State.*
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.model.Origin
@@ -40,8 +38,6 @@ internal class BasicInformationTest {
         // when
         val r1: TestInformation = testee.copy()
         // then
-        assertThat(r1.state).isEqualTo(NEW)
-        assertThat(testee.state).isEqualTo(LOST)
         assertThat(r1.origin).isEqualTo(testee.origin)
         assertThat(r1.createdAt).isAfter(testee.createdAt)
         assertThat(r1.validFrom).isEqualTo(testee.validFrom)
@@ -50,18 +46,6 @@ internal class BasicInformationTest {
         assertThat(testee.due).isEqualTo(testee.createdAt)
         assertThat(testee.priority).isEqualTo(A2)
         assertThat(r1.priority).isEqualTo(testee.priority)
-        assertThat(r1.new).isTrue()
-        assertThat(testee.new).isFalse()
-        assertThat(r1.enqueued).isFalse()
-        assertThat(testee.enqueued).isTrue()
-        assertThat(r1.dispatched).isFalse()
-        assertThat(testee.dispatched).isFalse()
-        assertThat(r1.delivered).isFalse()
-        assertThat(testee.delivered).isFalse()
-        assertThat(r1.processed).isFalse()
-        assertThat(testee.processed).isFalse()
-        assertThat(testee.observerCount).isEqualTo(0)
-        assertThat(r1.observerCount).isEqualTo(testee.observerCount)
         assertThat(testee.deferred).isFalse()
         assertThat(r1.deferred).isEqualTo(testee.deferred)
         assertThat(testee.validUpTo).isEqualTo(ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC))
@@ -92,9 +76,6 @@ internal class BasicInformationTest {
             "validUpTo" to now()
         ))
         // then
-        assertThat(r1.state).isEqualTo(NEW)
-        assertThat(testee.state).isEqualTo(LOST)
-        assertThat(r2.state).isEqualTo(r1.state)
         assertThat(r1.origin).isEqualTo(testee.origin)
         assertThat(r2.origin).isEqualTo(r1.origin)
         assertThat(r1.createdAt).isAfter(testee.createdAt)
@@ -111,24 +92,6 @@ internal class BasicInformationTest {
         assertThat(testee.priority).isEqualTo(A2)
         assertThat(r1.priority).isEqualTo(C2)
         assertThat(r2.priority).isEqualTo(B3)
-        assertThat(testee.new).isFalse()
-        assertThat(r1.new).isTrue()
-        assertThat(r2.new).isTrue()
-        assertThat(testee.enqueued).isTrue()
-        assertThat(r1.enqueued).isFalse()
-        assertThat(r2.enqueued).isFalse()
-        assertThat(testee.dispatched).isFalse()
-        assertThat(r1.dispatched).isFalse()
-        assertThat(r2.dispatched).isFalse()
-        assertThat(testee.delivered).isFalse()
-        assertThat(r1.delivered).isFalse()
-        assertThat(r2.delivered).isFalse()
-        assertThat(testee.processed).isFalse()
-        assertThat(r1.processed).isFalse()
-        assertThat(r2.processed).isFalse()
-        assertThat(testee.observerCount).isEqualTo(0)
-        assertThat(r1.observerCount).isEqualTo(testee.observerCount)
-        assertThat(r2.observerCount).isEqualTo(testee.observerCount)
         assertThat(testee.deferred).isFalse()
         assertThat(r1.deferred).isEqualTo(testee.deferred)
         assertThat(r2.deferred).isTrue()
@@ -146,10 +109,7 @@ internal class BasicInformationTest {
         // given
         val testee = TestInformation(here, A2, "BarrelCopy")
         val agent = TestAgent()
-        IMMEX.plugin(TestInformation::class, agent)
-        IMMEX.inject(testee)
-        Thread.sleep(100)
-        IMMEX.unplug(agent)
+        agent.accept(testee)
         // when
         val r1: TestInformation = testee.copy(
             "priority" to C2,
@@ -164,9 +124,6 @@ internal class BasicInformationTest {
             "validUpTo" to now()
         ))
         // then
-        assertThat(r1.state).isEqualTo(NEW)
-        assertThat(testee.state).isEqualTo(PROCESSED)
-        assertThat(r2.state).isEqualTo(r1.state)
         assertThat(r1.origin).isEqualTo(testee.origin)
         assertThat(r2.origin).isEqualTo(r1.origin)
         assertThat(r1.createdAt).isAfter(testee.createdAt)
@@ -183,24 +140,6 @@ internal class BasicInformationTest {
         assertThat(testee.priority).isEqualTo(A2)
         assertThat(r1.priority).isEqualTo(C2)
         assertThat(r2.priority).isEqualTo(B3)
-        assertThat(testee.new).isFalse()
-        assertThat(r1.new).isTrue()
-        assertThat(r2.new).isTrue()
-        assertThat(testee.enqueued).isTrue()
-        assertThat(r1.enqueued).isFalse()
-        assertThat(r2.enqueued).isFalse()
-        assertThat(testee.dispatched).isTrue()
-        assertThat(r1.dispatched).isFalse()
-        assertThat(r2.dispatched).isFalse()
-        assertThat(testee.delivered).isTrue()
-        assertThat(r1.delivered).isFalse()
-        assertThat(r2.delivered).isFalse()
-        assertThat(testee.processed).isTrue()
-        assertThat(r1.processed).isFalse()
-        assertThat(r2.processed).isFalse()
-        assertThat(testee.observerCount).isEqualTo(0)
-        assertThat(r1.observerCount).isEqualTo(testee.observerCount)
-        assertThat(r2.observerCount).isEqualTo(testee.observerCount)
         assertThat(testee.deferred).isFalse()
         assertThat(r1.deferred).isEqualTo(testee.deferred)
         assertThat(r2.deferred).isTrue()
@@ -223,19 +162,10 @@ internal class BasicInformationTest {
         validUpTo: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
     ) : BasicInformation(origin, priority, createdAt, Session.new, validFrom, validUpTo)
 
-    class TestMessage(
-        origin: Origin,
-        priority: Priority,
-        val content: String,
-        createdAt: ZonedDateTime = now(),
-        validFrom: ZonedDateTime = createdAt,
-        validUpTo: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC),
-        target: Recipient? = null
-    ) : BasicMessage(origin, priority, createdAt, Session.new, target, validFrom,validUpTo)
-
     class TestAgent: BasicAgent() {
-        override fun onMessage(message: Information) {
-            if (message is Request) message.succeed()
+        override fun receive(notification: Notification<*>) = when (val message = notification.content) {
+            is Request -> message.succeed()
+            else -> super.receive(notification)
         }
     }
 

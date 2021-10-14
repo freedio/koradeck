@@ -4,12 +4,11 @@
 
 package com.coradec.coradeck.com.model
 
-interface Recipient: Target {
-    /** The recipient's queue capacity. */
-    val capacity: Int
+import com.coradec.coradeck.com.trouble.NotificationRejectedException
 
-    /** Injects the specified information to the recipient's message queue (in the IMMEX). */
-    fun <M : Message> inject(message: M): M
-    /** Delivers the specified message to the recipient. */
-    fun onMessage(message: Information)
+interface Recipient: Target {
+    /** Has the recipient accept the specified information; returns the message containing the information. */
+    fun <I: Information> accept(info: I): Message<I>
+    /** Delivers the specified notification to the recipient. */
+    @Throws(NotificationRejectedException::class) fun receive(notification: Notification<*>)
 }

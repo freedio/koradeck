@@ -7,6 +7,7 @@ package com.coradec.coradeck.core.util
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 val Duration.pretty: CharSequence
@@ -33,3 +34,4 @@ fun String.asLocalDate(pattern: String = "yyyy-MM-dd"): LocalDate =
     LocalDate.parse(this, DateTimeFormatter.ofPattern(pattern))
 fun String.asLocalDateTime(pattern: String = "yyyy-MM-dd'T'HH:mm:ss"): LocalDateTime =
     LocalDateTime.parse(this, DateTimeFormatter.ofPattern(pattern))
+fun max(a: ZonedDateTime, b: ZonedDateTime): ZonedDateTime = if (a.isAfter(b)) a else b

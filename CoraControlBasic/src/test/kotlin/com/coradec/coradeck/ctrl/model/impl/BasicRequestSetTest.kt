@@ -4,13 +4,12 @@
 
 package com.coradec.coradeck.ctrl.model.impl
 
-import com.coradec.coradeck.com.model.Information
+import com.coradec.coradeck.com.model.Notification
 import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.relax
-import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
 import com.coradec.coradeck.dir.model.module.CoraModules
@@ -41,9 +40,9 @@ internal class BasicRequestSetTest {
     @Test fun testEmptySet() {
         // given
         val agent = TestAgent()
-        val testee = BasicRequestSet(here, listOf())
+        val testee = BasicRequestSet(here, emptySequence())
         // when
-        agent.inject(testee).standby()
+        agent.accept(testee).standby()
         // then
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
@@ -55,12 +54,12 @@ internal class BasicRequestSetTest {
     fun testSuccessfulSet() {
         // given:
         val agent = TestAgent()
-        val req1 = TestRequest(agent, 100)
-        val req2 = TestRequest(agent, 10)
-        val req3 = TestRequest(agent, 1)
-        val testee = BasicRequestSet(here, listOf(req1, req2, req3))
+        val req1 = TestRequest(100)
+        val req2 = TestRequest(10)
+        val req3 = TestRequest(1)
+        val testee = BasicRequestSet(here, sequenceOf(req1, req2, req3), processor = agent)
         // when:
-        agent.inject(testee).standby()
+        agent.accept(testee).standby()
         // then:
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
@@ -75,13 +74,13 @@ internal class BasicRequestSetTest {
     fun testFailedSet() {
         // given:
         val agent = TestAgent()
-        val req1 = TestRequest(agent, 100)
-        val req2 = FailingRequest(agent, 10)
-        val req3 = TestRequest(agent, 1)
-        val testee = BasicRequestSet(here, listOf(req1, req2, req3))
+        val req1 = TestRequest(100)
+        val req2 = FailingRequest(10)
+        val req3 = TestRequest(1)
+        val testee = BasicRequestSet(here, sequenceOf(req1, req2, req3), processor = agent)
         // when:
         val trouble = try {
-            agent.inject(testee).standby()
+            agent.accept(testee).standby()
             null
         } catch (e: Exception) {
             e
@@ -103,13 +102,13 @@ internal class BasicRequestSetTest {
     fun testCancelledSet() {
         // given:
         val agent = TestAgent()
-        val req1 = TestRequest(agent, 100)
-        val req2 = CancellingRequest(agent, 10)
-        val req3 = TestRequest(agent, 1)
-        val testee = BasicRequestSet(here, listOf(req1, req2, req3))
+        val req1 = TestRequest(100)
+        val req2 = CancellingRequest(10)
+        val req3 = TestRequest(1)
+        val testee = BasicRequestSet(here, sequenceOf(req1, req2, req3), processor = agent)
         // when:
         val trouble = try {
-            agent.inject(testee).standby()
+            agent.accept(testee).standby()
             null
         } catch (e: Exception) {
             e
@@ -131,18 +130,18 @@ internal class BasicRequestSetTest {
     fun testRandomness() {
         // given:
         val agent = TestAgent2()
-        val req1 = TestRequest(agent, 'a'.code)
-        val req2 = TestRequest(agent, 'b'.code)
-        val req3 = TestRequest(agent, 'c'.code)
-        val req4 = TestRequest(agent, 'd'.code)
-        val req5 = TestRequest(agent, 'e'.code)
-        val req6 = TestRequest(agent, 'f'.code)
-        val req7 = TestRequest(agent, 'g'.code)
-        val req8 = TestRequest(agent, 'h'.code)
-        val req9 = TestRequest(agent, 'i'.code)
-        val testee = BasicRequestSet(here, listOf(req1, req2, req3, req4, req5, req6, req7, req8, req9))
+        val req1 = TestRequest('a'.code)
+        val req2 = TestRequest('b'.code)
+        val req3 = TestRequest('c'.code)
+        val req4 = TestRequest('d'.code)
+        val req5 = TestRequest('e'.code)
+        val req6 = TestRequest('f'.code)
+        val req7 = TestRequest('g'.code)
+        val req8 = TestRequest('h'.code)
+        val req9 = TestRequest('i'.code)
+        val testee = BasicRequestSet(here, sequenceOf(req1, req2, req3, req4, req5, req6, req7, req8, req9), processor = agent)
         // when:
-        agent.inject(testee).standby()
+        agent.accept(testee).standby()
         // then:
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
@@ -160,21 +159,28 @@ internal class BasicRequestSetTest {
         assertThat(req9.observerCount).isEqualTo(0)
     }
 
-    class TestRequest(agent: Agent, val value: Int) : BasicRequest(here, target = agent)
-    class FailingRequest(agent: Agent, val value: Int) : BasicRequest(here, target = agent)
-    class CancellingRequest(agent: Agent, val value: Int) : BasicRequest(here, target = agent)
+    class TestRequest(val value: Int) : BasicRequest(here)
+    class FailingRequest(val value: Int) : BasicRequest(here)
+    class CancellingRequest(val value: Int) : BasicRequest(here)
 
     class TestAgent : BasicAgent() {
         var sum = AtomicInteger(0)
 
-        override fun onMessage(message: Information) = when (message) {
-            is TestRequest -> if (!message.cancelled) {
-                sum.addAndGet(message.value)
-                message.succeed()
-            } else relax()
-            is CancellingRequest -> message.cancel()
-            is FailingRequest -> message.fail(RuntimeException("This was to be expected!"))
-            else -> super.onMessage(message)
+        override fun receive(notification: Notification<*>) = when (val message = notification.content) {
+            is TestRequest -> {
+                if (!message.cancelled) {
+                    sum.addAndGet(message.value)
+                    message.succeed()
+                }
+                relax()
+            }
+            is CancellingRequest -> {
+                message.cancel()
+            }
+            is FailingRequest -> {
+                message.fail(RuntimeException("This was to be expected!"))
+            }
+            else -> super.receive(notification)
         }
     }
 
@@ -182,14 +188,21 @@ internal class BasicRequestSetTest {
         private var collector = StringBuilder()
         val value get() = collector.toString()
 
-        override fun onMessage(message: Information) = when (message) {
-            is TestRequest -> if (!message.cancelled) {
-                collector.append(message.value.toChar())
-                message.succeed()
-            } else relax()
-            is CancellingRequest -> message.cancel()
-            is FailingRequest -> message.fail(RuntimeException("This was to be expected!"))
-            else -> super.onMessage(message)
+        override fun receive(notification: Notification<*>) = when (val message = notification.content) {
+            is TestRequest -> {
+                if (!message.cancelled) {
+                    collector.append(message.value.toChar())
+                    message.succeed()
+                }
+                relax()
+            }
+            is CancellingRequest -> {
+                message.cancel()
+            }
+            is FailingRequest -> {
+                message.fail(RuntimeException("This was to be expected!"))
+            }
+            else -> super.receive(notification)
         }
     }
 }

@@ -6,10 +6,11 @@ package com.coradec.coradeck.com.model.impl
 
 import com.coradec.coradeck.com.ctrl.Observer
 import com.coradec.coradeck.com.model.Event
-import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.com.model.Request
-import com.coradec.coradeck.com.model.State.*
-import com.coradec.coradeck.com.model.State.Companion.FINISHED
+import com.coradec.coradeck.com.model.RequestState
+import com.coradec.coradeck.com.model.RequestState.*
+import com.coradec.coradeck.com.model.RequestState.Companion.FINISHED
+import com.coradec.coradeck.com.model.RequestStateObserver
 import com.coradec.coradeck.com.trouble.RequestCancelledException
 import com.coradec.coradeck.com.trouble.RequestFailedException
 import com.coradec.coradeck.core.model.Origin
@@ -17,11 +18,14 @@ import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
 import com.coradec.coradeck.core.model.Timespan
 import com.coradec.coradeck.core.trouble.StandbyTimeoutException
+import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.session.model.Session
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
+import java.util.*
+import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Semaphore
 
@@ -30,21 +34,65 @@ open class BasicRequest(
     priority: Priority = defaultPriority,
     createdAt: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
-    target: Recipient? = null,
     validFrom: ZonedDateTime = createdAt,
     validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
-) : BasicMessage(origin, priority, createdAt, session, target, validFrom, validUpto), Request {
-    private var myReason: Throwable? = null
+) : BasicEvent(origin, priority, createdAt, session, validFrom, validUpto), Request {
     private val unfinished = CountDownLatch(1)
+    private var myReason: Throwable? = null
     override val reason: Throwable? get() = myReason
+    private val stateRegistry = CopyOnWriteArraySet<Observer>()
+    private val myStates = EnumSet.of(NEW)
+    override val states: EnumSet<RequestState> get() = EnumSet.copyOf(myStates)
+    override val new: Boolean get() = myStates.singleOrNull() == NEW
+    override val enqueued: Boolean get() = ENQUEUED in myStates
+    override val dispatched: Boolean get() = DISPATCHED in myStates
+    override val delivered: Boolean get() = DELIVERED in myStates
+    override val processed: Boolean get() = PROCESSED in myStates
+    override val lost: Boolean get() = LOST in myStates
     override val successful: Boolean get() = state == SUCCESSFUL
     override val failed: Boolean get() = state == FAILED
     override val cancelled: Boolean get() = state == CANCELLED
     override val complete: Boolean get() = state in FINISHED
+    override val observerCount: Int get() = stateRegistry.size
     private val successActions: MutableList<Request.() -> Unit> = mutableListOf()
     private val failureActions: MutableList<Request.() -> Unit> = mutableListOf()
     private val cancellationActions: MutableList<Request.() -> Unit> = mutableListOf()
     private val postActionSemaphore = Semaphore(1)
+
+    override var state: RequestState
+        get() = myStates.last()
+        set(state) {
+            interceptSetState(state)
+            var event: RequestStateChangedEvent? = null
+            synchronized(myStates) {
+                if (state !in myStates) {
+                    event = RequestStateChangedEvent(here, this, myStates.last(), state.apply { myStates += this })
+                }
+            }
+            if (event != null) stateRegistry.forEach { if (it.notify(event!!)) stateRegistry.remove(it) }
+        }
+
+    protected open fun interceptSetState(state: RequestState) = relax()
+
+    override fun enqueue() {
+        state = ENQUEUED
+    }
+
+    override fun dispatch() {
+        state = DISPATCHED
+    }
+
+    override fun deliver() {
+        state = DELIVERED
+    }
+
+    override fun process() {
+        state = PROCESSED
+    }
+
+    override fun discard() {
+        state = LOST
+    }
 
     override fun succeed() {
         if (!complete) {
@@ -69,7 +117,7 @@ open class BasicRequest(
         }
     }
 
-    override fun standby(): BasicRequest {
+    override fun standby(): Request {
         unfinished.await()
         if (reason != null) throw reason!!
         if (failed) throw RequestFailedException()
@@ -78,13 +126,19 @@ open class BasicRequest(
         return this
     }
 
-    override fun standby(delay: Timespan): BasicRequest {
+    override fun standby(delay: Timespan): Request {
         if (!unfinished.await(delay.amount, delay.unit)) throw StandbyTimeoutException(delay)
         if (reason != null) throw reason!!
         if (failed) throw RequestFailedException()
         if (cancelled) throw RequestCancelledException()
         Thread.yield()
         return this
+    }
+
+    override fun whenState(state: RequestState, action: () -> Unit) {
+        if (synchronized(myStates) {
+                (state in myStates).also { if (!it) stateRegistry.add(RequestStateObserver(state, action)) }
+            }) action.invoke()
     }
 
     override fun onSuccess(action: Request.() -> Unit): Request = also {
@@ -130,6 +184,7 @@ open class BasicRequest(
     }
 
     override fun propagateTo(other: Request) = whenFinished {
+        trace("Propagating state ‹%s› from ‹%s› to ‹%s›.", state, this, other)
         when (state) {
             SUCCESSFUL -> other.succeed()
             FAILED -> other.fail(reason)
@@ -147,11 +202,12 @@ open class BasicRequest(
         cancellationActions.clear()
     }
 
-    override fun enregister(observer: Observer) = !complete && super.enregister(observer)
+    override fun enregister(observer: Observer) = !complete && stateRegistry.add(observer)
+    override fun deregister(observer: Observer) = stateRegistry.remove(observer)
 
     private inner class PostActionObserver : Observer {
         override fun onNotification(event: Event): Boolean = when (event) {
-            is StateChangedEvent -> (event.current in FINISHED).also { complete ->
+            is RequestStateChangedEvent -> (event.current in FINISHED).also { complete ->
                 if (complete) runPostActions()
             }
             else -> false

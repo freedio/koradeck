@@ -4,14 +4,19 @@
 
 package com.coradec.coradeck.ctrl.model.impl
 
+import com.coradec.coradeck.com.model.Information
 import com.coradec.coradeck.com.model.Message
 import com.coradec.coradeck.com.model.State.PROCESSED
+import com.coradec.coradeck.core.model.Timespan
+import com.coradec.coradeck.core.trouble.StandbyTimeoutException
 import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
 import com.coradec.coradeck.ctrl.model.AgentPool
+import com.coradec.coradeck.ctrl.module.CoraControl
+import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.Semaphore
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit.SECONDS
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -23,6 +28,7 @@ class BasicAgentPool<AgentType : Agent>(
     private val generator: () -> AgentType
 ) : BasicAgent(), AgentPool {
     private val agents = LinkedBlockingQueue<AgentType>()
+    private val messages = CopyOnWriteArraySet<Message<*>>()
     private val done = Semaphore(0)
     private val agentCount = AtomicInteger(0)
     private val processing = AtomicInteger(0)
@@ -31,18 +37,18 @@ class BasicAgentPool<AgentType : Agent>(
     private var submitted = AtomicLong(0L)
     private var digested = AtomicLong(0L)
 
-    override val stats: String get() = "Low: $low, High: $high, Agents Used: $used, Messages submitted: $submitted, processing: $processing & processed: $digested; state: ${if (enabled.get()) "enabled" else "disabled"}"
+    override val stats: String get() = "Low: $low, High: $high, Agents Used: $used, Messages submitted: $submitted, processing: $processing(${messages.size}) & processed: $digested; state: ${if (enabled.get()) "enabled" else "disabled"}"
 
-    override fun <M : Message> inject(message: M): M = with(agents.poll() ?: makeOrWaitForAgent()) {
+    override fun <I : Information> accept(info: I): Message<I> = with(agents.poll() ?: makeOrWaitForAgent()) {
         used = max(used, processing.incrementAndGet())
         submitted.incrementAndGet()
-        inject(message.apply {
+        accept(info).apply {
             whenState(PROCESSED) {
+                messages -= this
                 digested.incrementAndGet()
                 if (processing.getAndDecrement() >= agentCount.get() || agents.size < high || agents.size == 0) agents.put(this@with)
-                tryRelease()
             }
-        })
+        }.also { messages += it }
     }
 
     override fun shutdown() {
@@ -52,9 +58,16 @@ class BasicAgentPool<AgentType : Agent>(
 
     override fun synchronize() {
         debug("Synchronizing...")
-        while (!done.tryAcquire(1, TimeUnit.SECONDS)) {
+        val IMMEX = CoraControl.IMMEX
+        var maxRetries = 10
+        while (!done.tryAcquire(1, SECONDS) && --maxRetries > 0) {
             debug("Statistics: «%s»", stats)
+            debug("CIMMEX Stats: %s", IMMEX.stats)
             tryRelease()
+        }
+        if (maxRetries == 0) {
+            debug("Unprocessed: %s", messages)
+            throw StandbyTimeoutException(Timespan(10, SECONDS))
         }
         debug("Synchronized.")
     }

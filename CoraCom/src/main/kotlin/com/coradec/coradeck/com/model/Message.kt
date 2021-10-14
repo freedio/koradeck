@@ -4,13 +4,18 @@
 
 package com.coradec.coradeck.com.model
 
-interface Message: Event {
-    val recipient: Recipient?
+import com.coradec.coradeck.com.model.impl.BasicMessage
+import com.coradec.coradeck.com.model.impl.TargetedNotification
 
-    /** Returns this message or a copy with the recipient set to the specified recipient. */
-    fun withRecipient(target: Recipient): Message
-    /** Returns this message or a copy with the recipient set to the specified recipient, but only if no recipient was set. */
-    fun withDefaultRecipient(target: Recipient?): Message
-    /** Enqueues this message with the specified target recipient. */
-    fun enqueue(target: Recipient)
+interface Message<I: Information>: Notification<I> {
+    /** The designated recipient. */
+    val recipient: Recipient
+
+    companion object {
+        operator fun <I: Information> invoke(content: I, recipient: Recipient): Message<I> = BasicMessage(content, recipient)
+        operator fun <I: Information> invoke(notification: Notification<I>, recipient: Recipient): Message<I> = TargetedNotification(notification, recipient)
+    }
 }
+
+infix fun <I: Information> Notification<I>.unto(recipient: Recipient): Message<I> = TargetedNotification(this, recipient)
+infix fun <I: Information> I.unto(recipient: Recipient): Message<I> = BasicMessage(this, recipient)

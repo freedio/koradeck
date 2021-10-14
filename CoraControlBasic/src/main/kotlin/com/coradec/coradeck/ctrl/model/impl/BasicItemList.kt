@@ -4,53 +4,56 @@
 
 package com.coradec.coradeck.ctrl.model.impl
 
-import com.coradec.coradeck.com.model.Event
-import com.coradec.coradeck.com.model.Recipient
-import com.coradec.coradeck.com.model.Request
-import com.coradec.coradeck.com.model.RequestState
+import com.coradec.coradeck.com.model.*
 import com.coradec.coradeck.com.model.RequestState.*
 import com.coradec.coradeck.com.model.RequestState.Companion.FINISHED
 import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.com.model.impl.RequestStateChangedEvent
+import com.coradec.coradeck.com.model.impl.StateChangedEvent
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.util.relax
-import com.coradec.coradeck.ctrl.model.RequestList
+import com.coradec.coradeck.ctrl.model.ItemList
 import com.coradec.coradeck.ctrl.module.CoraControl.IMMEX
+import com.coradec.coradeck.ctrl.trouble.LostInformationException
 import com.coradec.coradeck.session.model.Session
 import com.coradec.coradeck.text.model.LocalText
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
-class BasicRequestList(
+class BasicItemList(
     origin: Origin,
-    private val requests: Iterator<Request>,
+    private val items: Iterator<Information>,
     priority: Priority = Priority.defaultPriority,
     createdAt: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
     validFrom: ZonedDateTime = createdAt,
     validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC),
     private val processor: Recipient? = null
-) : BasicRequest(origin, priority, createdAt, session, validFrom, validUpto), RequestList {
+) : BasicRequest(origin, priority, createdAt, session, validFrom, validUpto), ItemList {
     constructor(
         origin: Origin,
-        requests: Sequence<Request>,
+        items: Sequence<Information>,
         priority: Priority = Priority.defaultPriority,
         createdAt: ZonedDateTime = ZonedDateTime.now(),
         session: Session = Session.current,
         validFrom: ZonedDateTime = createdAt,
         validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC),
         processor: Recipient? = null
-    ) : this(origin, requests.iterator(), priority, createdAt, session, validFrom, validUpto, processor)
+    ) : this(origin, items.iterator(), priority, createdAt, session, validFrom, validUpto, processor)
+
+    private val actionItems = Sequence { items }.map {
+        if (it is Notification<*>) it else Notification(it)
+    }.iterator()
 
     override fun execute(): Unit = when {
         complete -> relax()
-        requests.hasNext() -> requests.next().let { request ->
-            request.enregister(this)
-            if (!request.complete) {
-                if (!request.enqueued) processor?.accept(request) ?: IMMEX.inject(request)
-            } else process(request, request.state)
+        actionItems.hasNext() -> actionItems.next().let { item ->
+            if (item.content is Request) (item.content as Request).enregister(this) else item.enregister(this)
+            if (!item.complete) {
+                if (!item.enqueued) processor?.accept(item) ?: IMMEX.inject(item)
+            } else process(item, item.state)
         }
         else -> succeed()
     }
@@ -64,13 +67,35 @@ class BasicRequestList(
             process(element, newState)
             newState in FINISHED
         }
+        event is StateChangedEvent -> {
+            val element: Notification<*> = event.message
+            trace("Notification state changed: %s %s→%s", element, event.previous, event.current)
+            val newState: State = event.current
+            process(element, newState)
+            newState == State.PROCESSED
+        }
         else -> false.also { warn(TEXT_EVENT_NOT_UNDERSTOOD, event) }
+    }
+
+    private fun process(item: Notification<*>, state: State) {
+        when (val element: Information = item.content) {
+            is Request -> process(element, element.state)
+            is Notification<*> -> process(element, element.state)
+            else -> process(item, element, state)
+        }
+    }
+
+    private fun process(notification: Notification<out Information>, element: Information, state: State) = when (state) {
+        State.PROCESSED -> execute()
+        State.REJECTED, State.CRASHED -> fail(notification.problem)
+        State.LOST -> fail(LostInformationException(element))
+        else -> relax()
     }
 
     private fun process(element: Request, state: RequestState) = when (state) {
         SUCCESSFUL -> execute()
-        FAILED -> fail(element.reason)
-        CANCELLED -> cancel()
+        FAILED -> this@BasicItemList.fail(element.reason)
+        CANCELLED -> this@BasicItemList.cancel()
         else -> relax()
     }
 

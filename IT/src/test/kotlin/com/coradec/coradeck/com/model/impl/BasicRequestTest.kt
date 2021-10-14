@@ -4,9 +4,9 @@
 
 package com.coradec.coradeck.com.model.impl
 
-import com.coradec.coradeck.com.model.Information
-import com.coradec.coradeck.com.model.Recipient
-import com.coradec.coradeck.com.model.State.NEW
+import com.coradec.coradeck.com.model.Message
+import com.coradec.coradeck.com.model.Notification
+import com.coradec.coradeck.com.model.RequestState.NEW
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.model.Origin
@@ -62,14 +62,14 @@ internal class BasicRequestTest {
         // given:
         val started = ZonedDateTime.now()
         val agent = TestAgent()
-        val request = SuccessfulTestRequest(here, agent)
+        val request = SuccessfulTestRequest(here)
         // when:
-        agent.inject(request).standby()
+        agent.accept(request).standby()
         val finished = ZonedDateTime.now()
         // then:
         val softly = SoftAssertions()
         softly.assertThat(request.enqueued).isTrue()
-        softly.assertThat(request.enqueued).isTrue()
+        softly.assertThat(request.dispatched).isTrue()
         softly.assertThat(request.complete).isTrue()
         softly.assertThat(request.successful).isTrue()
         softly.assertThat(request.createdAt).isBetween(started, finished)
@@ -85,12 +85,12 @@ internal class BasicRequestTest {
         val agent = TestAgent()
         val request = SuccessfulTestRequest(here)
         // when:
-        agent.inject(request).standby()
+        agent.accept(request).standby()
         val finished = ZonedDateTime.now()
         // then:
         val softly = SoftAssertions()
         softly.assertThat(request.enqueued).isTrue()
-        softly.assertThat(request.enqueued).isTrue()
+        softly.assertThat(request.dispatched).isTrue()
         softly.assertThat(request.complete).isTrue()
         softly.assertThat(request.successful).isTrue()
         softly.assertThat(request.createdAt).isBetween(started, finished)
@@ -107,21 +107,30 @@ internal class BasicRequestTest {
         val request = SuccessfulTestRequest(here)
         val agent2 = TestAgent()
         // when:
-        val r1 = agent.inject(request).standby()
-        val r2 = agent2.inject(r1).standby()
+        val r1 = try {
+            agent.accept(request).standby()
+        } catch (e: Exception) {
+            e
+        }
+        val r2 = try {
+            agent2.accept(request).standby()
+        } catch (e: Exception) {
+            e
+        }
         val finished = ZonedDateTime.now()
         // then:
+        Thread.sleep(10)
         val softly = SoftAssertions()
         softly.assertThat(request.enqueued).isTrue()
-        softly.assertThat(request.enqueued).isTrue()
+        softly.assertThat(request.dispatched).isTrue()
         softly.assertThat(request.complete).isTrue()
         softly.assertThat(request.successful).isTrue()
         softly.assertThat(request.createdAt).isBetween(started, finished)
         softly.assertThat(request.cancelled).isFalse()
         softly.assertThat(request.failed).isFalse()
         softly.assertThat(request.reason).isNull()
-        softly.assertThat(r1).isSameAs(request)
-        softly.assertThat(r2).isNotSameAs(r1)
+        softly.assertThat(r1).isInstanceOf(Message::class.java)
+        softly.assertThat(r2).isInstanceOf(Message::class.java)
         softly.assertAll()
     }
 
@@ -129,10 +138,10 @@ internal class BasicRequestTest {
         // given:
         val started = ZonedDateTime.now()
         val agent = TestAgent()
-        val request = FailedTestRequest(here, agent)
+        val request = FailedTestRequest(here)
         // when:
         try {
-            agent.inject(request).standby()
+            agent.accept(request).standby()
         } catch (e: Exception) {
         }
         val finished = ZonedDateTime.now()
@@ -153,10 +162,10 @@ internal class BasicRequestTest {
         // given:
         val started = ZonedDateTime.now()
         val agent = TestAgent()
-        val request = CancelledTestRequest(here, agent)
+        val request = CancelledTestRequest(here)
         // when:
         try {
-            agent.inject(request).standby()
+            agent.accept(request).standby()
         } catch (e: Exception) {
         }
         val finished = ZonedDateTime.now()
@@ -177,10 +186,10 @@ internal class BasicRequestTest {
         // given:
         val started = ZonedDateTime.now()
         val agent = TestAgent()
-        val request = CancelledTestRequest2(here, agent)
+        val request = CancelledTestRequest2(here)
         // when:
         try {
-            agent.inject(request).standby()
+            agent.accept(request).standby()
         } catch (e: Exception) {
         }
         val finished = ZonedDateTime.now()
@@ -197,19 +206,19 @@ internal class BasicRequestTest {
         softly.assertAll()
     }
 
-    class SuccessfulTestRequest(origin: Origin, target: Recipient? = null) : BasicRequest(origin, target = target)
-    class FailedTestRequest(origin: Origin, recipient: Recipient? =null) : BasicRequest(origin, target = recipient)
-    class CancelledTestRequest(origin: Origin, recipient: Recipient? = null) : BasicRequest(origin, target = recipient)
-    class CancelledTestRequest2(origin: Origin, recipient: Recipient? = null) : BasicRequest(origin, target = recipient)
+    class SuccessfulTestRequest(origin: Origin) : BasicRequest(origin)
+    class FailedTestRequest(origin: Origin) : BasicRequest(origin)
+    class CancelledTestRequest(origin: Origin) : BasicRequest(origin)
+    class CancelledTestRequest2(origin: Origin) : BasicRequest(origin)
     class TestFailureException: BasicException()
     class CancelReason : BasicException()
     class TestAgent : BasicAgent() {
-        override fun onMessage(message: Information) = when(message) {
+        override fun receive(notification: Notification<*>) = when(val message = notification.content) {
             is SuccessfulTestRequest -> message.succeed()
             is FailedTestRequest -> message.fail(TestFailureException())
             is CancelledTestRequest -> message.cancel()
             is CancelledTestRequest2 -> message.cancel(CancelReason())
-            else -> super.onMessage(message)
+            else -> super.receive(notification)
         }
     }
 

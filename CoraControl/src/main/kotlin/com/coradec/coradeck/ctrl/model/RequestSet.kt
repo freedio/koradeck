@@ -15,6 +15,6 @@ interface RequestSet: Observer, MultiRequest {
         operator fun invoke(origin: Origin, vararg requests: Request) =
                 CoraControl.createRequestSet(origin, *requests)
         operator fun invoke(origin: Origin, requests: Sequence<Request>) =
-                CoraControl.createRequestSet(origin, *requests.toList().toTypedArray())
+                CoraControl.createRequestSet(origin, requests)
     }
 }

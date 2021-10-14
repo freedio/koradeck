@@ -8,13 +8,14 @@ import com.coradec.coradeck.com.ctrl.impl.Logger
 import com.coradec.coradeck.com.model.*
 import com.coradec.coradeck.com.model.impl.ActionCommand
 import com.coradec.coradeck.com.model.impl.BasicCommand
+import com.coradec.coradeck.com.model.impl.DummyRequest
+import com.coradec.coradeck.com.trouble.NotificationRejectedException
 import com.coradec.coradeck.core.util.caller
 import com.coradec.coradeck.core.util.classname
 import com.coradec.coradeck.core.util.contains
 import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.module.CoraControl.IMMEX
 import com.coradec.coradeck.ctrl.trouble.CommandNotApprovedException
-import com.coradec.coradeck.ctrl.trouble.NoRouteForMessageException
 import com.coradec.coradeck.text.model.LocalText
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
@@ -22,8 +23,8 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
 
-@Suppress("UNCHECKED_CAST", "LeakingThis")
-open class BasicAgent(override val capacity: Int = 1024) : Logger(), Agent {
+@Suppress("LeakingThis")
+open class BasicAgent() : Logger(), Agent {
     private val index = NEXT.getAndIncrement()
     private val routes = ConcurrentHashMap<Class<*>, (Any) -> Unit>()
     private val approvedCommands = CopyOnWriteArraySet(INTERNAL_COMMANDS)
@@ -34,11 +35,18 @@ open class BasicAgent(override val capacity: Int = 1024) : Logger(), Agent {
         AGENTS[index] = this
     }
 
-    override fun <M : Message> inject(message: M): M = IMMEX.inject(message.withDefaultRecipient(this)) as M
+    @Suppress("UNCHECKED_CAST")
+    override fun <I : Information> accept(info: I): Message<I> = IMMEX.inject(
+        when {
+            info is Message<*> && info.recipient == this -> info as Message<I>
+            info is Notification<*> -> (info unto this) as Message<I>
+            else -> info unto this
+        }
+    )
 
     override fun synchronize() {
         val sync = Semaphore(0)
-        IMMEX.inject(Synchronization(sync))
+        accept(Synchronization(sync))
         sync.acquire()
     }
 
@@ -59,43 +67,39 @@ open class BasicAgent(override val capacity: Int = 1024) : Logger(), Agent {
         shutdownActions += action
     }
 
-    override fun onMessage(message: Information) {
-        when (message) {
-            is Command ->
-                if (approvedCommands.any { it.isInstance(message) })
-                    try {
-                        message.execute()
-                    } catch (e: Throwable) {
-                        error(e, TEXT_COMMAND_FAILED, message::class.classname, e.toString())
-                        message.fail(e)
-                    }
-                else {
-                    message.fail(CommandNotApprovedException(message))
-                    error(TEXT_MESSAGE_NOT_APPROVED, message.classname, message)
-                }
-            is Synchronization -> {
-                debug("Synchronization point «%s» reached", message)
-                message.succeed()
+    override fun receive(notification: Notification<*>): Unit = when (val content = notification.content) {
+        is Command ->
+            if (approvedCommands.any { it.isInstance(content) }) try {
+                content.execute()
+            } catch (e: Throwable) {
+                error(e, TEXT_COMMAND_FAILED, content::class.classname, e.toString())
+                content.fail(e)
+            } else {
+                content.fail(CommandNotApprovedException(content))
+                error(TEXT_MESSAGE_NOT_APPROVED, content.classname, content)
             }
-            in routes.keys -> with(routes.filterKeys { it.isInstance(message) }.iterator().next().value) {
-                try {
-                    invoke(message)
-                } catch (e: Throwable) {
-                    error(e, TEXT_MESSAGE_FAILED, message.classname, e.toString())
-                    if (message is Request) message.fail(e)
-                }
+        is Synchronization -> content.succeed().also { debug("Synchronization point «%s» reached", content) }
+        in routes.keys -> with(routes.filterKeys { it.isInstance(content) }.iterator().next().value) {
+            try {
+                invoke(content)
+            } catch (e: Throwable) {
+                error(e, TEXT_MESSAGE_FAILED, content.classname, e.toString())
+                if (content is Request) content.fail(e)
             }
-            else -> {
-                if (message is Request) message.fail(NoRouteForMessageException(message))
-                error(TEXT_MESSAGE_NOT_UNDERSTOOD, message.classname, message)
-            }
+        }
+        is DummyRequest -> content.succeed().also { debug("DummyRequest processed.") }
+        else -> {
+            error(TEXT_MESSAGE_NOT_UNDERSTOOD, content.classname, content)
+            throw NotificationRejectedException(notification)
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     protected fun <T : Information> addRoute(type: Class<out T>, processor: (T) -> Unit) {
         routes[type] = processor as (Any) -> Unit
     }
 
+    @Suppress("UNCHECKED_CAST")
     protected fun <T : Information> addRoute(type: KClass<out T>, processor: (T) -> Unit) {
         routes[type.java] = processor as (Any) -> Unit
     }
@@ -108,7 +112,7 @@ open class BasicAgent(override val capacity: Int = 1024) : Logger(), Agent {
         routes -= type.java
     }
 
-    private inner class Synchronization(val sync: Semaphore, target: Recipient? = this@BasicAgent) : BasicCommand(caller, target = target) {
+    class Synchronization(val sync: Semaphore) : BasicCommand(caller) {
         override fun execute() {
             debug("Synchronization point reached")
             sync.release()

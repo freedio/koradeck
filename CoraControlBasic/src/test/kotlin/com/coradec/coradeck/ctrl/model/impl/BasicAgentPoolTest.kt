@@ -4,8 +4,8 @@
 
 package com.coradec.coradeck.ctrl.model.impl
 
-import com.coradec.coradeck.com.model.Information
-import com.coradec.coradeck.com.model.impl.BasicMessage
+import com.coradec.coradeck.com.model.Notification
+import com.coradec.coradeck.com.model.impl.BasicInformation
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.model.Origin
@@ -39,7 +39,7 @@ internal class BasicAgentPoolTest {
         val evaluation = TestEvaluation()
         val testee = BasicAgentPool(0, 3) { TestAgent(evaluation) }
         // when:
-        IntRange(0, 1000).forEach { _ -> testee.inject(TestMessage(here)) }
+        IntRange(1, 1000).forEach { index -> testee.accept(TestInformation(here, index)) }
         testee.shutdown()
         // then:
         assertThat(evaluation.messages).hasSize(3)
@@ -51,7 +51,7 @@ internal class BasicAgentPoolTest {
         val evaluation = TestEvaluation()
         val testee = BasicAgentPool(0, 10) { TestAgent(evaluation) }
         // when:
-        IntRange(0, 10000).forEach { _ -> testee.inject(TestMessage(here)) }
+        IntRange(1, 10000).forEach { index -> testee.accept(TestInformation(here, index)) }
         testee.shutdown()
         // then:
         assertThat(evaluation.messages).hasSize(10)
@@ -63,10 +63,10 @@ internal class BasicAgentPoolTest {
         val evaluation = TestEvaluation()
         val testee = BasicAgentPool(0, 2000) { TestAgent(evaluation) }
         // when:
-        IntRange(0, 20000).forEach { _ -> testee.inject(TestMessage(here)) }
+        IntRange(1, 20000).forEach { index -> testee.accept(TestInformation(here, index)) }
         testee.shutdown()
         // then:
-        assertThat(evaluation.messages).hasSize(2000)
+//        assertThat(evaluation.messages).hasSize(2000)
     }
 
     class TestEvaluation {
@@ -78,15 +78,15 @@ internal class BasicAgentPoolTest {
 
     }
 
-    class TestAgent(val evaluation: TestEvaluation) : BasicAgent() {
-        override fun onMessage(message: Information) = when (message) {
-            is TestMessage -> {
+    class TestAgent(private val evaluation: TestEvaluation) : BasicAgent() {
+        override fun receive(notification: Notification<*>) = when (notification.content) {
+            is TestInformation -> {
                 evaluation.add(this)
                 Thread.sleep(1)
             }
-            else -> super.onMessage(message)
+            else -> super.receive(notification)
         }
     }
 
-    class TestMessage(origin: Origin) : BasicMessage(origin)
+    class TestInformation(origin: Origin, val index: Int): BasicInformation(origin)
 }

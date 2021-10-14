@@ -4,11 +4,13 @@
 
 package com.coradec.coradeck.ctrl.ctrl.impl
 
-import com.coradec.coradeck.com.model.Information
-import com.coradec.coradeck.com.model.Information.Companion.LOST_ITEMS
+import com.coradec.coradeck.com.model.Notification
+import com.coradec.coradeck.com.model.Notification.Companion.LOST_ITEMS
 import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.com.model.State.LOST
+import com.coradec.coradeck.com.model.impl.BasicInformation
 import com.coradec.coradeck.com.model.impl.BasicMessage
+import com.coradec.coradeck.com.model.impl.BasicNotification
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.model.Origin
@@ -35,23 +37,11 @@ internal class CIMMEXUT {
     }
 
     @Test
-    fun testDirectedMessageInjectionCIMMEX() {
+    fun testNotificationInjectionCIMMEX() {
         // given
         val agent = TestAgent1()
-        val message = TestMessage1(here, agent)
-        // when
-        CIMMEX.inject(message)
-        agent.synchronize()
-        // then
-        assertThat(agent.gotMessage).isTrue()
-    }
-
-    @Test
-    fun testBroadcastMessageInjectionCIMMEX() {
-        // given
-        val agent = TestAgent1()
-        val message = TestMessage1(here)
-        CIMMEX.plugin(TestMessage1::class, agent)
+        val message = TestNotification1(here)
+        CIMMEX.plugin(TestInformation1::class, agent)
         // when
         CIMMEX.inject(message)
         CIMMEX.synchronize()
@@ -64,9 +54,26 @@ internal class CIMMEXUT {
     }
 
     @Test
-    fun testLostBroadcastMessage() {
+    fun testInformationInjectionCIMMEX() {
         // given
-        val message = TestMessage1(here)
+        val agent = TestAgent1()
+        val message = TestInformation1(here)
+        CIMMEX.plugin(TestInformation1::class, agent)
+        // when
+        CIMMEX.inject(message)
+        CIMMEX.synchronize()
+        agent.synchronize()
+        // then
+        assertThat(agent.gotMessage).isTrue()
+        assertThat(LOST_ITEMS.map { it.content }).doesNotContain(message)
+        // cleanup
+        CIMMEX.unplug(agent)
+    }
+
+    @Test
+    fun testLostNotification() {
+        // given
+        val message = TestNotification1(here)
         // when
         CIMMEX.inject(message)
         CIMMEX.synchronize()
@@ -76,41 +83,97 @@ internal class CIMMEXUT {
     }
 
     @Test
-    fun testMessageInjectionAgent() {
+    fun testInjectionThroughAgent() {
         // given
         val agent = TestAgent1()
-        val message = TestMessage1(here)
+        val info = TestInformation1(here)
         // when
-        agent.inject(message)
+        val message = agent.accept(info)
         agent.synchronize()
         // then
         assertThat(agent.gotMessage).isTrue()
+        assertThat(message.recipient).isEqualTo(agent)
+        assertThat(message.enqueued).isTrue()
+        assertThat(message.dispatched).isTrue()
+        assertThat(message.delivered).isTrue()
+        assertThat(message.processed).isTrue()
     }
 
     @Test
-    fun testDelayedMessageInjectionCIMMEX() {
+    fun testDelayedNotificationInjectionCIMMEX() {
         // given
         val then = System.currentTimeMillis()
         val delay = Duration.ofSeconds(2)
         val agent = TestAgent2()
-        val message = TestMessage2(here, agent, delay)
+        CIMMEX.plugin(TestInformation1::class, agent)
+        val message = TestNotification2(here, delay)
         // when
-        agent.inject(message)
+        CIMMEX.inject(message)
+        agent.synchronize()
+        // then
+        assertThat(agent.gotMessage).isFalse()
+        message.standBy()
+        assertThat(agent.gotMessage).isTrue()
+        assertThat(System.currentTimeMillis()).isGreaterThanOrEqualTo(then + delay.toMillis())
+        // cleanup
+        CIMMEX.unplug(agent)
+    }
+
+    @Test
+    fun testDelayedInformationInjectionCIMMEX() {
+        // given
+        val then = System.currentTimeMillis()
+        val delay = Duration.ofSeconds(2)
+        val agent = TestAgent2()
+        CIMMEX.plugin(TestInformation2::class, agent)
+        val message = TestInformation2(here, delay)
+        // when
+        CIMMEX.inject(message)
         agent.synchronize()
         // then
         assertThat(agent.gotMessage).isFalse()
         message.standBy()
         assertThat(agent.gotMessage).isTrue()
         assertThat(System.currentTimeMillis()).isGreaterThan(then + delay.toMillis())
+        // cleanup
+        CIMMEX.unplug(agent)
     }
 
-    class TestMessage1(origin: Origin, target: Recipient? = null) : BasicMessage(origin, target = target)
+    class TestInformation1(origin: Origin) : BasicInformation(origin)
+    class TestNotification1(origin: Origin) : BasicNotification<TestInformation1>(TestInformation1(origin))
+    class TestInformation2(
+        origin: Origin,
+        delay: Duration
+    ) : BasicInformation(origin, validFrom = ZonedDateTime.now().plus(delay)) {
+        private val semaphore = Semaphore(0)
+        fun standBy() {
+            semaphore.acquire()
+        }
+
+        fun done() {
+            semaphore.release()
+        }
+    }
+
+    class TestNotification2(
+        origin: Origin,
+        delay: Duration
+    ) : BasicNotification<TestInformation1>(TestInformation1(origin), validFrom = ZonedDateTime.now().plus(delay)) {
+        private val semaphore = Semaphore(0)
+        fun standBy() {
+            semaphore.acquire()
+        }
+
+        fun done() {
+            semaphore.release()
+        }
+    }
 
     class TestMessage2(
         origin: Origin,
-        target: Recipient? = null,
+        recipient: Recipient,
         delay: Duration
-    ) : BasicMessage(origin, target = target, validFrom = ZonedDateTime.now().plus(delay)) {
+    ) : BasicMessage<TestInformation1>(TestInformation1(origin), recipient, validFrom = ZonedDateTime.now().plus(delay)) {
         private val semaphore = Semaphore(0)
         fun standBy() {
             semaphore.acquire()
@@ -123,20 +186,24 @@ internal class CIMMEXUT {
 
     class TestAgent1 : BasicAgent() {
         var gotMessage: Boolean = false
-        override fun onMessage(message: Information) = when (message) {
-            is TestMessage1 -> gotMessage = true
-            else -> super.onMessage(message)
+        override fun receive(notification: Notification<*>) = when (notification.content) {
+            is TestInformation1 -> gotMessage = true
+            else -> super.receive(notification)
         }
     }
 
     class TestAgent2 : BasicAgent() {
         var gotMessage: Boolean = false
-        override fun onMessage(message: Information) = when (message) {
-            is TestMessage2 -> {
+        override fun receive(notification: Notification<*>) = when {
+            notification is TestNotification2 -> {
                 gotMessage = true
-                message.done()
+                notification.done()
             }
-            else -> super.onMessage(message)
+            notification.content is TestInformation2 -> {
+                gotMessage = true
+                (notification.content as TestInformation2).done()
+            }
+            else -> super.receive(notification)
         }
     }
 

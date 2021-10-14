@@ -4,9 +4,8 @@
 
 package com.coradec.coradeck.com.model.impl
 
-import com.coradec.coradeck.com.model.Recipient
-import com.coradec.coradeck.com.model.State
-import com.coradec.coradeck.com.model.State.SUCCESSFUL
+import com.coradec.coradeck.com.model.RequestState
+import com.coradec.coradeck.com.model.RequestState.SUCCESSFUL
 import com.coradec.coradeck.com.model.Voucher
 import com.coradec.coradeck.core.annot.NonRepresentable
 import com.coradec.coradeck.core.model.Origin
@@ -25,11 +24,10 @@ open class BasicVoucher<V>(
     priority: Priority = defaultPriority,
     createdAt: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
-    target: Recipient? = null,
     validFrom: ZonedDateTime = createdAt,
     validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC),
     initialValue: V? = null
-) : BasicRequest(origin, priority, createdAt, session, target, validFrom, validUpto), Voucher<V> {
+) : BasicRequest(origin, priority, createdAt, session, validFrom, validUpto), Voucher<V> {
     private val valueSemaphore = CountDownLatch(1)
     private var valueSet = false
     override var current: V? = initialValue
@@ -48,7 +46,7 @@ open class BasicVoucher<V>(
         if (initialValue != null) value = initialValue
     }
 
-    override fun interceptSetState(state: State) {
+    override fun interceptSetState(state: RequestState) {
         if (state == SUCCESSFUL)
             if (valueSet) valueSemaphore.countDown() else throw IllegalStateException("To be successful, value must be set first!")
         super.interceptSetState(state)

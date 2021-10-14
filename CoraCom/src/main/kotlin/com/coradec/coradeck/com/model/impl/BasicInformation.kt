@@ -4,13 +4,8 @@
 
 package com.coradec.coradeck.com.model.impl
 
-import com.coradec.coradeck.com.ctrl.Observer
 import com.coradec.coradeck.com.ctrl.impl.Logger
 import com.coradec.coradeck.com.model.Information
-import com.coradec.coradeck.com.model.Information.Companion.LOST_ITEMS
-import com.coradec.coradeck.com.model.State
-import com.coradec.coradeck.com.model.State.*
-import com.coradec.coradeck.com.model.StateObserver
 import com.coradec.coradeck.core.model.Deferred
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Prioritized
@@ -22,9 +17,6 @@ import com.coradec.coradeck.text.model.LocalText
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
-import java.util.*
-import java.util.Collections.binarySearch
-import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.reflect.KClass
 import kotlin.reflect.KVisibility.PRIVATE
 import kotlin.reflect.full.memberProperties
@@ -39,16 +31,7 @@ open class BasicInformation(
     override val validFrom: ZonedDateTime = createdAt,
     override val validUpTo: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
 ) : Logger(), Information {
-    private val stateRegistry = CopyOnWriteArraySet<Observer>()
-    private val myStates = ArrayList<State>().apply { add(NEW) }
     override val due: ZonedDateTime get() = validFrom
-    override val states: List<State> = Collections.unmodifiableList(myStates)
-    override val new: Boolean get() = states.singleOrNull() == NEW
-    override val enqueued: Boolean get() = ENQUEUED in states
-    override val dispatched: Boolean get() = DISPATCHED in states
-    override val delivered: Boolean get() = DELIVERED in states
-    override val processed: Boolean get() = PROCESSED in states
-    override val observerCount: Int get() = stateRegistry.size
     override fun <I : Information> copy(vararg substitute: Pair<String, Any?>): I = copy(substitute.toMap())
     override fun <I : Information> copy(substitute: Map<String, Any?>): I {
         val dynamic = listOf("createdAt")
@@ -93,34 +76,6 @@ open class BasicInformation(
         return primaryConstructor.callBy(args)
     }
 
-    override var state: State
-        get() = synchronized(myStates) { myStates.last() }
-        set(state) {
-            interceptSetState(state)
-            synchronized(myStates) {
-                fun invert(i: Int): Int = if (i < 0) -i - 1 else i
-                fun addState(newstate: State) {
-                    myStates.add(invert(binarySearch(myStates, newstate)), newstate)
-                }
-                if (state !in myStates) {
-                    val event = StateChangedEvent(here, this, myStates.last(), state.apply { addState(this) })
-                    stateRegistry.forEach { if (it.notify(event)) stateRegistry.remove(it) }
-                }
-            }
-        }
-
-    protected open fun interceptSetState(state: State) = relax()
-    override fun enregister(observer: Observer) = stateRegistry.add(observer)
-    override fun deregister(observer: Observer) = stateRegistry.remove(observer)
-    override fun enqueue() = also { state = ENQUEUED }
-    override fun dispatch() = also { state = DISPATCHED }
-    override fun deliver() = also { state = DELIVERED }
-    override fun process() = also { state = PROCESSED }
-    override fun miss() = also {
-        state = LOST
-        LOST_ITEMS += this
-    }
-
     override fun toString(): String =
         "%s(%s)".format(shortClassname, properties.formatted)
 
@@ -130,16 +85,6 @@ open class BasicInformation(
     override fun compareTo(other: Prioritized): Int = priority.compareTo(other.priority)
     override fun compareTo(other: Deferred): Int {
         TODO("Not yet implemented")
-    }
-
-    override fun whenState(state: State, action: () -> Unit) {
-        stateRegistry.add(StateObserver(state, action))
-        synchronized(myStates) {
-            if (state in myStates) {
-                val event = StateChangedEvent(here, this, myStates.dropLast(1).last(), myStates.last())
-                stateRegistry.forEach { if (it.notify(event)) stateRegistry.remove(it) }
-            }
-        }
     }
 
     companion object {
