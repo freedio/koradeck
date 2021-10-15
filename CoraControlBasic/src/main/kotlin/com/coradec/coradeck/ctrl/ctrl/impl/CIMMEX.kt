@@ -69,9 +69,10 @@ object CIMMEX : Logger(), IMMEX {
     private var enabled = AtomicBoolean(true)
     override val load: Int get() = inqueue.size + taskqueue.size + delayQueue.size + undeliveredCount
     private val clear: Boolean get() = load == 0
-    override val stats: String get() = "Enabled: %s, InQueue: %d, TaskQueue: %d, DelayQueue: %d, Undelivered: %d".format(
-        if (enabled.get()) "Yes" else "No", inqueue.size, taskqueue.size, delayQueue.size, undeliveredCount
-    )
+    override val stats: String
+        get() = "Enabled: %s, InQueue: %d, TaskQueue: %d, DelayQueue: %d, Undelivered: %d".format(
+            if (enabled.get()) "Yes" else "No", inqueue.size, taskqueue.size, delayQueue.size, undeliveredCount
+        )
 
     private val WORKER_ID_GEN = BitSet(999)
     private val EXCTOR_ID_GEN = BitSet(999)
@@ -94,7 +95,10 @@ object CIMMEX : Logger(), IMMEX {
         dispatcher.interrupt()
         while (!clear && System.nanoTime() < end) cleanout()
         if (!clear)
-            warn(TEXT_NOT_FINISHED, shutdownAllowance.representation, inqueue.size, taskqueue.size, undeliveredCount, dispatchTable)
+            warn(TEXT_NOT_FINISHED, shutdownAllowance.representation, inqueue.size, taskqueue.size, undeliveredCount, dispatchTable
+                .flatMap { (key, value) -> value.asSequence().map { Pair(key, it.content) } }
+                .joinToString("\n", "\n") { "${it.first} ← ${it.second}" }
+            )
         val shutdownEvent = ShutdownCompleteEvent(here)
         finishTriggers.forEach { observer -> observer.notify(shutdownEvent) }
         info(TEXT_SHUT_DOWN)
@@ -132,7 +136,7 @@ object CIMMEX : Logger(), IMMEX {
         addExecutor()
     }
 
-    override fun <I: Information> inject(info: I): Notification<I> = Notification(info).also {
+    override fun <I : Information> inject(info: I): Notification<I> = Notification(info).also {
         ifEnabled {
             if (info.deferred) delayQueue.put(it) else inqueue.put(it)
             it.enqueue()
@@ -140,7 +144,7 @@ object CIMMEX : Logger(), IMMEX {
         }
     }
 
-    override fun <I: Information, N: Notification<I>> inject(notification: N): N = notification.also {
+    override fun <I : Information, N : Notification<I>> inject(notification: N): N = notification.also {
         ifEnabled {
             if (notification.enqueued) throw NotificationAlreadyEnqueuedException(notification, notification.states)
             if (notification.deferred) delayQueue.put(it) else inqueue.put(it)

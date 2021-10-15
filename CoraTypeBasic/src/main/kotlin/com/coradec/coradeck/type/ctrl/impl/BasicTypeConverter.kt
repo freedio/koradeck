@@ -34,11 +34,11 @@ abstract class BasicTypeConverter<T : Any>(val type: KType) : TypeConverter<T> {
 
     override fun decode(value: String?): T? = when (value) {
         null -> null
-        else -> decodeFrom(value) ?: throw TypeConversionException(
-            "Failed to decode \"%s\" to type %s".format(value, type.name)
-        )
+        else -> decodeFrom(value) ?: throw TypeConversionException("Failed to decode \"%s\" to type %s".format(value, type.name))
     }
 
+    /** Tries to decode the specified String value into an instance of the derived type, returning null if not possible. */
     protected abstract fun decodeFrom(value: String): T?
+    /** Tries to convert the specified value into an instance of the derived type, returning null if not possible. */
     protected abstract fun convertFrom(value: Any): T?
 }
