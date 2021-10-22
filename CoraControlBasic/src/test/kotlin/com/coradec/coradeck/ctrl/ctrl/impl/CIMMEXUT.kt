@@ -6,8 +6,8 @@ package com.coradec.coradeck.ctrl.ctrl.impl
 
 import com.coradec.coradeck.com.model.Notification
 import com.coradec.coradeck.com.model.Notification.Companion.LOST_ITEMS
+import com.coradec.coradeck.com.model.NotificationState.LOST
 import com.coradec.coradeck.com.model.Recipient
-import com.coradec.coradeck.com.model.State.LOST
 import com.coradec.coradeck.com.model.impl.BasicInformation
 import com.coradec.coradeck.com.model.impl.BasicMessage
 import com.coradec.coradeck.com.model.impl.BasicNotification
@@ -16,7 +16,7 @@ import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
-import com.coradec.coradeck.dir.model.module.CoraModules
+import com.coradec.coradeck.module.model.CoraModules
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import org.assertj.core.api.Assertions.assertThat

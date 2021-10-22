@@ -15,7 +15,7 @@ import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
 import com.coradec.coradeck.ctrl.module.CoraControl
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
-import com.coradec.coradeck.dir.model.module.CoraModules
+import com.coradec.coradeck.module.model.CoraModules
 import com.coradec.coradeck.session.model.Session
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl

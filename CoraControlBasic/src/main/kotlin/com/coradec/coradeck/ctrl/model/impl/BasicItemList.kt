@@ -70,14 +70,14 @@ class BasicItemList(
         event is StateChangedEvent -> {
             val element: Notification<*> = event.message
             trace("Notification state changed: %s %s→%s", element, event.previous, event.current)
-            val newState: State = event.current
+            val newState: NotificationState = event.current
             process(element, newState)
-            newState == State.PROCESSED
+            newState == NotificationState.PROCESSED
         }
         else -> false.also { warn(TEXT_EVENT_NOT_UNDERSTOOD, event) }
     }
 
-    private fun process(item: Notification<*>, state: State) {
+    private fun process(item: Notification<*>, state: NotificationState) {
         when (val element: Information = item.content) {
             is Request -> process(element, element.state)
             is Notification<*> -> process(element, element.state)
@@ -85,10 +85,10 @@ class BasicItemList(
         }
     }
 
-    private fun process(notification: Notification<out Information>, element: Information, state: State) = when (state) {
-        State.PROCESSED -> execute()
-        State.REJECTED, State.CRASHED -> fail(notification.problem)
-        State.LOST -> fail(LostInformationException(element))
+    private fun process(notification: Notification<out Information>, element: Information, state: NotificationState) = when (state) {
+        NotificationState.PROCESSED -> execute()
+        NotificationState.REJECTED, NotificationState.CRASHED -> fail(notification.problem)
+        NotificationState.LOST -> fail(LostInformationException(element))
         else -> relax()
     }
 

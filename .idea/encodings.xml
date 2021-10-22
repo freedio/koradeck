@@ -3,6 +3,8 @@
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/CoraBus/src/main/kotlin" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/CoraBus/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/CoraBusBasic/src/main/kotlin" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/CoraBusBasic/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/CoraCom/src/main/kotlin" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/CoraCom/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/CoraComBasic/src/main/kotlin" charset="UTF-8" />
@@ -23,6 +25,7 @@
     <file url="file://$PROJECT_DIR$/CoraDir/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/CoraDirBasic/src/main/kotlin" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/CoraDirBasic/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/CoraModule/src/main/kotlin" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/CoraSession/src/main/kotlin" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/CoraSession/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/CoraText/src/main/kotlin" charset="UTF-8" />

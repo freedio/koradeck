@@ -31,6 +31,7 @@
         <module>CoraComBasic</module>
         <module>CoraTextBasic</module>
         <module>CoraDB</module>
+        <module>CoraModule</module>
     </modules>
 
     <properties>

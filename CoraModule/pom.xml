@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>coradeck</artifactId>
+        <groupId>com.coradec.coradeck</groupId>
+        <version>0.2</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>module</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.coradec.coradeck</groupId>
+            <artifactId>core</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <sourceDirectory>src/main/kotlin</sourceDirectory>
+        <testSourceDirectory>src/test/kotlin</testSourceDirectory>
+    </build>
+
+</project>

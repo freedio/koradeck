@@ -72,6 +72,9 @@ interface Request: Event {
     fun enregister(observer: Observer): Boolean
     /** Removes the specified observer from the state change registry. @return `true` if the observer was deregistered. */
     fun deregister(observer: Observer): Boolean
+    /** Executes the specified action if the request was successful (see standby). */
+    infix fun andThen(action: () -> Unit): Request
+
     /** The number of observers on the request. */
     val observerCount: Int
 }

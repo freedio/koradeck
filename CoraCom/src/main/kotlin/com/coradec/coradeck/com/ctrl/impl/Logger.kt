@@ -18,6 +18,7 @@ import com.coradec.coradeck.text.model.Text
 open class Logger {
     private val log = CoraCom.log
 
+    @Suppress("UNUSED_PARAMETER")
     @Deprecated("This doesn't work as expected!", replaceWith = ReplaceWith("error(template: Text)"))
     fun error(arg: Any) {
         TODO("you used the wrong 'error()' method, probably tried to specify a String")

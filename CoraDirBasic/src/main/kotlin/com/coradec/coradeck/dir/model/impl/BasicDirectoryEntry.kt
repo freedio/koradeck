@@ -31,4 +31,9 @@ open class BasicDirectoryEntry(override val parent: Directory?, override val nam
     override fun writeUnlock(key: Any) {
         if (writeLock == key) writeLock = null
     }
+
+    override fun clearLocks(key: Any) {
+        writeUnlock(key)
+        readUnlock(key)
+    }
 }

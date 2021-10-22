@@ -14,7 +14,7 @@ import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
 import com.coradec.coradeck.ctrl.module.CoraControl
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
-import com.coradec.coradeck.dir.model.module.CoraModules
+import com.coradec.coradeck.module.model.CoraModules
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import org.assertj.core.api.Assertions.assertThat

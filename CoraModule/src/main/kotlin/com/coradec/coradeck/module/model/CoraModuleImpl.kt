@@ -2,6 +2,6 @@
  * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
  */
 
-package com.coradec.coradeck.dir.model.module
+package com.coradec.coradeck.module.model
 
-interface CoraModuleAPI
+open class CoraModuleImpl<M>()

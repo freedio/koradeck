@@ -7,7 +7,7 @@ package com.coradec.conf.model
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.model.LocalProperty
 import com.coradec.coradeck.conf.module.CoraConfImpl
-import com.coradec.coradeck.dir.model.module.CoraModules
+import com.coradec.coradeck.module.model.CoraModules
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import org.assertj.core.api.Assertions.assertThat

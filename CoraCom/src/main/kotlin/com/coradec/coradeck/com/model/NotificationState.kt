@@ -4,6 +4,6 @@
 
 package com.coradec.coradeck.com.model
 
-enum class State {
+enum class NotificationState {
     NEW, ENQUEUED, DISPATCHED, DELIVERED, REJECTED, PROCESSED, CRASHED, LOST
 }

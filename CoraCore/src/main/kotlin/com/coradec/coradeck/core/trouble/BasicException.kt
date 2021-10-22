@@ -13,7 +13,7 @@ open class BasicException(message: String?, problem: Throwable?) : Exception(mes
     constructor(problem: Throwable?) : this(null, problem)
     constructor() : this(null, null)
 
-    private val superMessage: String? = super.message
+    protected val superMessage: String? = super.message
     override val message: String
         get() {
             val properties = listProperties().map { "${it.key}: ${it.value.formatted}"}.joinToString()
@@ -30,7 +30,7 @@ open class BasicException(message: String?, problem: Throwable?) : Exception(mes
         return result.toString()
     }
 
-    private fun listProperties(): Map<String, Any> = javaClass.methods
+    protected fun listProperties(): Map<String, Any> = javaClass.methods
             .filterNot { method -> method.name in IRRELEVANT_METHODS }
             .filter { method -> method.name.matches(PROPERTY_METHOD_PREFIX) }
             .filter { method -> method.parameterCount == 0 && !Void.TYPE.isAssignableFrom(method.returnType) }

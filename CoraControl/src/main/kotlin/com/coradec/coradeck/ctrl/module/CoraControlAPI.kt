@@ -12,7 +12,7 @@ import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.ctrl.IMMEX
 import com.coradec.coradeck.ctrl.model.*
-import com.coradec.coradeck.dir.model.module.CoraModuleAPI
+import com.coradec.coradeck.module.model.CoraModuleAPI
 
 interface CoraControlAPI: CoraModuleAPI {
     val Market: MarketSpace

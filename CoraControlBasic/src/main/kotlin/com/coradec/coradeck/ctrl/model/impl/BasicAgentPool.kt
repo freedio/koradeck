@@ -6,7 +6,7 @@ package com.coradec.coradeck.ctrl.model.impl
 
 import com.coradec.coradeck.com.model.Information
 import com.coradec.coradeck.com.model.Message
-import com.coradec.coradeck.com.model.State.PROCESSED
+import com.coradec.coradeck.com.model.NotificationState.PROCESSED
 import com.coradec.coradeck.core.model.Timespan
 import com.coradec.coradeck.core.trouble.StandbyTimeoutException
 import com.coradec.coradeck.ctrl.ctrl.Agent

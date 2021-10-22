@@ -4,7 +4,7 @@
 
 package com.coradec.coradeck.type.module
 
-import com.coradec.coradeck.dir.model.module.CoraModuleAPI
+import com.coradec.coradeck.module.model.CoraModuleAPI
 import com.coradec.coradeck.type.model.Password
 import com.coradec.coradeck.type.model.Secret
 import kotlin.reflect.KClass

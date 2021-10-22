@@ -5,7 +5,7 @@
 package com.coradec.coradeck.conf.module
 
 import com.coradec.coradeck.conf.model.Configuration
-import com.coradec.coradeck.dir.model.module.CoraModuleAPI
+import com.coradec.coradeck.module.model.CoraModuleAPI
 import com.fasterxml.jackson.databind.ObjectMapper
 
 interface CoraConfAPI: CoraModuleAPI {

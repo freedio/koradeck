@@ -6,7 +6,7 @@ package com.coradec.coradeck.dir.model
 
 interface DirectoryEntry {
     /** The complete absolute path to this directory. */
-    val path: String
+    val path: Path
     /** The parent directory, unless this is the root. */
     val parent: Directory?
     /** The name of the entry. */
@@ -20,4 +20,6 @@ interface DirectoryEntry {
     fun writeLock(key: Any)
     /** Unlocks the directory entry for write with the specified key. */
     fun writeUnlock(key: Any)
+    /** Clears all locks on the directory entry with the specified key. */
+    fun clearLocks(key: Any)
 }

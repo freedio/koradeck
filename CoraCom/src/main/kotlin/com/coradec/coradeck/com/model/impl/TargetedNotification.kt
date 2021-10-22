@@ -24,8 +24,8 @@ open class TargetedNotification<I: Information>(
     validUpTo: ZonedDateTime = notification.validUpTo,
 ) : BasicInformation(origin, priority, createdAt, session, validFrom, validUpTo), Message<I> {
     override val content: I get() = notification.content
-    override val states: EnumSet<State> = notification.states
-    override var state: State = notification.state
+    override val states: EnumSet<NotificationState> = notification.states
+    override var state: NotificationState = notification.state
     override val new: Boolean get() = notification.new
     override val enqueued: Boolean get() = notification.enqueued
     override val dispatched: Boolean get() = notification.dispatched
@@ -47,7 +47,7 @@ open class TargetedNotification<I: Information>(
     override fun process() = notification.process()
     override fun discard() = notification.discard()
     override fun crash(reason: Throwable) = notification.crash(reason)
-    override fun whenState(state: State, action: () -> Unit) = notification.whenState(state, action)
+    override fun whenState(state: NotificationState, action: () -> Unit) = notification.whenState(state, action)
     override fun standby(): Notification<*> = notification.standby()
     override fun standby(delay: Timespan): Notification<*> = notification.standby(delay)
     override fun andThen(action: () -> Unit) = notification.andThen(action)

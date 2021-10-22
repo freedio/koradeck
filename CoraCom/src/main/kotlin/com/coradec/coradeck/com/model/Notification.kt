@@ -15,9 +15,9 @@ interface Notification<I: Information> : Information {
     /** The content of the message. */
     val content: I
     /** The state of the notification. */
-    val state: State
+    val state: NotificationState
     /** A list of state(transition)s (in order) the notification went through. */
-    val states: EnumSet<State>
+    val states: EnumSet<NotificationState>
     /** Whether the notification is new and was never enqueued nor dispatched. */
     val new: Boolean
     /** Whether the notification was ever enqueued. */
@@ -60,7 +60,7 @@ interface Notification<I: Information> : Information {
     /** Marks the notification as rejected. */
     fun reject(reason: Throwable)
     /** Triggers the specified action whenever the specified state is reached. */
-    fun whenState(state: State, action: () -> Unit)
+    fun whenState(state: NotificationState, action: () -> Unit)
     /**
      * Wait for the notification to finish (i. e. its request to become successful, cancelled, or failed, or its information to
      * be processed).  Fluid.
@@ -71,7 +71,7 @@ interface Notification<I: Information> : Information {
      * or its information to be processed).  Fluid.
      */
     @Throws(StandbyTimeoutException::class) fun standby(delay: Timespan): Notification<*>
-    /** Executes the specified action if the notification finishes (see standby). */
+    /** Executes the specified action if the notification was processed (see standby). */
     infix fun andThen(action: () -> Unit)
 
     companion object {

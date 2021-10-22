@@ -9,13 +9,14 @@
         <module name="com" />
         <module name="CoraText" />
         <module name="bus" />
+        <module name="bus-basic" />
         <module name="ctrl" />
         <module name="session" />
         <module name="conf" />
         <module name="CoraControlBasic" />
         <module name="CoraControl" />
-        <module name="dir" />
         <module name="type" />
+        <module name="dir" />
         <module name="CoraDir" />
         <module name="text-basic" />
         <module name="type-basic" />
@@ -31,6 +32,7 @@
         <module name="CoraDirBasic" />
         <module name="com-basic" />
         <module name="ctrl-basic" />
+        <module name="module" />
         <module name="conf-basic" />
         <module name="IT" />
         <module name="core" />
@@ -41,6 +43,8 @@
         <module name="db" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel target="11" />
+    <bytecodeTargetLevel target="11">
+      <module name="bus-basic" target="11" />
+    </bytecodeTargetLevel>
   </component>
 </project>

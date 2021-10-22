@@ -10,7 +10,7 @@ import com.coradec.coradeck.com.model.ProblemLogEntry
 import com.coradec.coradeck.com.model.StringLogEntry
 import com.coradec.coradeck.com.model.TextLogEntry
 import com.coradec.coradeck.core.model.Origin
-import com.coradec.coradeck.dir.model.module.CoraModuleAPI
+import com.coradec.coradeck.module.model.CoraModuleAPI
 import com.coradec.coradeck.text.model.Text
 
 interface CoraComAPI: CoraModuleAPI {

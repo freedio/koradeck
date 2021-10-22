@@ -66,12 +66,12 @@ class BasicItemSet(
             trace("Notification state changed: %s %s→%s", element, event.previous, event.current)
             val newState = event.current
             process(element, newState)
-            newState == State.PROCESSED
+            newState == NotificationState.PROCESSED
         }
         else -> false.also { warn(TEXT_EVENT_NOT_UNDERSTOOD, event) }
     }
 
-    private fun process(item: Notification<out Information>, state: State) {
+    private fun process(item: Notification<out Information>, state: NotificationState) {
         when (val element: Information = item.content) {
             is Request -> process(element, element.state)
             is Notification<*> -> process(element, element.state)
@@ -80,8 +80,8 @@ class BasicItemSet(
         debug("%s/%s: Outstanding: %d", item.content, state, outstanding.get())
     }
 
-    private fun process(notification: Notification<out Information>, element: Information, state: State) = when(state) {
-        State.PROCESSED -> {
+    private fun process(notification: Notification<out Information>, element: Information, state: NotificationState) = when(state) {
+        NotificationState.PROCESSED -> {
             if (outstanding.decrementAndGet() == 0) when (endState) {
                 SUCCESSFUL -> succeed()
                 FAILED -> fail(endProblem)
@@ -89,8 +89,8 @@ class BasicItemSet(
                 else -> relax()
             } else relax()
         }
-        State.REJECTED, State.CRASHED -> fail(notification.problem)
-        State.LOST -> fail(LostInformationException(element))
+        NotificationState.REJECTED, NotificationState.CRASHED -> fail(notification.problem)
+        NotificationState.LOST -> fail(LostInformationException(element))
         else -> relax()
     }
 

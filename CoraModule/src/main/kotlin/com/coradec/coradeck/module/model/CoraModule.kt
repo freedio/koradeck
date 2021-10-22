@@ -2,7 +2,7 @@
  * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
  */
 
-package com.coradec.coradeck.dir.model.module
+package com.coradec.coradeck.module.model
 
 import kotlin.reflect.KClass
 import kotlin.reflect.full.createType
@@ -21,4 +21,3 @@ open class CoraModule<M: CoraModuleAPI> {
         val CoraModuleAPIType = CoraModuleAPI::class.createType()
     }
 }
-

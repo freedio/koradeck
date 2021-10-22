@@ -5,7 +5,7 @@
 package com.coradec.coradeck.db.module
 
 import com.coradec.coradeck.db.model.TableKind
-import com.coradec.coradeck.dir.model.module.CoraModule
+import com.coradec.coradeck.module.model.CoraModule
 import kotlin.reflect.KClass
 
 object CoraDB: CoraModule<CoraDBAPI>() {

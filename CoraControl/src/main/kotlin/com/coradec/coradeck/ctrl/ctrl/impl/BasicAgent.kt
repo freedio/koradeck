@@ -95,20 +95,20 @@ open class BasicAgent() : Logger(), Agent {
     }
 
     @Suppress("UNCHECKED_CAST")
-    protected fun <T : Information> addRoute(type: Class<out T>, processor: (T) -> Unit) {
+    protected fun <T : Information> route(type: Class<out T>, processor: (T) -> Unit) {
         routes[type] = processor as (Any) -> Unit
     }
 
     @Suppress("UNCHECKED_CAST")
-    protected fun <T : Information> addRoute(type: KClass<out T>, processor: (T) -> Unit) {
+    protected fun <T : Information> route(type: KClass<out T>, processor: (T) -> Unit) {
         routes[type.java] = processor as (Any) -> Unit
     }
 
-    protected fun removeRoute(type: Class<out Information>) {
+    protected fun unroute(type: Class<out Information>) {
         routes -= type
     }
 
-    protected fun removeRoute(type: KClass<out Information>) {
+    protected fun unroute(type: KClass<out Information>) {
         routes -= type.java
     }
 

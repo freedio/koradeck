@@ -204,6 +204,7 @@ open class BasicRequest(
 
     override fun enregister(observer: Observer) = !complete && stateRegistry.add(observer)
     override fun deregister(observer: Observer) = stateRegistry.remove(observer)
+    override fun andThen(action: () -> Unit) = also { whenState(SUCCESSFUL, action) }
 
     private inner class PostActionObserver : Observer {
         override fun onNotification(event: Event): Boolean = when (event) {

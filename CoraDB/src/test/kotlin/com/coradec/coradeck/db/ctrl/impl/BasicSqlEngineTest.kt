@@ -9,7 +9,7 @@ import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.db.ctrl.Selection
 import com.coradec.coradeck.db.ctrl.impl.BasicSqlEngine
 import com.coradec.coradeck.db.ctrl.impl.SqlSelection
-import com.coradec.coradeck.dir.model.module.CoraModules.register
+import com.coradec.coradeck.module.model.CoraModules.register
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import com.coradec.module.db.annot.Size
@@ -25,12 +25,7 @@ internal class BasicSqlEngineTest {
         @BeforeAll
         @JvmStatic
         fun setup() {
-            register(
-                CoraConfImpl(),
-                CoraComImpl(),
-                CoraTextImpl(),
-                CoraTypeImpl()
-            )
+            register(CoraConfImpl(), CoraComImpl(), CoraTextImpl(), CoraTypeImpl())
             BasicSqlEngine(TestClass2::class).use { table ->
                 table.assertTable()
                 table.insert(TestClass2("Jane", "Doe", LocalDate.of(2000, 1, 1), 2))

@@ -6,8 +6,8 @@ package com.coradec.coradeck.com.model.impl
 
 import com.coradec.coradeck.com.model.Message
 import com.coradec.coradeck.com.model.Notification
+import com.coradec.coradeck.com.model.NotificationState.PROCESSED
 import com.coradec.coradeck.com.model.Request
-import com.coradec.coradeck.com.model.State.PROCESSED
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.model.Origin
@@ -20,7 +20,7 @@ import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
 import com.coradec.coradeck.ctrl.module.CoraControl
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
 import com.coradec.coradeck.ctrl.trouble.NotificationAlreadyEnqueuedException
-import com.coradec.coradeck.dir.model.module.CoraModules
+import com.coradec.coradeck.module.model.CoraModules
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import org.assertj.core.api.Assertions.assertThat
@@ -69,7 +69,7 @@ internal class BasicMessageTest {
         } catch (e: Exception) {
             e
         }
-        Thread.sleep(100)
+        Thread.sleep(200)
         // then
         assertThat(r2).isInstanceOf(NotificationAlreadyEnqueuedException::class.java)
         assertThat(r1.state).isEqualTo(PROCESSED)

@@ -12,11 +12,10 @@ import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
-import com.coradec.coradeck.dir.model.module.CoraModules
+import com.coradec.coradeck.module.model.CoraModules
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicInteger
@@ -28,12 +27,6 @@ internal class BasicRequestSetTest {
         @JvmStatic
         fun setup() {
             CoraModules.register(CoraConfImpl(), CoraTextImpl(), CoraTypeImpl(), CoraComImpl(), CoraControlImpl())
-        }
-
-        @AfterAll
-        @JvmStatic
-        fun teardown() {
-            CoraModules.initialize()
         }
     }
 

@@ -5,9 +5,9 @@
 package com.coradec.coradeck.dir
 
 import com.coradec.coradeck.dir.model.TypeDirectory
-import com.coradec.coradeck.dir.model.module.CoraModules
 import com.coradec.coradeck.dir.module.CoraDirImpl
 import com.coradec.coradeck.dir.view.DirectoryView
+import com.coradec.coradeck.module.model.CoraModules
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll

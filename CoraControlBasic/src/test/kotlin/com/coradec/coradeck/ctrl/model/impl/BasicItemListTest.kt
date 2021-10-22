@@ -16,7 +16,7 @@ import com.coradec.coradeck.core.util.swallow
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
 import com.coradec.coradeck.ctrl.module.CoraControl
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
-import com.coradec.coradeck.dir.model.module.CoraModules
+import com.coradec.coradeck.module.model.CoraModules
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import org.assertj.core.api.Assertions.assertThat
@@ -165,7 +165,7 @@ internal class BasicItemListTest {
         assertThat(testee.cancelled).isFalse()
         assertThat(agent.sum).isEqualTo(100)
         Thread.sleep(100)
-        assertThat(message.state).isEqualTo(State.PROCESSED)
+        assertThat(message.state).isEqualTo(NotificationState.PROCESSED)
     }
 
     @Test

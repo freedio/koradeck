@@ -9,11 +9,11 @@ import com.coradec.coradeck.dir.model.ValueDirectoryEntry
 import com.coradec.coradeck.dir.model.impl.BasicDirectory
 import com.coradec.coradeck.dir.model.impl.BasicDirectoryNamespace
 import com.coradec.coradeck.dir.model.impl.RootNamespace
-import com.coradec.coradeck.dir.model.module.CoraModules
 import com.coradec.coradeck.dir.module.CoraDirImpl
 import com.coradec.coradeck.dir.trouble.DirectoryEntryAlreadyExistsException
 import com.coradec.coradeck.dir.trouble.DirectoryNotFoundException
 import com.coradec.coradeck.dir.view.DirectoryView
+import com.coradec.coradeck.module.model.CoraModules
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll

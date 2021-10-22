@@ -7,7 +7,7 @@ package com.coradec.coradeck.com.model.impl
 import com.coradec.coradeck.com.ctrl.Observer
 import com.coradec.coradeck.com.model.*
 import com.coradec.coradeck.com.model.Notification.Companion.LOST_ITEMS
-import com.coradec.coradeck.com.model.State.*
+import com.coradec.coradeck.com.model.NotificationState.*
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.model.Timespan
@@ -29,8 +29,8 @@ open class BasicNotification<I: Information>(
 ): BasicInformation(origin, priority, createdAt, session, validFrom, validUpTo), Notification<I> {
     private val unfinished = CountDownLatch(1)
     private val stateRegistry = CopyOnWriteArraySet<Observer>()
-    private val myStates = ArrayList<State>().apply { add(NEW) }
-    override val states: EnumSet<State> get() = EnumSet.copyOf(myStates)
+    private val myStates = ArrayList<NotificationState>().apply { add(NEW) }
+    override val states: EnumSet<NotificationState> get() = EnumSet.copyOf(myStates)
     override val new: Boolean get() = states.singleOrNull() == NEW
     override val enqueued: Boolean get() = ENQUEUED in myStates
     override val dispatched: Boolean get() = DISPATCHED in myStates
@@ -42,23 +42,19 @@ open class BasicNotification<I: Information>(
     override val complete: Boolean get() = PROCESSED in myStates
     override var problem: Throwable? = null
     override val observerCount: Int get() = stateRegistry.size
-    override var state: State
+    override var state: NotificationState
         get() = synchronized(myStates) { myStates.last() }
         set(state) {
             interceptSetState(state)
             synchronized(myStates) {
-                fun invert(i: Int): Int = if (i < 0) -i - 1 else i
-                fun addState(newstate: State) {
-                    myStates.add(invert(Collections.binarySearch(myStates, newstate)), newstate)
-                }
                 if (state !in myStates) {
-                    val event = StateChangedEvent(here, this, myStates.last(), state.apply { addState(this) })
+                    val event = StateChangedEvent(here, this, myStates.last(), state.apply { myStates += this })
                     stateRegistry.forEach { if (it.notify(event)) stateRegistry.remove(it) }
                 }
             }
         }
 
-    protected open fun interceptSetState(state: State) = relax()
+    protected open fun interceptSetState(state: NotificationState) = relax()
     override fun enregister(observer: Observer) =
         /*if (content is Request) (content as Request).enregister(observer) else*/ stateRegistry.add(observer)
     override fun deregister(observer: Observer) =
@@ -98,7 +94,7 @@ open class BasicNotification<I: Information>(
         unfinished.countDown()
     }
 
-    override fun whenState(state: State, action: () -> Unit) {
+    override fun whenState(state: NotificationState, action: () -> Unit) {
         if (synchronized(myStates) {
             (state in myStates).also { if (!it) stateRegistry.add(StateObserver(state, action)) }
         }) action.invoke()

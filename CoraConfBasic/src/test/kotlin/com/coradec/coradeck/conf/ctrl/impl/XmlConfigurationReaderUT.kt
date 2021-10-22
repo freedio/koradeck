@@ -8,7 +8,7 @@ import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConf
 import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.util.resource
-import com.coradec.coradeck.dir.model.module.CoraModules
+import com.coradec.coradeck.module.model.CoraModules
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.fasterxml.jackson.databind.node.JsonNodeFactory
 import com.fasterxml.jackson.databind.node.NullNode

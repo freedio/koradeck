@@ -4,7 +4,7 @@
 
 package com.coradec.coradeck.text.module
 
-import com.coradec.coradeck.dir.model.module.CoraModule
+import com.coradec.coradeck.module.model.CoraModule
 import com.coradec.coradeck.text.model.LocalText
 import com.coradec.coradeck.text.model.TextBase
 

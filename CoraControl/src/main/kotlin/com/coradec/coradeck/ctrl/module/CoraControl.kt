@@ -14,7 +14,7 @@ import com.coradec.coradeck.ctrl.ctrl.IMMEX
 import com.coradec.coradeck.ctrl.model.AgentPool
 import com.coradec.coradeck.ctrl.model.MarketSpace
 import com.coradec.coradeck.ctrl.model.Task
-import com.coradec.coradeck.dir.model.module.CoraModule
+import com.coradec.coradeck.module.model.CoraModule
 import kotlin.reflect.KClass
 
 object CoraControl : CoraModule<CoraControlAPI>() {
@@ -36,6 +36,14 @@ object CoraControl : CoraModule<CoraControlAPI>() {
      */
     fun createRequestSet(origin: Origin, requests: Sequence<Request>, processor: Recipient? = null) =
         impl.createRequestSet(origin, requests, processor)
+
+    /**
+     * Creates a request list for the specified requests; injecting the list will trigger each request in order, waiting for the
+     * next until the first has terminated.  If all requests were successful, the list is successful; if any request fails, the
+     * rest is skipped and the list fails; if any request is cancelled, the rest is skipped and the list is cancelled.
+     */
+    fun createRequestList(origin: Origin, requests: Sequence<Request>, processor: Recipient? = null) =
+        impl.createRequestList(origin, requests, processor = processor)
 
     /**
      * Creates a request list for the specified requests; injecting the list will trigger each request in order, waiting for the

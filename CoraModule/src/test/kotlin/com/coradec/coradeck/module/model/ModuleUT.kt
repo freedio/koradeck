@@ -2,9 +2,8 @@
  * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
  */
 
-package com.coradec.coradeck.dir.model.module
+package com.coradec.coradeck.module.model
 
-import com.coradec.coradeck.dir.trouble.MissingModuleImplementationException
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.parallel.Execution
@@ -57,13 +56,13 @@ internal class ModuleUT {
         val result =
                 try {
                     module.impl
-                } catch (e: MissingModuleImplementationException) {
+                } catch (e: com.coradec.coradeck.module.trouble.MissingModuleImplementationException) {
                     e
                 }
         // then
-        assertThat(result).isInstanceOf(MissingModuleImplementationException::class.java)
-        val problem = result as MissingModuleImplementationException
-        assertThat(problem.message).isEqualTo("(Type: class com.coradec.coradeck.dir.model.module.TestModule3)")
+        assertThat(result).isInstanceOf(com.coradec.coradeck.module.trouble.MissingModuleImplementationException::class.java)
+        val problem = result as com.coradec.coradeck.module.trouble.MissingModuleImplementationException
+        assertThat(problem.message).isEqualTo("(Type: class com.coradec.coradeck.module.model.TestModule3)")
         assertThat(module.implementations.modules).isEmpty()
     }
 
