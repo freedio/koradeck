@@ -14,6 +14,7 @@
     <version>0.2</version>
 
     <modules>
+        <module>CoraModule</module>
         <module>CoraCore</module>
         <module>CoraDir</module>
         <module>CoraDirBasic</module>
@@ -25,13 +26,13 @@
         <module>CoraType</module>
         <module>CoraTypeBasic</module>
         <module>CoraBus</module>
+        <module>CoraBusBasic</module>
         <module>CoraCom</module>
         <module>CoraSession</module>
         <module>IT</module>
         <module>CoraComBasic</module>
         <module>CoraTextBasic</module>
         <module>CoraDB</module>
-        <module>CoraModule</module>
     </modules>
 
     <properties>
@@ -43,6 +44,11 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>com.coradec.coradeck</groupId>
+                <artifactId>module</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.coradec.coradeck</groupId>
                 <artifactId>core</artifactId>
@@ -100,11 +106,6 @@
             </dependency>
             <dependency>
                 <groupId>com.coradec.coradeck</groupId>
-                <artifactId>bus</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.coradec.coradeck</groupId>
                 <artifactId>com</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -116,6 +117,16 @@
             <dependency>
                 <groupId>com.coradec.coradeck</groupId>
                 <artifactId>session</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.coradec.coradeck</groupId>
+                <artifactId>bus</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.coradec.coradeck</groupId>
+                <artifactId>bus-basic</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
