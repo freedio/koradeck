@@ -40,5 +40,9 @@ fun Any?.swallow() {}
 fun execute(action: () -> Unit) {
     action.invoke()
 }
+fun addShutdownHook(name: String? = null, routine: () -> Unit) = with (Runtime.getRuntime()) {
+    if (name != null) addShutdownHook(Thread(routine, name))
+    else addShutdownHook(Thread(routine))
+}
 
 fun resource(klass: KClass<*>, ext: String) = ClassPathResource(klass, ext)
