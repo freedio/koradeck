@@ -8,6 +8,7 @@ import com.coradec.coradeck.com.model.impl.BasicCommand
 import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.com.trouble.NotificationRejectedException
+import com.coradec.coradeck.com.trouble.RequestFailedException
 import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.util.here
@@ -56,9 +57,9 @@ internal class BasicAgentTest {
         try {
             testee.accept(TestRouteRequest(here)).standby()
             // then:
-            fail("Expected RequestCancelledException!")
-        } catch (e: NotificationRejectedException) {
-            // expected that
+            fail("Expected RequestFailedException!")
+        } catch (e: RequestFailedException) {
+            assertThat(e.cause).isInstanceOf(NotificationRejectedException::class.java)
         }
     }
 
@@ -101,9 +102,9 @@ internal class BasicAgentTest {
         try {
             testee.accept(TestRouteCommand(here)).standby()
             // then:
-            fail("Expected CommandNotApprovedException!")
-        } catch (e: CommandNotApprovedException) {
-            // expected that
+            fail("Expected RequestFailedException!")
+        } catch (e: RequestFailedException) {
+            assertThat(e.cause).isInstanceOf(CommandNotApprovedException::class.java)
         }
     }
 

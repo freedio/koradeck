@@ -19,7 +19,7 @@ open class BasicDirectory(
 ) : BasicDirectoryEntry(parent, name), Directory {
     protected val entries = ConcurrentHashMap<String, DirectoryEntry>()
     override val count: Int get() = entries.size
-    override val countAll: Int get() = count + entries.values.filterIsInstance<Directory>().map { it.countAll }.sum()
+    override val countAll: Int get() = count + entries.values.filterIsInstance<Directory>().sumOf { it.countAll }
     override val root get() = parent?.root ?: this
     private val isRoot = parent == null
     private val myParent get() = parent!!

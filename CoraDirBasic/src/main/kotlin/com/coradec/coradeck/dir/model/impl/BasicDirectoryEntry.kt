@@ -6,12 +6,14 @@ package com.coradec.coradeck.dir.model.impl
 
 import com.coradec.coradeck.dir.model.Directory
 import com.coradec.coradeck.dir.model.DirectoryEntry
+import com.coradec.coradeck.dir.trouble.ExtendLockFailedException
 import com.coradec.coradeck.dir.trouble.ReadLockFailedException
 import com.coradec.coradeck.dir.trouble.WriteLockFailedException
 
 open class BasicDirectoryEntry(override val parent: Directory?, override val name: String) : DirectoryEntry {
     override val path: String get() = parent?.pathOf(name) ?: name
     private val readLocks = mutableListOf<Any>()
+    private val xtndLocks = mutableListOf<Any>()
     private var writeLock: Any? = null
 
     override fun readLock(key: Any) {
@@ -32,8 +34,18 @@ open class BasicDirectoryEntry(override val parent: Directory?, override val nam
         if (writeLock == key) writeLock = null
     }
 
+    override fun extendLock(key: Any) {
+        if (writeLock != null && writeLock != key) throw ExtendLockFailedException()
+        xtndLocks += key
+    }
+
+    override fun extendUnlock(key: Any) {
+        xtndLocks.removeIf { it == key }
+    }
+
     override fun clearLocks(key: Any) {
         writeUnlock(key)
         readUnlock(key)
+        extendUnlock(key)
     }
 }

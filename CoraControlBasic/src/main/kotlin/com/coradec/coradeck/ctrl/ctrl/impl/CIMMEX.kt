@@ -76,8 +76,8 @@ object CIMMEX : Logger(), IMMEX {
 
     private val WORKER_ID_GEN = BitSet(999)
     private val EXCTOR_ID_GEN = BitSet(999)
-    private val NEXT_WORKER: Int get() = WORKER_ID_GEN.nextClearBit(0).also { WORKER_ID_GEN.set(it) }
-    private val NEXT_EXCTOR: Int get() = EXCTOR_ID_GEN.nextClearBit(0).also { EXCTOR_ID_GEN.set(it) }
+    private val NEXT_WORKER: Int get() = WORKER_ID_GEN.nextClearBit(0).also { WORKER_ID_GEN.set(it) } + 1
+    private val NEXT_EXCTOR: Int get() = EXCTOR_ID_GEN.nextClearBit(0).also { EXCTOR_ID_GEN.set(it) } + 1
 
     init {
         dispatcher.start()

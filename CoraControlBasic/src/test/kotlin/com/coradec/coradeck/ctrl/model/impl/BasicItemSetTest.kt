@@ -156,7 +156,7 @@ internal class BasicItemSetTest {
         assertThat(testee.cancelled).isTrue()
         assertThat(agent.sum).isIn(100, 101)
         assertThat(trouble).isNotNull()
-        Thread.yield()
+        Thread.sleep(100)
         assertThat(req2.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)
     }

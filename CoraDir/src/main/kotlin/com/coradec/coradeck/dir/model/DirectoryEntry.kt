@@ -20,6 +20,10 @@ interface DirectoryEntry {
     fun writeLock(key: Any)
     /** Unlocks the directory entry for write with the specified key. */
     fun writeUnlock(key: Any)
+    /** Locks the directory entry for extension with the specified key.  Fails if the entry already has a write lock. */
+    fun extendLock(key: Any)
+    /** Unlocks the directory entry for extension with the specified key. */
+    fun extendUnlock(key: Any)
     /** Clears all locks on the directory entry with the specified key. */
     fun clearLocks(key: Any)
 }

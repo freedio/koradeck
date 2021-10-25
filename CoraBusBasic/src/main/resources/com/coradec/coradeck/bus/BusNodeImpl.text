@@ -1,0 +1,2 @@
+# Localized text base for default locale of class BusNodeImpl
+TransitionFailed3: Bus node transition from ‹%s› to ‹%s› failed with context ‹%s›!

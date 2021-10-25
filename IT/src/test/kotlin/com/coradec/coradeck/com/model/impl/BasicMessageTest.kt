@@ -63,13 +63,12 @@ internal class BasicMessageTest {
         val agent = TestAgent()
         val info = TestInformation(here, A2)
         // when
-        val r1 = agent.accept(info)
+        val r1 = agent.accept(info).standby()
         val r2 = try {
             IMMEX.inject(r1)
         } catch (e: Exception) {
             e
         }
-        Thread.sleep(200)
         // then
         assertThat(r2).isInstanceOf(NotificationAlreadyEnqueuedException::class.java)
         assertThat(r1.state).isEqualTo(PROCESSED)

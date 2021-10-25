@@ -18,13 +18,11 @@
     <dependencies>
         <dependency>
             <groupId>com.coradec.coradeck</groupId>
-            <artifactId>core</artifactId>
+            <artifactId>module</artifactId>
         </dependency>
         <dependency>
             <groupId>com.coradec.coradeck</groupId>
-            <artifactId>module</artifactId>
-            <version>0.2</version>
-            <scope>compile</scope>
+            <artifactId>core</artifactId>
         </dependency>
     </dependencies>
 

@@ -4,9 +4,10 @@
 
 package com.coradec.coradeck.com.model.impl
 
-import com.coradec.coradeck.com.model.RequestState
-import com.coradec.coradeck.com.model.RequestState.SUCCESSFUL
+import com.coradec.coradeck.com.model.RequestState.*
 import com.coradec.coradeck.com.model.Voucher
+import com.coradec.coradeck.com.trouble.RequestCancelledException
+import com.coradec.coradeck.com.trouble.RequestFailedException
 import com.coradec.coradeck.core.annot.NonRepresentable
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
@@ -19,6 +20,7 @@ import java.time.ZonedDateTime
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeoutException
 
+@Suppress("UNCHECKED_CAST")
 open class BasicVoucher<V>(
     origin: Origin,
     priority: Priority = defaultPriority,
@@ -31,10 +33,17 @@ open class BasicVoucher<V>(
     private val valueSemaphore = CountDownLatch(1)
     private var valueSet = false
     override var current: V? = initialValue
+
+    init {
+        onSuccess { if (valueSet) valueSemaphore.countDown() else throw IllegalStateException("Value has not been set!") }
+        onFailure { valueSemaphore.countDown() }
+        onCancellation { valueSemaphore.countDown() }
+    }
+
     @Suppress("UNCHECKED_CAST")
     @NonRepresentable
     override var value: V
-        get() = valueSemaphore.await().let { current as V }
+        get() = lookup()
         set(value) {
             if (complete) throw IllegalStateException("Voucher already complete!")
             current = value
@@ -46,10 +55,18 @@ open class BasicVoucher<V>(
         if (initialValue != null) value = initialValue
     }
 
-    override fun interceptSetState(state: RequestState) {
-        if (state == SUCCESSFUL)
-            if (valueSet) valueSemaphore.countDown() else throw IllegalStateException("To be successful, value must be set first!")
-        super.interceptSetState(state)
+    private fun lookup(): V = when (state) {
+        SUCCESSFUL -> current as V
+        FAILED -> throw reason ?: RequestFailedException()
+        CANCELLED -> throw RequestCancelledException()
+        else -> valueSemaphore.await().let {
+            when (state) {
+                SUCCESSFUL -> current as V
+                FAILED -> throw RequestFailedException(reason)
+                CANCELLED -> throw RequestCancelledException()
+                else -> lookup()
+            }
+        }
     }
 
     override fun value(t: Timespan): V {

@@ -119,17 +119,16 @@ open class BasicRequest(
 
     override fun standby(): Request {
         unfinished.await()
-        if (reason != null) throw reason!!
-        if (failed) throw RequestFailedException()
-        if (cancelled) throw RequestCancelledException()
-        Thread.yield()
-        return this
+        return report()
     }
 
     override fun standby(delay: Timespan): Request {
         if (!unfinished.await(delay.amount, delay.unit)) throw StandbyTimeoutException(delay)
-        if (reason != null) throw reason!!
-        if (failed) throw RequestFailedException()
+        return report()
+    }
+
+    private fun report(): BasicRequest {
+        if (failed) throw RequestFailedException(reason)
         if (cancelled) throw RequestCancelledException()
         Thread.yield()
         return this
@@ -141,7 +140,7 @@ open class BasicRequest(
             }) action.invoke()
     }
 
-    override fun onSuccess(action: Request.() -> Unit): Request = also {
+    final override fun onSuccess(action: Request.() -> Unit): Request = also {
         postActionSemaphore.acquire()
         try {
             successActions += action
@@ -151,7 +150,7 @@ open class BasicRequest(
         }
     }
 
-    override fun onFailure(action: Request.() -> Unit): Request = also {
+    final override fun onFailure(action: Request.() -> Unit): Request = also {
         postActionSemaphore.acquire()
         try {
             failureActions += action
@@ -161,7 +160,7 @@ open class BasicRequest(
         }
     }
 
-    override fun onCancellation(action: Request.() -> Unit): Request = also {
+    final override fun onCancellation(action: Request.() -> Unit): Request = also {
         postActionSemaphore.acquire()
         try {
             cancellationActions += action
