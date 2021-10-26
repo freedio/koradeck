@@ -35,3 +35,4 @@ fun String.asLocalDate(pattern: String = "yyyy-MM-dd"): LocalDate =
 fun String.asLocalDateTime(pattern: String = "yyyy-MM-dd'T'HH:mm:ss"): LocalDateTime =
     LocalDateTime.parse(this, DateTimeFormatter.ofPattern(pattern))
 fun max(a: ZonedDateTime, b: ZonedDateTime): ZonedDateTime = if (a.isAfter(b)) a else b
+fun ZonedDateTime.format(pattern: String): String = format(DateTimeFormatter.ofPattern(pattern))
