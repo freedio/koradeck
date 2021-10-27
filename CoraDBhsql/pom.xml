@@ -13,25 +13,23 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>db</artifactId>
+    <artifactId>db-hsql</artifactId>
 
     <dependencies>
         <dependency>
             <groupId>com.coradec.coradeck</groupId>
-            <artifactId>core</artifactId>
+            <artifactId>db</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.hsqldb</groupId>
+            <artifactId>hsqldb</artifactId>
+            <version>2.5.0</version>
         </dependency>
         <dependency>
             <groupId>com.coradec.coradeck</groupId>
-            <artifactId>com</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.coradec.coradeck</groupId>
-            <artifactId>conf</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.coradec.coradeck</groupId>
-            <artifactId>com-basic</artifactId>
-            <scope>test</scope>
+            <artifactId>db-basic</artifactId>
+            <version>0.2</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.coradec.coradeck</groupId>
@@ -40,7 +38,7 @@
         </dependency>
         <dependency>
             <groupId>com.coradec.coradeck</groupId>
-            <artifactId>dir-basic</artifactId>
+            <artifactId>com-basic</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -52,11 +50,6 @@
             <groupId>com.coradec.coradeck</groupId>
             <artifactId>type-basic</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.hsqldb</groupId>
-            <artifactId>hsqldb</artifactId>
-            <version>2.5.0</version>
         </dependency>
         <dependency>
             <groupId>com.coradec.coradeck</groupId>

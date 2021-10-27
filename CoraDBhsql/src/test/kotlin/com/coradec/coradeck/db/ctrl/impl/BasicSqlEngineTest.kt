@@ -2,31 +2,29 @@
  * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
  */
 
-package com.coradec.module.db.ctrl.impl
+package com.coradec.coradeck.db.ctrl.impl
 
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.db.ctrl.Selection
-import com.coradec.coradeck.db.ctrl.impl.BasicSqlEngine
-import com.coradec.coradeck.db.ctrl.impl.SqlSelection
-import com.coradec.coradeck.module.model.CoraModules.register
+import com.coradec.coradeck.module.model.CoraModules
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import com.coradec.module.db.annot.Size
-import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.sql.SQLSyntaxErrorException
 import java.time.LocalDate
 
-internal class BasicSqlEngineTest {
+internal class HsqlEngineTest {
 
     companion object {
         @BeforeAll
         @JvmStatic
         fun setup() {
-            register(CoraConfImpl(), CoraComImpl(), CoraTextImpl(), CoraTypeImpl())
-            BasicSqlEngine(TestClass2::class).use { table ->
+            CoraModules.register(CoraConfImpl(), CoraComImpl(), CoraTextImpl(), CoraTypeImpl())
+            HsqlEngine(TestClass2::class).use { table ->
                 table.assertTable()
                 table.insert(TestClass2("Jane", "Doe", LocalDate.of(2000, 1, 1), 2))
                 table.insert(TestClass2("Jack", "Rack", LocalDate.of(1970, 12, 31), 1))
@@ -37,73 +35,73 @@ internal class BasicSqlEngineTest {
     @Test
     fun testTableName() {
         // given:
-        BasicSqlEngine(TestClass::class).use { testee ->
+        HsqlEngine(TestClass::class).use { testee ->
             // when:
             val result = testee.tableName
             // then:
-            assertThat(result).isEqualTo("TEST_CLASS")
+            Assertions.assertThat(result).isEqualTo("TEST_CLASS")
         }
     }
 
     @Test
     fun testTableName2() {
         // given:
-        BasicSqlEngine(TestClass2::class).use { testee ->
+        HsqlEngine(TestClass2::class).use { testee ->
             // when:
             val result = testee.tableName
             // then:
-            assertThat(result).isEqualTo("TEST_CLASS2")
+            Assertions.assertThat(result).isEqualTo("TEST_CLASS2")
         }
     }
 
     @Test
     fun testFieldNames() {
         // given:
-        BasicSqlEngine(TestClass::class).use { testee ->
+        HsqlEngine(TestClass::class).use { testee ->
             // when:
             val result = testee.fieldNames
             // then:
-            assertThat(result).hasSameElementsAs(listOf("vorname", "familienName", "geburtsdatum", "geschlecht"))
+            Assertions.assertThat(result).hasSameElementsAs(listOf("vorname", "familienName", "geburtsdatum", "geschlecht"))
         }
     }
 
     @Test
     fun testFieldNames2() {
         // given:
-        BasicSqlEngine(TestClass2::class).use { testee ->
+        HsqlEngine(TestClass2::class).use { testee ->
             // when:
             val result = testee.fieldNames
             // then:
-            assertThat(result).hasSameElementsAs(listOf("vorname", "familienName", "geburtsdatum", "geschlecht"))
+            Assertions.assertThat(result).hasSameElementsAs(listOf("vorname", "familienName", "geburtsdatum", "geschlecht"))
         }
     }
 
     @Test
     fun testTableNames() {
         // given:
-        BasicSqlEngine(TestClass::class).use { testee ->
+        HsqlEngine(TestClass::class).use { testee ->
             // when:
             val result = testee.tableNames
             // then:
-            assertThat(result).isEmpty()
+            Assertions.assertThat(result).isEmpty()
         }
     }
 
     @Test
     fun testTableNames2() {
         // given:
-        BasicSqlEngine(TestClass2::class).use { testee ->
+        HsqlEngine(TestClass2::class).use { testee ->
             // when:
             val result = testee.tableNames
             // then:
-            assertThat(result).containsExactly("TEST_CLASS2")
+            Assertions.assertThat(result).containsExactly("TEST_CLASS2")
         }
     }
 
     @Test
     fun testFields() {
         // given:
-        BasicSqlEngine(TestClass::class).use { testee ->
+        HsqlEngine(TestClass::class).use { testee ->
             // when:
             val result =
                 testee.fields.mapValues {
@@ -112,7 +110,7 @@ internal class BasicSqlEngineTest {
                         (it.value.second.singleOrNull { an -> an is Size } as Size?)?.value)
                 }
             // then:
-            assertThat(result).containsAllEntriesOf(
+            Assertions.assertThat(result).containsAllEntriesOf(
                 mapOf(
                     "familienName" to Pair(String::class, 40),
                     "geburtsdatum" to Pair(LocalDate::class, null),
@@ -126,7 +124,7 @@ internal class BasicSqlEngineTest {
     @Test
     fun testFields2() {
         // given:
-        BasicSqlEngine(TestClass2::class).use { testee ->
+        HsqlEngine(TestClass2::class).use { testee ->
             // when:
             val result =
                 testee.fields.mapValues {
@@ -135,7 +133,7 @@ internal class BasicSqlEngineTest {
                         (it.value.second.singleOrNull { an -> an is Size } as Size?)?.value)
                 }
             // then:
-            assertThat(result).containsAllEntriesOf(
+            Assertions.assertThat(result).containsAllEntriesOf(
                 mapOf(
                     "familienName" to Pair(String::class, 40),
                     "geburtsdatum" to Pair(LocalDate::class, null),
@@ -149,33 +147,33 @@ internal class BasicSqlEngineTest {
     @Test
     fun testColumnNames() {
         // given:
-        BasicSqlEngine(TestClass::class).use { testee ->
+        HsqlEngine(TestClass::class).use { testee ->
             // when:
             val result = testee.columnNames
             // then:
-            assertThat(result).hasSameElementsAs(listOf("VORNAME", "FAMILIEN_NAME", "GEBURTSDATUM", "GESCHLECHT"))
+            Assertions.assertThat(result).hasSameElementsAs(listOf("VORNAME", "FAMILIEN_NAME", "GEBURTSDATUM", "GESCHLECHT"))
         }
     }
 
     @Test
     fun testColumnNames2() {
         // given:
-        BasicSqlEngine(TestClass2::class).use { testee ->
+        HsqlEngine(TestClass2::class).use { testee ->
             // when:
             val result = testee.columnNames
             // then:
-            assertThat(result).hasSameElementsAs(listOf("VORNAME", "FAMILIEN_NAME", "GEBURTSDATUM", "GESCHLECHT"))
+            Assertions.assertThat(result).hasSameElementsAs(listOf("VORNAME", "FAMILIEN_NAME", "GEBURTSDATUM", "GESCHLECHT"))
         }
     }
 
     @Test
     fun testColumnDefinitions() {
         // given:
-        BasicSqlEngine(TestClass::class).use { testee ->
+        HsqlEngine(TestClass::class).use { testee ->
             // when:
             val result = testee.columnDefinitions.toMap()
             // then:
-            assertThat(result).containsAllEntriesOf(
+            Assertions.assertThat(result).containsAllEntriesOf(
                 mapOf(
                     "VORNAME" to "VARCHAR(20)",
                     "FAMILIEN_NAME" to "VARCHAR(40)",
@@ -189,11 +187,11 @@ internal class BasicSqlEngineTest {
     @Test
     fun testColumnDefinitions2() {
         // given:
-        BasicSqlEngine(TestClass2::class).use { testee ->
+        HsqlEngine(TestClass2::class).use { testee ->
             // when:
             val result = testee.columnDefinitions.toMap()
             // then:
-            assertThat(result).containsAllEntriesOf(
+            Assertions.assertThat(result).containsAllEntriesOf(
                 mapOf(
                     "VORNAME" to "VARCHAR(20)",
                     "FAMILIEN_NAME" to "VARCHAR(40)",
@@ -207,7 +205,7 @@ internal class BasicSqlEngineTest {
     @Test
     fun testInsertRecord() {
         // given:
-        BasicSqlEngine(TestClass::class).use { testee ->
+        HsqlEngine(TestClass::class).use { testee ->
             // when:
             val result = try {
                 testee.insert(TestClass("John", "Buck", LocalDate.of(1970, 1, 1), 1))
@@ -215,25 +213,26 @@ internal class BasicSqlEngineTest {
                 e
             }
             // then:
-            assertThat(result).isInstanceOf(SQLSyntaxErrorException::class.java)
-            assertThat((result as SQLSyntaxErrorException).message).isEqualTo("user lacks privilege or object not found: TEST_CLASS")
+            Assertions.assertThat(result).isInstanceOf(SQLSyntaxErrorException::class.java)
+            Assertions.assertThat((result as SQLSyntaxErrorException).message).isEqualTo("user lacks privilege or object not found: TEST_CLASS")
         }
     }
 
     @Test
     fun testInsertRecord2() {
         // given:
-        BasicSqlEngine(TestClass2::class).use { testee ->
+        HsqlEngine(TestClass2::class).use { testee ->
             // when:
             val result = testee.insert(TestClass2("John", "Buck", LocalDate.of(1970, 1, 1), 1))
             // then:
-            assertThat(result).isEqualTo(1)
+            Assertions.assertThat(result).isEqualTo(1)
         }
     }
 
-    @Test fun testDeleteRecord() {
+    @Test
+    fun testDeleteRecord() {
         // given:
-        BasicSqlEngine(TestClass::class).use { testee ->
+        HsqlEngine(TestClass::class).use { testee ->
             // when:
             val result = try {
                 testee.delete(where("[familienName = 'Doe']"))
@@ -241,19 +240,19 @@ internal class BasicSqlEngineTest {
                 e
             }
             // then:
-            assertThat(result).isInstanceOf(SQLSyntaxErrorException::class.java)
-            assertThat((result as SQLSyntaxErrorException).message).isEqualTo("user lacks privilege or object not found: TEST_CLASS")
+            Assertions.assertThat(result).isInstanceOf(SQLSyntaxErrorException::class.java)
+            Assertions.assertThat((result as SQLSyntaxErrorException).message).isEqualTo("user lacks privilege or object not found: TEST_CLASS")
         }
     }
 
     @Test
     fun testDeleteRecord2() {
         // given:
-        BasicSqlEngine(TestClass2::class).use { testee ->
+        HsqlEngine(TestClass2::class).use { testee ->
             // when:
             val result = testee.delete(where("[familienName = 'Doe']"))
             // then:
-            assertThat(result).isEqualTo(1)
+            Assertions.assertThat(result).isEqualTo(1)
         }
     }
 

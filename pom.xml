@@ -23,16 +23,18 @@
         <module>CoraConf</module>
         <module>CoraConfBasic</module>
         <module>CoraText</module>
+        <module>CoraTextBasic</module>
         <module>CoraType</module>
         <module>CoraTypeBasic</module>
         <module>CoraBus</module>
         <module>CoraBusBasic</module>
         <module>CoraCom</module>
-        <module>CoraSession</module>
-        <module>IT</module>
         <module>CoraComBasic</module>
-        <module>CoraTextBasic</module>
+        <module>CoraSession</module>
         <module>CoraDB</module>
+        <module>CoraDBhsql</module>
+        <module>CoraDBasic</module>
+        <module>IT</module>
     </modules>
 
     <properties>
@@ -127,6 +129,16 @@
             <dependency>
                 <groupId>com.coradec.coradeck</groupId>
                 <artifactId>bus-basic</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.coradec.coradeck</groupId>
+                <artifactId>db</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.coradec.coradeck</groupId>
+                <artifactId>db-hsql</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

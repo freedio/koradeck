@@ -4,4 +4,4 @@
 
 package com.coradec.coradeck.db.model
 
-interface TableKind<T>: Iterable<T>
+interface RecordCollection<R: Any>: Sequence<R>, AutoCloseable

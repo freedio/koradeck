@@ -15,6 +15,7 @@ import kotlin.reflect.full.memberProperties
 fun String.toSqlObjectName() = replace(Regex("([A-Z])"), "_$1").uppercase().trimStart('_')
 val <T : Any> KClass<T>.fields: Map<String, KProperty1<T, *>> get() = memberProperties.associateBy { it.name }
 fun <T: Any> ResultSet.streamOf(klass: KClass<T>): Stream<T> = StreamSupport.stream(ResultSetSpliterator(this, klass), false)
+fun <T: Any> ResultSet.asSequence(model: KClass<T>): Sequence<T> = Sequence { ResultSetIterator(this, model) }
 fun Any?.toSqlFieldValue(): Any? = when (this) {
     is java.sql.Date -> toLocalDate()
     is java.sql.Time -> toLocalTime()

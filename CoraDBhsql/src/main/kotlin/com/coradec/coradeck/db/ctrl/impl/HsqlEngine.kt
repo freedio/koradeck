@@ -8,9 +8,9 @@ import com.coradec.coradeck.com.ctrl.impl.Logger
 import com.coradec.coradeck.conf.model.LocalProperty
 import com.coradec.coradeck.db.ctrl.Selection
 import com.coradec.coradeck.db.ctrl.SqlEngine
+import com.coradec.coradeck.db.util.asSequence
 import com.coradec.coradeck.db.util.checkedSingleOf
 import com.coradec.coradeck.db.util.listOf
-import com.coradec.coradeck.db.util.streamOf
 import com.coradec.coradeck.db.util.toSqlObjectName
 import com.coradec.module.db.annot.Size
 import java.math.BigDecimal
@@ -19,14 +19,13 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import java.util.stream.Stream
 import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
 
-class BasicSqlEngine<T : Any>(val klass: KClass<out T>) : Logger(), SqlEngine<T>, AutoCloseable {
+open class HsqlEngine<T : Any>(private val model: KClass<out T>) : Logger(), SqlEngine<T>, AutoCloseable {
     private val connection = DriverManager.getConnection(dbUrlProperty.value, usernameProperty.value, passwordProperty.value)
-    override val tableName: String = klass.simpleName?.toSqlObjectName()
-        ?: throw IllegalArgumentException("Unsupported class: $klass")
+    override val tableName: String = model.simpleName?.toSqlObjectName()
+        ?: throw IllegalArgumentException("Unsupported model: $model")
     internal val columnNames: List<String>
         get() = connection.metaData
             .getColumns(null, null, tableName, null)
@@ -44,10 +43,10 @@ class BasicSqlEngine<T : Any>(val klass: KClass<out T>) : Logger(), SqlEngine<T>
                 fields.map { Pair(it.key.toSqlObjectName(), it.value.toSqlType()) }
             }
     internal val fields: Map<String, Pair<KClass<*>, List<Annotation>>>
-        get() = klass.members
+        get() = model.members
             .filter { it.name in fieldNames }
-            .map { Pair(it.name, Pair(it.returnType.classifier as KClass<*>, it.returnType.annotations)) }.toMap()
-    internal val fieldNames: List<String> get() = klass.memberProperties.map { it.name }
+            .associate { Pair(it.name, Pair(it.returnType.classifier as KClass<*>, it.returnType.annotations)) }
+    internal val fieldNames: List<String> get() = model.memberProperties.map { it.name }
     private val statement = connection.createStatement()
 
     override fun count(selector: Selection): Int {
@@ -56,11 +55,11 @@ class BasicSqlEngine<T : Any>(val klass: KClass<out T>) : Logger(), SqlEngine<T>
         return statement.executeQuery(stmt).checkedSingleOf(Int::class)
     }
 
-    override fun query(selector: Selection): Stream<T> {
+    override fun query(selector: Selection): Sequence<T> {
         val stmt = "select * from $tableName${selector.select}"
         debug("Executing query «$stmt»")
         @Suppress("UNCHECKED_CAST")
-        return statement.executeQuery(stmt).streamOf(klass) as Stream<T>
+        return statement.executeQuery(stmt).asSequence(model)
     }
 
     override fun insert(entry: T): Int {

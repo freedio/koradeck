@@ -7,6 +7,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="com" />
+        <module name="db-hsql" />
         <module name="CoraText" />
         <module name="bus" />
         <module name="bus-basic" />
@@ -34,6 +35,7 @@
         <module name="ctrl-basic" />
         <module name="module" />
         <module name="conf-basic" />
+        <module name="db-basic" />
         <module name="IT" />
         <module name="core" />
         <module name="CoraTextBasic" />
