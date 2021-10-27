@@ -20,6 +20,7 @@ import java.util.*
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
 
@@ -185,8 +186,8 @@ open class BusNodeImpl(private val delegator: NodeDelegator? = null) : BasicAgen
     override fun attach(context: BusContext): Request = attachRequest(context)
     override fun detach(): Request = detachRequest()
     override fun context(timeout: Long, timeoutUnit: TimeUnit): BusContext {
-        contextPresent.await(timeout, timeoutUnit)
-        return context!!
+        if (contextPresent.await(timeout, timeoutUnit)) return context!!
+        else throw TimeoutException("Context not available within $timeout $timeoutUnit!")
     }
 
     fun <D : BusNode> get(type: Class<D>): D? = context?.get(type)
