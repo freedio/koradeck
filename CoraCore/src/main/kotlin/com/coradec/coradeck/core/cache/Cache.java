@@ -7,7 +7,7 @@ package com.coradec.coradeck.core.cache;
 import java.util.Map;
 
 /**
- * ​A map whose entries are reclaimed by the garbage collector when their keys are no longer
+ * A map whose entries are reclaimed by the garbage collector when their keys are no longer
  * referenced.  In contrast to WeakHashHap whose entries are reclaimed on each garbage collection,
  * the entries of Cache implementations should only be reclaimed upon memory saturation (before an
  * OutOfMemoryException is thrown).

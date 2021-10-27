@@ -4,6 +4,7 @@
 
 package com.coradec.coradeck.core.util
 
+import com.coradec.coradeck.core.model.Formattable
 import com.coradec.coradeck.core.model.Null
 import com.coradec.coradeck.core.trouble.BasicException
 
@@ -16,7 +17,7 @@ private fun formatAnyOrNull(obj: Any?, known: Set<Any?>, new: Any?): String = wh
     is Map<*, *> -> obj.entries.joinToString(", ", "[", "]") { (key, value) -> "$key: ${formatAnyOrNull(value, known + new, obj)}" }
     is String -> "\"$obj\""
     is BasicException -> "${obj.classname}: ${obj.message(known)}"
-    is com.coradec.coradeck.core.model.Formattable -> obj.format(known)
+    is Formattable -> obj.format(known)
     else -> obj.toString()
 }
 

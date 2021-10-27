@@ -39,10 +39,10 @@ enum class FileType(val formatted: String, val label: String) {
     DOOR("D", "Door"),
     LOOP_LINK("L", "Loop Link"),
     LOST_LINK("N", "Lost Link"),
-    DIR_LINK("D", "Directory Link"),
     UNKNOWN("U", "Unknown");
 
     companion object {
+        operator fun invoke(code: Char) = values().single { it.formatted[0] == code }
         operator fun invoke(name: String) = values().single { it.name == name || it.formatted == name || it.label == name }
         val Path.type: FileType get() = when {
             isDirectory() -> DIRECTORY
