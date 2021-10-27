@@ -60,37 +60,37 @@ open class BasicNotification<I: Information>(
     override fun deregister(observer: Observer) =
         /*if (content is Request) (content as Request).deregister(observer) else*/ stateRegistry.remove(observer)
     override fun enqueue() {
-        if (content is Request) (content as Request).enqueue()
         state = ENQUEUED
+        if (content is Request) (content as Request).enqueue()
     }
     override fun dispatch() {
-        if (content is Request) (content as Request).dispatch()
         state = DISPATCHED
+        if (content is Request) (content as Request).dispatch()
     }
     override fun deliver() {
-        if (content is Request) (content as Request).deliver()
         state = DELIVERED
+        if (content is Request) (content as Request).deliver()
     }
     override fun reject(reason: Throwable) {
         problem = reason
-        if (content is Request) (content as Request).fail(reason)
         state = REJECTED
+        if (content is Request) (content as Request).fail(reason)
     }
     override fun process() {
-        if (content is Request) (content as Request).process()
         state = PROCESSED
+        if (content is Request) (content as Request).process()
         unfinished.countDown()
     }
     override fun crash(reason: Throwable) {
         problem = reason
-        if (content is Request) (content as Request).fail(reason)
         state = CRASHED
+        if (content is Request) (content as Request).fail(reason)
         unfinished.countDown()
     }
     override fun discard() {
         LOST_ITEMS += this
-        if (content is Request) (content as Request).discard()
         state = LOST
+        if (content is Request) (content as Request).discard()
         unfinished.countDown()
     }
 

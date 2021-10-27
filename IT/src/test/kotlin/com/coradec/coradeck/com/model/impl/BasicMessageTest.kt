@@ -38,7 +38,7 @@ internal class BasicMessageTest {
         val info = TestInformation(here, A2)
         // when
         val testee: Message<TestInformation> = agent.accept(info)
-        Thread.sleep(100)
+        testee.standby()
         // then
         assertThat(testee.recipient).isEqualTo(agent)
         assertThat(testee.state).isEqualTo(PROCESSED)
