@@ -213,12 +213,12 @@ internal class BasicRequestTest {
     class TestFailureException: BasicException()
     class CancelReason : BasicException()
     class TestAgent : BasicAgent() {
-        override fun receive(notification: Notification<*>) = when(val message = notification.content) {
+        override fun subscribe(notification: Notification<*>) = when(val message = notification.content) {
             is SuccessfulTestRequest -> message.succeed()
             is FailedTestRequest -> message.fail(TestFailureException())
             is CancelledTestRequest -> message.cancel()
             is CancelledTestRequest2 -> message.cancel(CancelReason())
-            else -> super.receive(notification)
+            else -> super.subscribe(notification)
         }
     }
 

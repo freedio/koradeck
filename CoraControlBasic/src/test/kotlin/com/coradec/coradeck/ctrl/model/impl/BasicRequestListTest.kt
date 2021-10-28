@@ -174,7 +174,7 @@ internal class BasicRequestListTest {
     class TestAgent : BasicAgent() {
         var sum = 0
 
-        override fun receive(notification: Notification<*>) = when (val message = notification.content) {
+        override fun subscribe(notification: Notification<*>) = when (val message = notification.content) {
             is TestRequest -> {
                 sum += message.value
                 message.succeed()
@@ -185,7 +185,7 @@ internal class BasicRequestListTest {
             is FailingRequest -> {
                 message.fail(RuntimeException("This was to be expected!"))
             }
-            else -> super.receive(notification)
+            else -> super.subscribe(notification)
         }
     }
 
@@ -193,7 +193,7 @@ internal class BasicRequestListTest {
         private var collector= StringBuilder()
         val value get() = collector.toString()
 
-        override fun receive(notification: Notification<*>) = when (val message = notification.content) {
+        override fun subscribe(notification: Notification<*>) = when (val message = notification.content) {
             is TestRequest -> {
                 collector.append(message.value.toChar())
                 message.succeed()
@@ -204,7 +204,7 @@ internal class BasicRequestListTest {
             is FailingRequest -> {
                 message.fail(RuntimeException("This was to be expected!"))
             }
-            else -> super.receive(notification)
+            else -> super.subscribe(notification)
         }
     }
 }

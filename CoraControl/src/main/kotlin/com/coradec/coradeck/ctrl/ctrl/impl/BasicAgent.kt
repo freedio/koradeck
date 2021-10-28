@@ -67,7 +67,7 @@ open class BasicAgent() : Logger(), Agent {
         shutdownActions += action
     }
 
-    override fun receive(notification: Notification<*>): Unit = when (val content = notification.content) {
+    override fun subscribe(notification: Notification<*>): Unit = when (val content = notification.content) {
         is Command ->
             if (approvedCommands.any { it.isInstance(content) }) try {
                 content.execute()

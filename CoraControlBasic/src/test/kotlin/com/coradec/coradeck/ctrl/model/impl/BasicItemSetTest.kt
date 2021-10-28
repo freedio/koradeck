@@ -77,6 +77,7 @@ internal class BasicItemSetTest {
         // when:
         agent.accept(testee).standby()
         // then:
+        Thread.sleep(100)
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
@@ -206,12 +207,12 @@ internal class BasicItemSetTest {
     class TestAgent : BasicAgent() {
         var sum = 0
 
-        override fun receive(notification: Notification<*>) = when (val message = notification.content) {
+        override fun subscribe(notification: Notification<*>) = when (val message = notification.content) {
             is TestRequest -> sum += message.value.also { message.succeed() }
             is TestInformation -> sum += message.value.also { Thread.sleep(100) }
             is CancellingRequest -> message.cancel()
             is FailingRequest -> message.fail(RuntimeException("This was to be expected!"))
-            else -> super.receive(notification)
+            else -> super.subscribe(notification)
         }
     }
 
@@ -219,7 +220,7 @@ internal class BasicItemSetTest {
         private var collector = StringBuilder()
         val value get() = collector.toString()
 
-        override fun receive(notification: Notification<*>) = when (val message = notification.content) {
+        override fun subscribe(notification: Notification<*>) = when (val message = notification.content) {
             is TestRequest -> {
                 if (!message.cancelled) {
                     collector.append(message.value.toChar())
@@ -233,7 +234,7 @@ internal class BasicItemSetTest {
             is FailingRequest -> {
                 message.fail(RuntimeException("This was to be expected!"))
             }
-            else -> super.receive(notification)
+            else -> super.subscribe(notification)
         }
     }
 }

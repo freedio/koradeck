@@ -12,8 +12,9 @@ import com.coradec.coradeck.bus.module.CoraBus
 import com.coradec.coradeck.com.model.Request
 import com.coradec.coradeck.com.model.Voucher
 import com.coradec.coradeck.dir.model.DirectoryNamespace
+import com.coradec.coradeck.dir.module.CoraDir
 
-open class BasicBusHub(private val namespace: DirectoryNamespace) : BasicBusNode(), DelegatedBusHub {
+open class BasicBusHub(private val namespace: DirectoryNamespace = CoraDir.defaultNamespace) : BasicBusNode(), DelegatedBusHub {
     override val delegate: BusHubDelegate = CoraBus.createHub(InternalHubDelegator())
     override val members: Voucher<Map<String, BusNode>> get() = delegate.members
     override val names: Voucher<Set<String>> get() = delegate.names

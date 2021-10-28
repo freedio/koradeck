@@ -14,7 +14,7 @@ interface NodeDelegator {
     fun onAttaching(context: BusContext)
     /** Invoked after the node was successfully attached to the specified context. */
     fun onAttached(context: BusContext)
-    /** Invoked before the node is going through initialization.  The node may throw an exception to signal that initialization failed. */
+    /** Invoked before the node is going through initialization.  The node may throw an exception if initialization failed. */
     fun onInitializing()
     /** Invoked after the node was successfully initialized. */
     fun onInitialized()

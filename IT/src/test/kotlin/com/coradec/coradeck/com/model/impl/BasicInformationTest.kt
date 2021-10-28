@@ -163,9 +163,9 @@ internal class BasicInformationTest {
     ) : BasicInformation(origin, priority, createdAt, Session.new, validFrom, validUpTo)
 
     class TestAgent: BasicAgent() {
-        override fun receive(notification: Notification<*>) = when (val message = notification.content) {
+        override fun subscribe(notification: Notification<*>) = when (val message = notification.content) {
             is Request -> message.succeed()
-            else -> super.receive(notification)
+            else -> super.subscribe(notification)
         }
     }
 

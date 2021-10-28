@@ -103,8 +103,8 @@ object CoraControl : CoraModule<CoraControlAPI>() {
     fun taskOf(executable: Runnable, prio: Priority): Task = impl.taskOf(executable, prio)
 }
 
-/** Requests to receive the specified type of information from the CIMMEX. */
-fun Recipient.receive(vararg types: KClass<out Information>) = types.forEach { CoraControl.IMMEX.plugin(it, this) }
+/** Subscribes to the specified type of information from the CIMMEX. */
+fun Recipient.subscribe(vararg types: KClass<out Information>) = types.forEach { CoraControl.IMMEX.plugin(it, this) }
 
 /** Ignore further information from the CIMMEX. */
-fun Recipient.ignore() = CoraControl.IMMEX.unplug(this)
+fun Recipient.unsubscribe() = CoraControl.IMMEX.unplug(this)

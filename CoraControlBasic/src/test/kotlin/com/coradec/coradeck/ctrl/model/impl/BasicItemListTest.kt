@@ -242,12 +242,12 @@ internal class BasicItemListTest {
     class TestAgent : BasicAgent() {
         var sum = 0
 
-        override fun receive(notification: Notification<*>) = when (val message = notification.content) {
+        override fun subscribe(notification: Notification<*>) = when (val message = notification.content) {
             is TestRequest -> sum += message.value.also { message.succeed() }
             is TestInformation -> sum += message.value
             is CancellingRequest -> message.cancel()
             is FailingRequest -> message.fail(RuntimeException("This was to be expected!"))
-            else -> super.receive(notification)
+            else -> super.subscribe(notification)
         }
     }
 
@@ -255,12 +255,12 @@ internal class BasicItemListTest {
         private var collector = StringBuilder()
         val value get() = collector.toString()
 
-        override fun receive(notification: Notification<*>) = when (val message = notification.content) {
+        override fun subscribe(notification: Notification<*>) = when (val message = notification.content) {
             is TestRequest -> collector.append(message.value.toChar()).let { message.succeed() }
             is TestInformation -> collector.append(message.value.toChar()).swallow()
             is CancellingRequest -> message.cancel()
             is FailingRequest -> message.fail(RuntimeException("This was to be expected!"))
-            else -> super.receive(notification)
+            else -> super.subscribe(notification)
         }
     }
 }

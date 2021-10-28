@@ -90,12 +90,12 @@ internal class BasicMessageTest {
     class TestInformation(origin: Origin, priority: Priority = B2) : BasicInformation(origin, priority)
 
     class TestAgent : BasicAgent() {
-        override fun receive(notification: Notification<*>) = when(val message = notification.content) {
+        override fun subscribe(notification: Notification<*>) = when(val message = notification.content) {
             is Request -> {
                 message.succeed()
             }
             is TestInformation -> relax()
-            else -> super.receive(notification)
+            else -> super.subscribe(notification)
         }
     }
 

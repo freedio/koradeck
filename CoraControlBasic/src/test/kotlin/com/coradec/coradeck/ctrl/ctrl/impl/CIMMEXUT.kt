@@ -186,15 +186,15 @@ internal class CIMMEXUT {
 
     class TestAgent1 : BasicAgent() {
         var gotMessage: Boolean = false
-        override fun receive(notification: Notification<*>) = when (notification.content) {
+        override fun subscribe(notification: Notification<*>) = when (notification.content) {
             is TestInformation1 -> gotMessage = true
-            else -> super.receive(notification)
+            else -> super.subscribe(notification)
         }
     }
 
     class TestAgent2 : BasicAgent() {
         var gotMessage: Boolean = false
-        override fun receive(notification: Notification<*>) = when {
+        override fun subscribe(notification: Notification<*>) = when {
             notification is TestNotification2 -> {
                 gotMessage = true
                 notification.done()
@@ -203,7 +203,7 @@ internal class CIMMEXUT {
                 gotMessage = true
                 (notification.content as TestInformation2).done()
             }
-            else -> super.receive(notification)
+            else -> super.subscribe(notification)
         }
     }
 

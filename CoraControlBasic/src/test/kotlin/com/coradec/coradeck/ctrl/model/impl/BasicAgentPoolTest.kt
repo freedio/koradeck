@@ -79,12 +79,12 @@ internal class BasicAgentPoolTest {
     }
 
     class TestAgent(private val evaluation: TestEvaluation) : BasicAgent() {
-        override fun receive(notification: Notification<*>) = when (notification.content) {
+        override fun subscribe(notification: Notification<*>) = when (notification.content) {
             is TestInformation -> {
                 evaluation.add(this)
                 Thread.sleep(1)
             }
-            else -> super.receive(notification)
+            else -> super.subscribe(notification)
         }
     }
 

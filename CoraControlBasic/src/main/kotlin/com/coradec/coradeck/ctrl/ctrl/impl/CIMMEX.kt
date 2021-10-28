@@ -329,7 +329,7 @@ object CIMMEX : Logger(), IMMEX {
             if (item != null) {
                 try {
                     item.deliver()
-                    recipient.receive(item)
+                    recipient.subscribe(item)
                     item.process()
                 } catch (e: NotificationRejectedException) {
                     item.reject(e)
