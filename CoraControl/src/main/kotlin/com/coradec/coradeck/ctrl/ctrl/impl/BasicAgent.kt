@@ -73,9 +73,9 @@ open class BasicAgent() : Logger(), Agent {
                 content.execute()
             } catch (e: Throwable) {
                 error(e, TEXT_COMMAND_FAILED, content::class.classname, e.toString())
-                content.fail(e)
+                notification.crash(e)
             } else {
-                content.fail(CommandNotApprovedException(content))
+                notification.crash(CommandNotApprovedException(content))
                 error(TEXT_MESSAGE_NOT_APPROVED, content.classname, content)
             }
         is Synchronization -> content.succeed().also { debug("Synchronization point «%s» reached", content) }
@@ -84,7 +84,7 @@ open class BasicAgent() : Logger(), Agent {
                 invoke(content)
             } catch (e: Throwable) {
                 error(e, TEXT_MESSAGE_FAILED, content.classname, e.toString())
-                if (content is Request) content.fail(e)
+                notification.crash(e)
             }
         }
         is DummyRequest -> content.succeed().also { debug("DummyRequest processed.") }
