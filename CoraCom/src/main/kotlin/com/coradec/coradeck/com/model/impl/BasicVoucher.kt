@@ -13,6 +13,7 @@ import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
 import com.coradec.coradeck.core.model.Timespan
+import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.session.model.Session
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -72,5 +73,21 @@ open class BasicVoucher<V>(
     override fun value(t: Timespan): V {
         if (valueSemaphore.await(t.amount, t.unit)) return current!!
         throw TimeoutException()
+    }
+
+    override fun forwardTo(voucher: Voucher<V>) {
+        whenFinished {
+            if (current != null) voucher.value = current!!
+            when (state) {
+                SUCCESSFUL -> voucher.succeed()
+                FAILED -> voucher.fail(reason)
+                CANCELLED -> voucher.cancel(reason)
+                else -> relax()
+            }
+        }
+    }
+
+    override fun whenVoucherFinished(action: Voucher<V>.() -> Unit): Voucher<V> = also {
+        whenFinished { action.invoke(this@BasicVoucher) }
     }
 }

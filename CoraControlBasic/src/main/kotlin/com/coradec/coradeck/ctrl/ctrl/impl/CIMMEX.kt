@@ -27,6 +27,7 @@ import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.TimeUnit.SECONDS
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.reflect.KClass
 
 /** Central information, market, messaging, event-handling and execution service. */
@@ -42,6 +43,8 @@ object CIMMEX : Logger(), IMMEX {
     private val TEXT_DISPATCHER_INTERRUPTED = LocalText("DispatcherInterrupted")
     private val TEXT_CIMMEX_DISABLED = LocalText("CimmexDisabled")
     private val TEXT_REMAINING_ITEMS = LocalText("RemainingItems1")
+    private val TEXT_WAITING_FOR_SHUTDOWN_CLEARANCE = LocalText("WaitingForShutdownClearance")
+    private val TEXT_SHUTDOWN_CLEARANCE_ACQUIRED = LocalText("ShutdownClearanceAcquired")
     private val PROP_INQUEUE_SIZE = LocalProperty("InQueueSize", 4000)
     private val PROP_TASKQUEUE_SIZE = LocalProperty("TaskQueueSize", 1000)
     private val PROP_DEFERRINGQUEUE_SIZE = LocalProperty("DeferringQueueSize", 1000)
@@ -73,7 +76,8 @@ object CIMMEX : Logger(), IMMEX {
         get() = "Enabled: %s, InQueue: %d, TaskQueue: %d, DelayQueue: %d, Undelivered: %d".format(
             if (enabled.get()) "Yes" else "No", inqueue.size, taskqueue.size, delayQueue.size, undeliveredCount
         )
-
+    private val shutdownSemaphore = Semaphore(1)
+    private val shutdownClearance = AtomicInteger(1)
     private val WORKER_ID_GEN = BitSet(999)
     private val EXCTOR_ID_GEN = BitSet(999)
     private val NEXT_WORKER: Int get() = WORKER_ID_GEN.nextClearBit(0).also { WORKER_ID_GEN.set(it) } + 1
@@ -87,6 +91,9 @@ object CIMMEX : Logger(), IMMEX {
     }
 
     private fun shutdown() {
+        info(TEXT_WAITING_FOR_SHUTDOWN_CLEARANCE)
+        shutdownSemaphore.acquire(shutdownClearance.get())
+        info(TEXT_SHUTDOWN_CLEARANCE_ACQUIRED)
         info(TEXT_SHUTTING_DOWN)
         val shutdownAllowance: Timespan = PROP_SHUTDOWN_ALLOWANCE.value
         val end = System.nanoTime() + shutdownAllowance.let { it.unit.toNanos(it.amount) }
@@ -170,6 +177,14 @@ object CIMMEX : Logger(), IMMEX {
             throw StandbyTimeoutException(delay)
         }
         Thread.sleep(10)
+    }
+
+    override fun preventShutdown() {
+        shutdownClearance.incrementAndGet()
+    }
+
+    override fun allowShutdown() {
+        shutdownSemaphore.release()
     }
 
     override fun plugin(klass: KClass<out Information>, vararg listener: Recipient) {

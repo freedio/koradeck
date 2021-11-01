@@ -39,4 +39,8 @@ interface IMMEX {
     fun standby()
     /** Wait for at most delay until there are no more pending messages in CIMMEX. */
     fun standby(delay: Timespan)
+    /** Make sure the IMMEX is not able to shut down until a symmetrical allowShutdown() has been invoked. */
+    fun preventShutdown()
+    /** Allows the IMMEX to shut down.  Make sure that this method is called only with a symmetrical #preventShutdown() */
+    fun allowShutdown()
 }

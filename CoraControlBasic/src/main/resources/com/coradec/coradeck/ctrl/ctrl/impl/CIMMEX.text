@@ -7,7 +7,9 @@ DispatchFailed1: Failed to dispatch ‹%s›! → item dropped.
 CantDispatch1: Can't dispatch item ‹%s›: all queues are full! → item dropped.
 NoRecipients2: Nobody was interested in ‹%s› message «%s» → Message dropped.
 DispatcherInterrupted: Dispatcher was interrupted!
-ShuttingDown: Terminating CIMMEX...
+ShuttingDown: Terminating CIMMEX ...
 ShutDown: CIMMEX terminated.
 CimmexDisabled: CIMMEX is disabled! → Message dropped.
 RemainingItems1: Remaining items in CIMMEX: %s.
+WaitingForShutdownClearance: Acquiring license to kill ...
+ShutdownClearanceAcquired: Termination clearance acquired.
