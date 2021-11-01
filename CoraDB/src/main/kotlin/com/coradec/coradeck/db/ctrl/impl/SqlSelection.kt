@@ -7,7 +7,7 @@ package com.coradec.coradeck.db.ctrl.impl
 import com.coradec.coradeck.db.ctrl.Selection
 import com.coradec.coradeck.db.util.toSqlObjectName
 
-open class SqlSelection(private val expr: String) : Selection {
+class SqlSelection(private val expr: String) : Selection {
     private val offsetNum: Int by lazy { OFFSET.find(expr)?.groupValues?.let { if (it.size > 2) it[2].toInt() else 0 } ?: 0 }
     private val limitNum: Int by lazy { LIMIT.find(expr)?.groupValues?.let { if (it.size > 2) it[2].toInt() else 0 } ?: 0 }
     private val whereList: List<String> by lazy {
@@ -46,6 +46,10 @@ open class SqlSelection(private val expr: String) : Selection {
         if (list.isEmpty()) "" else list.joinToString(", ", " order by ") { it }
     }
 
+    fun where(expr: String): Selection = SqlSelection("$expr$order$slice")
+
+    override fun toString(): String = select
+
     companion object {
         val ALL = SqlSelection("")
         private val OFFSET = Regex("(OFFSET|Offset|offset):(\\d+)")
@@ -60,5 +64,7 @@ open class SqlSelection(private val expr: String) : Selection {
         private val WHERE2 = Regex("\\[(\\w+)\\s+(EXISTS|[Ee]xists|" +
                 "IS\\s+NULL|[Ii]s\\s+[Nn]ull|IS\\s+NOT\\s+NULL|[Ii]s\\s+[Nn]ot\\s+[Nn]ull)]")
         private val ORDER = Regex("(\\w+):(ASC|DESC|Asc|Desc|asc|desc)")
+
+        fun where(expr: String): Selection = SqlSelection(expr)
     }
 }

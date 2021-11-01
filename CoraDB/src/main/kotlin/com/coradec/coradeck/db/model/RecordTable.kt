@@ -4,4 +4,15 @@
 
 package com.coradec.coradeck.db.model
 
-interface RecordTable<R: Any>: RecordCollection<R>
+import com.coradec.coradeck.db.ctrl.Selection
+
+interface RecordTable<Record: Any>: RecordCollection<Record> {
+    operator fun plusAssign(element: Record)
+    operator fun plusAssign(elements: Iterable<Record>)
+    operator fun minusAssign(selector: Selection)
+    fun insert(element: Record): Int
+    fun insert(elements: Iterable<Record>): Int
+    fun insert(elements: Sequence<Record>): Int
+    fun delete(selector: Selection): Int
+    fun update(selector: Selection, vararg fields: Pair<String, Any?>): Int
+}

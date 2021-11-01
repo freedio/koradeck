@@ -4,12 +4,13 @@
 
 package com.coradec.coradeck.db.util
 
-import com.coradec.coradeck.com.module.CoraCom
+import com.coradec.coradeck.com.module.CoraCom.log
 import com.coradec.coradeck.core.util.formatted
 import com.coradec.module.db.trouble.ExcessResultsException
 import java.sql.ResultSet
 import java.sql.SQLException
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 import kotlin.reflect.KClass
 import kotlin.reflect.full.primaryConstructor
@@ -25,7 +26,7 @@ fun <Record : Any> ResultSet.encode(model: KClass<Record>): Record = when (model
             .map { Pair(it.value.name, getObjectOrNull(it.key).toSqlFieldValue()) }.toMap()
         val pcon = model.primaryConstructor ?: throw IllegalArgumentException("$model has no primary constructor!")
         val args = pcon.valueParameters.map { Pair(it, it.name) }.toMap().mapValues { sqlValues[it.value] }
-        CoraCom.log.debug("Calling ${pcon.name}(${args.entries
+        log.debug("Calling ${pcon.name}(${args.entries
             .joinToString { "${it.key.name}:${it.key.type} = ${it.value.formatted}:${it.value?.javaClass?.name}" }})")
         pcon.callBy(args)
     }
@@ -57,6 +58,8 @@ fun <Record : Any> ResultSet.listOf(klass: KClass<Record>): List<Record> {
     return result.toList()
 }
 
+fun <Record : Any> ResultSet.seqOf(model: KClass<Record>): Sequence<Record> = Sequence { ResultSetIterator(this, model) }
+
 fun ResultSet.forEach(action: (ResultSet) -> Unit) {
     while (next()) action.invoke(this)
 }
@@ -78,6 +81,9 @@ class ResultSetSpliterator<Record : Any>(private val dataset: ResultSet, private
 }
 
 class ResultSetIterator<Record: Any>(private val dataset: ResultSet, private val model: KClass<Record>): Iterator<Record> {
-    override fun hasNext()= dataset.next()
-    override fun next(): Record = if (dataset.isAfterLast) throw NoSuchElementException() else dataset.encode(model)
+    private val useLast = AtomicBoolean(false)
+    private val last = AtomicBoolean(false)
+    private fun useNext(new: Boolean) = if (useLast.getAndSet(new)) last.get() else dataset.next().also { last.set(it) }
+    override fun hasNext() = useNext(true)
+    override fun next(): Record = if (useNext(false)) dataset.encode(model) else throw NoSuchElementException()
 }

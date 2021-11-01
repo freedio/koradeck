@@ -15,4 +15,7 @@ interface Selection {
     val select: String get() = "$where$order$slice"
     /** The entire filter specification: LIMIT, OFFSET, WHERE. */
     val filter: String get() = "$where$slice"
+
+    /** Returns a string representation that can be fed to a database. */
+    override fun toString(): String
 }

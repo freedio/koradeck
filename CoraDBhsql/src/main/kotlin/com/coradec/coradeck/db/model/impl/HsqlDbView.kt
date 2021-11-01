@@ -4,30 +4,16 @@
 
 package com.coradec.coradeck.db.model.impl
 
-import com.coradec.coradeck.db.model.RecordTable
+import com.coradec.coradeck.core.util.classname
+import com.coradec.coradeck.db.ctrl.impl.SqlSelection
+import com.coradec.coradeck.db.model.Database
 import com.coradec.coradeck.db.model.RecordView
 import kotlin.reflect.KClass
 
-class HsqlDbView<Record: Any>(model: KClass<out Record>) : RecordTable<Record> {
-    override fun iterator(): Iterator<Record> {
-        TODO("Not yet implemented")
-    }
-
-    override fun close() {
-        TODO("Not yet implemented")
-    }
-
-    companion object {
-        fun <Record: Any> create(model: KClass<out Record>): RecordView<Record> {
-            TODO("Not yet implemented")
-        }
-
-        fun <Record: Any> open(model: KClass<out Record>): RecordView<Record> {
-            TODO("Not yet implemented")
-        }
-
-        fun <Record: Any> creopen(model: KClass<out Record>): RecordView<Record> {
-            TODO("Not yet implemented")
-        }
-    }
+open class HsqlDbView<Record: Any>(
+    db: Database,
+    model: KClass<out Record>
+) : HsqlDbCollection<Record>(db, model), RecordView<Record> {
+    override val selector = SqlSelection.ALL
+    override val recordName: String = model.classname
 }

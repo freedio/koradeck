@@ -1,0 +1,94 @@
+/*
+ * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+ */
+
+package com.coradec.coradeck.db.model.impl
+
+import com.coradec.coradeck.bus.model.BusNode
+import com.coradec.coradeck.bus.model.impl.BasicBusHub
+import com.coradec.coradeck.com.model.RequestState.*
+import com.coradec.coradeck.com.model.Voucher
+import com.coradec.coradeck.core.util.here
+import com.coradec.coradeck.core.util.relax
+import com.coradec.coradeck.db.com.CreateTableVoucher
+import com.coradec.coradeck.db.com.GetTableVoucher
+import com.coradec.coradeck.db.com.OpenTableVoucher
+import com.coradec.coradeck.db.model.Database
+import com.coradec.coradeck.db.model.RecordTable
+import com.coradec.coradeck.db.util.toSqlObjectName
+import com.coradec.coradeck.db.util.toSqlTableName
+import com.coradec.coradeck.db.util.toSqlType
+import com.coradec.coradeck.type.model.Password
+import com.coradec.module.db.annot.Size
+import java.sql.Connection
+import java.sql.DriverManager
+import java.sql.Statement
+import kotlin.reflect.KClass
+import kotlin.reflect.KType
+import kotlin.reflect.full.findAnnotation
+
+@Suppress("UNCHECKED_CAST")
+class HsqlDatabase(private val url: String, private val username: String, private val password: Password): BasicBusHub(), Database {
+    var myConnection: Connection? = null
+    override val connection: Connection get() = myConnection ?: throw IllegalStateException("Database «%s» not attached!")
+    override val statement: Statement get() = connection.createStatement()
+
+    override fun onInitializing() {
+        super.onInitializing()
+        myConnection = DriverManager.getConnection(url, username, password.decoded)
+        route(GetTableVoucher::class, ::getTable)
+        route(OpenTableVoucher::class, ::openTable)
+        route(CreateTableVoucher::class, ::createTable)
+    }
+
+    override fun onFinalizing() {
+        super.onFinalizing()
+        unroute(GetTableVoucher::class)
+        connection.close()
+    }
+
+    override fun close() {
+        leave()
+    }
+
+    override fun <Record : Any> getTable(model: KClass<Record>): RecordTable<Record> =
+        accept(GetTableVoucher(here, model)).content.value
+
+    private fun getTable(voucher: GetTableVoucher<*>) {
+        lookup(voucher.model.toSqlTableName()).forwardTo(voucher as Voucher<BusNode>)
+    }
+
+    private fun openTable(voucher: OpenTableVoucher<*>) {
+        val model = voucher.model
+        lookup(model.toSqlTableName()).whenVoucherFinished {
+            when (state) {
+                FAILED -> CreateTableVoucher(here, model).also { accept(it) } as Voucher<BusNode>
+                else -> this
+            }.forwardTo(voucher as Voucher<BusNode>)
+        }
+    }
+
+    private fun createTable(voucher: CreateTableVoucher<*>) {
+        val name = voucher.model.toSqlTableName()
+        val node = HsqlDbTable(this, voucher.model)
+        add(name, node).whenFinished {
+            when (state) {
+                SUCCESSFUL -> {
+                    (voucher as Voucher<BusNode>).value = node
+                    voucher.succeed()
+                }
+                FAILED -> voucher.fail(reason)
+                CANCELLED -> voucher.cancel(reason)
+                else -> relax()
+            }
+        }
+    }
+
+    override fun createTable(tableName: String, columnDefinitions: Sequence<Pair<String, KType>>) {
+        val viewspec = columnDefinitions.joinToString(",", "(", ")") { (name, type) ->
+            val klass = type.classifier as KClass<*>
+            "${name.toSqlObjectName()} ${klass.toSqlType(name, type.findAnnotation<Size>()?.value)}"
+        }
+        statement.executeUpdate("create table if not exists $tableName $viewspec")
+    }
+}
