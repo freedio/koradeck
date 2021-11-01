@@ -9,7 +9,6 @@ import com.coradec.coradeck.bus.model.BusNodeState
 import com.coradec.coradeck.bus.trouble.MemberNotFoundException
 import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.bus.view.BusHubView
-import com.coradec.coradeck.com.model.impl.Syslog
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.com.trouble.RequestFailedException
 import com.coradec.coradeck.conf.module.CoraConfImpl
@@ -77,7 +76,6 @@ class BusHubImplTest {
         testee.add("e1", node1).standby()
         testee.add("e2", node2).standby()
         // then:
-        Syslog.debug("-------------------------------------------")
         assertThat(testee.state).isEqualTo(BusNodeState.READY)
         assertThat(node1.state).isEqualTo(BusNodeState.READY)
         assertThat(node2.state).isEqualTo(BusNodeState.READY)

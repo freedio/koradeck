@@ -43,6 +43,7 @@ interface BusNodeStateTransition : Request {
             StoppingPausedTemplate,
             UnloadingBusyTemplate,
             UnloadingStoppedTemplate,
+            UnloadingLoadingTemplate,
             UnloadingLoadedTemplate,
             UnloadedTemplate,
             FinalizingBusyTemplate,
@@ -185,6 +186,13 @@ interface BusNodeStateTransition : Request {
 
         object UnloadingStoppedTemplate : Template {
             override val from: BusNodeState = STOPPED
+            override val unto: BusNodeState = UNLOADING
+
+            override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
+        }
+
+        object UnloadingLoadingTemplate : Template {
+            override val from: BusNodeState = LOADING
             override val unto: BusNodeState = UNLOADING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)

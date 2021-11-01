@@ -4,4 +4,7 @@
 
 package com.coradec.coradeck.bus.model
 
-interface BusEngineDelegate: BusNodeDelegate, BusEngine
+interface BusEngineDelegate: BusNodeDelegate, BusEngine {
+    /** The delegator. */
+    override val delegator: EngineDelegator?
+}

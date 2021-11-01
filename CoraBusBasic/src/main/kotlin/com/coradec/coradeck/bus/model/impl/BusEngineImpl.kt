@@ -11,7 +11,7 @@ import com.coradec.coradeck.bus.model.EngineDelegator
 
 @Suppress("UNCHECKED_CAST")
 open class BusEngineImpl(
-    private val delegator: EngineDelegator? = null
+    override val delegator: EngineDelegator? = null
 ) : BusNodeImpl(delegator), BusEngineDelegate {
     override val upstates: Sequence<BusNodeState> get() = super.upstates + sequenceOf(BusNodeState.STARTING, BusNodeState.STARTED)
     override val downstates: Sequence<BusNodeState> get() = sequenceOf(BusNodeState.STOPPING, BusNodeState.STOPPED) + super.downstates

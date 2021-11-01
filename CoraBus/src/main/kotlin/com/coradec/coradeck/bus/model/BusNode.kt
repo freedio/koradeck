@@ -4,10 +4,12 @@
 
 package com.coradec.coradeck.bus.model
 
+import com.coradec.coradeck.bus.trouble.StateUnreachableException
 import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.com.model.Request
 import com.coradec.coradeck.core.model.Origin
+import com.coradec.coradeck.core.model.Timespan
 import com.coradec.coradeck.dir.model.Path
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -34,4 +36,12 @@ interface BusNode : Origin, Recipient {
     fun detach(): Request
     /** The bus context.  Will wait up to [timeout] [timeoutUnit]s for the node to be connected, then throw TimeoutException. */
     @Throws(TimeoutException::class) fun context(timeout: Long, timeoutUnit: TimeUnit): BusContext
+    /** Waits for at most [delay] until the node has reached the specified state.  Fails if the specified state is unreachable. */
+    @Throws(StateUnreachableException::class, TimeoutException::class) fun standby(delay: Timespan, state: BusNodeState)
+    /** Waits until the node has reached the specified state.  Fails if the specified state is unreachable. */
+    @Throws(StateUnreachableException::class) fun standby(state: BusNodeState)
+    /** Waits for at most [delay] until the node is ready.  Fails if the node is shutting down already. */
+    @Throws(StateUnreachableException::class, TimeoutException::class) fun standby(delay: Timespan)
+    /** Waits until the node is ready.  Fails if the node is shutting down already. */
+    @Throws(StateUnreachableException::class) fun standby()
 }

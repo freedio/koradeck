@@ -13,8 +13,8 @@ import com.coradec.coradeck.dir.module.CoraDir
 
 @Suppress("UNCHECKED_CAST")
 open class BusMachineImpl(
-    private val delegator: MachineDelegator? = null,
-    private val namespace: DirectoryNamespace = CoraDir.rootNamespace
+    override val delegator: MachineDelegator? = null,
+    namespace: DirectoryNamespace = CoraDir.rootNamespace
 ) : BusHubImpl(delegator, namespace), BusMachineDelegate {
     override val upstates: Sequence<BusNodeState> get() = super.upstates + sequenceOf(BusNodeState.STARTING, BusNodeState.STARTED)
     override val downstates: Sequence<BusNodeState> get() = sequenceOf(BusNodeState.STOPPING, BusNodeState.STOPPED) + super.downstates

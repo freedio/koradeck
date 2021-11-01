@@ -9,7 +9,9 @@ import com.coradec.coradeck.bus.model.impl.*
 import com.coradec.coradeck.dir.model.DirectoryNamespace
 
 class CoraBusImpl : CoraBusAPI {
-    override val systemBus: BusHub = SystemBus
+    override val systemBus: BusHub get() = SystemBus
+    override val machineBus: BusHub get() = MachineBus
+    override val applicationBus: BusHub get() = ApplicationBus
     override fun createNode(delegator: NodeDelegator?): BusNodeDelegate = BusNodeImpl(delegator)
     override fun createHub(delegator: HubDelegator?, namespace: DirectoryNamespace): BusHubDelegate =
         BusHubImpl(delegator, namespace)

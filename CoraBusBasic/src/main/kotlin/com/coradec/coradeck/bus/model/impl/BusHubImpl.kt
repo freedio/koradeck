@@ -20,7 +20,7 @@ import kotlin.reflect.KClass
 
 @Suppress("UNCHECKED_CAST")
 open class BusHubImpl(
-    private val delegator: HubDelegator? = null,
+    override val delegator: HubDelegator? = null,
     private val namespace: DirectoryNamespace = CoraDir.rootNamespace
 ) : BusNodeImpl(delegator), BusHubDelegate {
     override val members: Voucher<Map<String, BusNode>> get() = MemberVoucher(this).apply { accept(this) }

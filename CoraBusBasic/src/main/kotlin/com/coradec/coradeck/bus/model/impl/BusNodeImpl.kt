@@ -6,11 +6,15 @@ package com.coradec.coradeck.bus.model.impl
 
 import com.coradec.coradeck.bus.com.*
 import com.coradec.coradeck.bus.model.*
+import com.coradec.coradeck.bus.model.BusNodeState.*
 import com.coradec.coradeck.bus.trouble.StateUnknownException
+import com.coradec.coradeck.bus.trouble.StateUnreachableException
 import com.coradec.coradeck.bus.trouble.TransitionNotFoundException
 import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.com.ctrl.Observer
+import com.coradec.coradeck.com.model.Event
 import com.coradec.coradeck.com.model.Request
+import com.coradec.coradeck.core.model.Timespan
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.swallow
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
@@ -20,19 +24,20 @@ import java.util.*
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit.SECONDS
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.reflect.KClass
 
-open class BusNodeImpl(private val delegator: NodeDelegator? = null) : BasicAgent(), BusNodeDelegate {
+open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAgent(), BusNodeDelegate {
     private val stateRegistry = CopyOnWriteArraySet<Observer>()
     private val detachForced = AtomicBoolean(false)
-    protected val myStates = mutableListOf<BusNodeState>(BusNodeState.UNATTACHED)
+    private val myStates = mutableListOf<BusNodeState>(UNATTACHED)
     protected open val mytype = "node"
     protected open val myType = "Node"
     override val states: List<BusNodeState> get() = Collections.unmodifiableList(myStates)
     private val contextPresent = CountDownLatch(1)
-    override val ready: Boolean = BusNodeState.READY in myStates
+    override val ready: Boolean = READY in myStates
     override var context: BusContext? = null
     override val path: Path? get() = context?.path
     override val name: String? get() = context?.name
@@ -53,18 +58,19 @@ open class BusNodeImpl(private val delegator: NodeDelegator? = null) : BasicAgen
 
     protected open val upstates: Sequence<BusNodeState>
         get() = sequenceOf(
-            BusNodeState.UNATTACHED,
-            BusNodeState.ATTACHING,
-            BusNodeState.ATTACHED,
-            BusNodeState.INITIALIZING,
-            BusNodeState.INITIALIZED
+            UNATTACHED,
+            ATTACHING,
+            ATTACHED,
+            INITIALIZING,
+            INITIALIZED
         )
-    protected open val downstates: Sequence<BusNodeState> get() = sequenceOf(
-        BusNodeState.FINALIZING,
-        BusNodeState.FINALIZED,
-        BusNodeState.DETACHING,
-        BusNodeState.DETACHED
-    )
+    protected open val downstates: Sequence<BusNodeState>
+        get() = sequenceOf(
+            FINALIZING,
+            FINALIZED,
+            DETACHING,
+            DETACHED
+        )
 
     private fun transition(initial: BusNodeState, terminal: BusNodeState, context: BusContext?): BusNodeStateTransition =
         BusNodeStateTransition(this, initial, terminal, context) ?: throw TransitionNotFoundException(initial, terminal)
@@ -89,53 +95,53 @@ open class BusNodeImpl(private val delegator: NodeDelegator? = null) : BasicAgen
         val name = name ?: ctxt?.name ?: throw IllegalStateException("Name must be present here!")
         try {
             when (val terminalState = transition.unto) {
-                BusNodeState.ATTACHING -> {
+                ATTACHING -> {
                     val contxt = ctxt ?: throw IllegalArgumentException("Context not specified!")
                     debug("Attaching %s ‹%s› to context ‹%s›.", mytype, name, contxt.path)
                     delegator?.onAttaching(contxt)
-                    state = BusNodeState.ATTACHING
+                    state = ATTACHING
                     contxt.joining(this)
                 }
-                BusNodeState.ATTACHED -> {
+                ATTACHED -> {
                     val contxt = ctxt ?: throw IllegalArgumentException("Context not specified!")
                     delegator?.onAttached(contxt)
                     debug("Attached %s ‹%s› to context ‹%s›.", mytype, name, contxt.path)
                     context = contxt
-                    state = BusNodeState.ATTACHED
+                    state = ATTACHED
                     contxt.joined(this)
                 }
-                BusNodeState.INITIALIZING -> {
+                INITIALIZING -> {
                     debug("Initializing %s ‹%s›.", mytype, name)
                     delegator?.onInitializing()
-                    state = BusNodeState.INITIALIZING
+                    state = INITIALIZING
                 }
-                BusNodeState.INITIALIZED -> {
+                INITIALIZED -> {
                     delegator?.onInitialized()
                     debug("Initialized %s ‹%s›.", mytype, name)
-                    state = BusNodeState.INITIALIZED
+                    state = INITIALIZED
                     readify(name)
                 }
-                BusNodeState.FINALIZING -> {
+                FINALIZING -> {
                     busify(name)
                     debug("Finalizing %s ‹%s›.", mytype, name)
                     delegator?.onFinalizing()
-                    state = BusNodeState.FINALIZING
+                    state = FINALIZING
                 }
-                BusNodeState.FINALIZED -> {
+                FINALIZED -> {
                     delegator?.onFinalized()
                     debug("Finalized %s ‹%s›.", mytype, name)
-                    state = BusNodeState.FINALIZED
+                    state = FINALIZED
                 }
-                BusNodeState.DETACHING -> {
+                DETACHING -> {
                     debug("Detaching %s ‹%s›.", mytype, name)
                     delegator?.onDetaching(detachForced.getAndSet(true))
-                    state = BusNodeState.DETACHING
+                    state = DETACHING
                     context?.leaving()
                 }
-                BusNodeState.DETACHED -> {
+                DETACHED -> {
                     delegator?.onDetached()
                     debug("Detached %s ‹%s›.", mytype, name)
-                    state = BusNodeState.DETACHED
+                    state = DETACHED
                     context?.left()
                     context = null
                 }
@@ -151,22 +157,22 @@ open class BusNodeImpl(private val delegator: NodeDelegator? = null) : BasicAgen
     protected fun readify(name: String) {
         debug("%s ‹%s› ready.", myType, name)
         delegator?.onReady()
-        state = BusNodeState.READY
+        state = READY
         context?.ready()
     }
 
     protected fun busify(name: String) {
         debug("%s ‹%s› busy.", myType, name)
-        myStates -= BusNodeState.READY
-        state = BusNodeState.BUSY
+        myStates -= READY
+        state = BUSY
         context?.busy()
         delegator?.onBusy()
     }
 
     private fun attachRequest(context: BusContext): Request {
-        if (state == BusNodeState.DETACHED) {
+        if (state == DETACHED) {
             myStates.clear()
-            myStates += BusNodeState.UNATTACHED
+            myStates += UNATTACHED
         }
         return AttachRequest(this, context).apply {
             accept(Attachment(this@BusNodeImpl, this, upstates.dropWhile { it <= this@BusNodeImpl.state }, context))
@@ -174,9 +180,9 @@ open class BusNodeImpl(private val delegator: NodeDelegator? = null) : BasicAgen
     }
 
     private fun detachRequest(): Request {
-        if (state == BusNodeState.READY) {
-            myStates -= BusNodeState.READY
-            myStates += BusNodeState.BUSY
+        if (state == READY) {
+            myStates -= READY
+            myStates += BUSY
         }
         return DetachRequest(this).apply {
             accept(Detachment(this@BusNodeImpl, this, downstates.dropWhile { it <= this@BusNodeImpl.state }, null))
@@ -185,9 +191,34 @@ open class BusNodeImpl(private val delegator: NodeDelegator? = null) : BasicAgen
 
     override fun attach(context: BusContext): Request = attachRequest(context)
     override fun detach(): Request = detachRequest()
+    override fun leave() = accept(detach()).swallow()
     override fun context(timeout: Long, timeoutUnit: TimeUnit): BusContext {
         if (contextPresent.await(timeout, timeoutUnit)) return context!!
         else throw TimeoutException("Context not available within $timeout $timeoutUnit!")
+    }
+
+    override fun standby(state: BusNodeState) = standby(Timespan(0, SECONDS), state)
+    override fun standby(delay: Timespan) = standby(delay, READY)
+    override fun standby() = standby(READY)
+    override fun standby(delay: Timespan, state: BusNodeState) {
+        val latch = CountDownLatch(1)
+        synchronized(myStates) {
+            if ((state in upstates || state == READY) && (BUSY in myStates || DETACHED in myStates))
+                throw StateUnreachableException(state)
+            if (state in myStates) return
+            stateRegistry.add(object : Observer {
+                override fun onNotification(event: Event): Boolean = when (event) {
+                    is NodeStateChangedEvent ->
+                        (event.current == state).also {
+                            if (it) {
+                                latch.countDown()
+                            }
+                        }
+                    else -> false
+                }
+            })
+        }
+        if (delay.amount == 0L) latch.await() else if (!latch.await(delay.amount, delay.unit)) throw TimeoutException()
     }
 
     fun <D : BusNode> get(type: Class<D>): D? = context?.get(type)

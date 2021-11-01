@@ -14,7 +14,7 @@ import com.coradec.coradeck.com.model.Voucher
 import com.coradec.coradeck.dir.model.DirectoryNamespace
 import com.coradec.coradeck.dir.module.CoraDir
 
-open class BasicBusHub(private val namespace: DirectoryNamespace = CoraDir.defaultNamespace) : BasicBusNode(), DelegatedBusHub {
+open class BasicBusHub(protected val namespace: DirectoryNamespace = CoraDir.defaultNamespace) : BasicBusNode(), DelegatedBusHub {
     override val delegate: BusHubDelegate = CoraBus.createHub(InternalHubDelegator())
     override val members: Voucher<Map<String, BusNode>> get() = delegate.members
     override val names: Voucher<Set<String>> get() = delegate.names
@@ -24,6 +24,8 @@ open class BasicBusHub(private val namespace: DirectoryNamespace = CoraDir.defau
     override fun remove(name: String): Voucher<BusNode> = delegate.remove(name)
     override fun replace(name: String, substitute: BusNode): Voucher<BusNode> = delegate.replace(name, substitute)
     override fun rename(name: String, newName: String): Request = delegate.rename(name, newName)
+
+    protected fun leave() = delegate.leave()
 
     protected open fun onLoading() {}
     protected open fun onLoaded() {}
