@@ -58,7 +58,7 @@ internal class BasicItemListTest {
         val item4 = TestMessage(1, agent)
         val testee = BasicItemList(here, sequenceOf(item1, item2, item3, item4), processor = agent)
         // when:
-        agent.accept(testee).standby()
+        agent.accept(testee).content.standby()
         // then:
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()

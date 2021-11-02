@@ -28,14 +28,14 @@ import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation
 
 @Suppress("UNCHECKED_CAST")
-class HsqlDatabase(private val url: String, private val username: String, private val password: Password): BasicBusHub(), Database {
+class HsqlDatabase(private val uri: String, private val username: String, private val password: Password): BasicBusHub(), Database {
     var myConnection: Connection? = null
     override val connection: Connection get() = myConnection ?: throw IllegalStateException("Database «%s» not attached!")
     override val statement: Statement get() = connection.createStatement()
 
     override fun onInitializing() {
         super.onInitializing()
-        myConnection = DriverManager.getConnection(url, username, password.decoded)
+        myConnection = DriverManager.getConnection(uri, username, password.decoded)
         route(GetTableVoucher::class, ::getTable)
         route(OpenTableVoucher::class, ::openTable)
         route(CreateTableVoucher::class, ::createTable)

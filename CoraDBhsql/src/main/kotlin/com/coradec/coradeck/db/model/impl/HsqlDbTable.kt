@@ -20,6 +20,7 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<out Record>) : HsqlD
 
     override fun plusAssign(element: Record) = insert(element).swallow()
     override fun plusAssign(elements: Iterable<Record>) = insert(elements).swallow()
+    override fun plusAssign(elements: Sequence<Record>) = insert(elements).swallow()
     override fun minusAssign(selector: Selection) = delete(selector).swallow()
 
     override fun insert(element: Record): Int {
@@ -80,5 +81,4 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<out Record>) : HsqlD
         statement.executeUpdate(stmt)
         connection.commit()
     }
-
 }

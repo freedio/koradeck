@@ -9,6 +9,7 @@ import com.coradec.coradeck.db.ctrl.Selection
 interface RecordTable<Record: Any>: RecordCollection<Record> {
     operator fun plusAssign(element: Record)
     operator fun plusAssign(elements: Iterable<Record>)
+    operator fun plusAssign(elements: Sequence<Record>)
     operator fun minusAssign(selector: Selection)
     fun insert(element: Record): Int
     fun insert(elements: Iterable<Record>): Int

@@ -18,7 +18,8 @@ import com.coradec.coradeck.db.com.GetTableVoucher
 import com.coradec.coradeck.db.com.OpenTableVoucher
 import com.coradec.coradeck.db.ctrl.impl.SqlSelection.Companion.where
 import com.coradec.coradeck.db.model.Database
-import com.coradec.coradeck.db.model.impl.HsqlDatabase
+import com.coradec.coradeck.db.module.CoraDB
+import com.coradec.coradeck.db.module.CoraDbHsql
 import com.coradec.coradeck.dir.module.CoraDirImpl
 import com.coradec.coradeck.module.model.CoraModules
 import com.coradec.coradeck.text.module.CoraTextImpl
@@ -41,9 +42,17 @@ internal class HsqlDbTest {
         @BeforeAll
         @JvmStatic
         fun setup() {
-            CoraModules.register(CoraConfImpl(), CoraComImpl(), CoraTextImpl(), CoraTypeImpl(), CoraDirImpl(), CoraControlImpl())
-            CoraModules.register(CoraBusImpl())
-            database = HsqlDatabase("jdbc:hsqldb:file:/tmp/dbtest/db", "sa", Password(""))
+            CoraModules.register(
+                CoraConfImpl(),
+                CoraComImpl(),
+                CoraTextImpl(),
+                CoraTypeImpl(),
+                CoraDirImpl(),
+                CoraControlImpl(),
+                CoraBusImpl(),
+                CoraDbHsql()
+            )
+            database = CoraDB.database("jdbc:hsqldb:file:/tmp/dbtest/db", "sa", Password(""))
             CoraBus.applicationBus.add("hsqlDB", database)
             database.standby()
             database.accept(OpenTableVoucher(here,TestClass::class)).content.value
