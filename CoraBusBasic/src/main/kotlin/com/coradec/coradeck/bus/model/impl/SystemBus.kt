@@ -12,12 +12,19 @@ import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.ctrl.module.CoraControl
 import com.coradec.coradeck.dir.model.Path
 import com.coradec.coradeck.dir.module.CoraDir
+import com.coradec.coradeck.text.model.LocalText
 import kotlin.reflect.KClass
 
 object SystemBus : BasicBusHub(CoraDir.rootNamespace) {
     private const val SYSTEM_BUS_NAME = "system"
     private val selfContext = SystemBusContext()
     private val CIMMEX = CoraControl.IMMEX
+    private val TEXT_ATTACHING = LocalText("Attaching")
+    private val TEXT_ATTACHED = LocalText("Attached")
+    private val TEXT_READY = LocalText("Ready")
+    private val TEXT_BUSY = LocalText("Busy")
+    private val TEXT_DETACHING = LocalText("Detaching")
+    private val TEXT_SHUTDOWN = LocalText("Shutdown")
 
     init {
         attach(selfContext) andThen { CIMMEX.preventShutdown() }
@@ -41,31 +48,31 @@ object SystemBus : BasicBusHub(CoraDir.rootNamespace) {
         override fun joining(node: BusNode) {
             if (node is BusHubDelegate && node.delegator?.node != SystemBus)
                 throw IllegalArgumentException("Only accepted applicant is the system bus.")
-            debug("System Bus is joining the system bus context.")
+            info(TEXT_ATTACHING)
         }
 
         override fun joined(node: BusNode) {
             if (node is BusHubDelegate && node.delegator?.node != SystemBus)
                 throw IllegalArgumentException("Only accepted applicant is the system bus.")
             member = node
-            debug("System Bus joined the system bus context.")
+            info(TEXT_ATTACHED)
         }
 
         override fun ready() {
-            debug("System Bus is ready.")
+            info(TEXT_READY)
         }
 
         override fun busy() {
-            debug("System Bus becomes busy.")
+            info(TEXT_BUSY)
         }
 
         override fun leaving() {
-            debug("System bus is leaving the system bus context.")
+            info(TEXT_DETACHING)
         }
 
         override fun left() {
             member = null
-            debug("System bus left the system bus context.")
+            info(TEXT_SHUTDOWN)
         }
     }
 
@@ -79,5 +86,7 @@ object SystemBus : BasicBusHub(CoraDir.rootNamespace) {
         override fun onJoined(node: BusNode) = relax()
         override fun onReady(member: BusNode) = relax()
         override fun onBusy(member: BusNode) = relax()
+        override fun link(name: String, node: BusNode) = relax()
+        override fun unlink(name: String) = relax()
     }
 }

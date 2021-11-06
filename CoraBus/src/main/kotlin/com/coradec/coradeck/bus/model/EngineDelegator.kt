@@ -4,7 +4,7 @@
 
 package com.coradec.coradeck.bus.model
 
-interface EngineDelegator: NodeDelegator {
+interface EngineDelegator: NodeDelegator, Runnable {
     fun onStarting()
     fun onStarted()
     fun onPausing()

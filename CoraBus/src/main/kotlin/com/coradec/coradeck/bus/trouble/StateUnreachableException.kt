@@ -6,4 +6,4 @@ package com.coradec.coradeck.bus.trouble
 
 import com.coradec.coradeck.bus.model.BusNodeState
 
-class StateUnreachableException(val state: BusNodeState): BusException()
+class StateUnreachableException(val terminalState: BusNodeState, val currentState: BusNodeState): BusException()

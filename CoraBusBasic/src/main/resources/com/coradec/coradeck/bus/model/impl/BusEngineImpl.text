@@ -1,0 +1,2 @@
+# Localized textbase for default locale of class BusEngineImpl
+NotRunning: Machine implementation not running, because method ‹run()› was not overridden!

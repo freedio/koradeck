@@ -8,9 +8,10 @@ import com.coradec.coradeck.bus.model.BusNodeState
 import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.com.model.Information
 import com.coradec.coradeck.com.model.Request
+import java.util.*
 
 interface TransitionTrigger: Information {
     val context: BusContext?
-    val states: Sequence<BusNodeState>
+    val states: Queue<BusNodeState>
     val trigger: Request
 }

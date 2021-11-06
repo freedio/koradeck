@@ -9,8 +9,9 @@ import com.coradec.coradeck.bus.model.DelegatedBusMachine
 import com.coradec.coradeck.bus.model.MachineDelegator
 import com.coradec.coradeck.bus.module.CoraBus
 import com.coradec.coradeck.dir.model.DirectoryNamespace
+import com.coradec.coradeck.dir.module.CoraDir
 
-open class BasicBusMachine(namespace: DirectoryNamespace) : BasicBusHub(namespace), DelegatedBusMachine {
+abstract class BasicBusMachine(namespace: DirectoryNamespace = CoraDir.defaultNamespace) : BasicBusHub(namespace), DelegatedBusMachine {
     override val delegate: BusMachineDelegate = CoraBus.createMachine(InternalMachineDelegator())
 
     protected open fun onStarting() {}
@@ -31,5 +32,6 @@ open class BasicBusMachine(namespace: DirectoryNamespace) : BasicBusHub(namespac
         override fun onResumed() = this@BasicBusMachine.onResumed()
         override fun onStopping() = this@BasicBusMachine.onStopping()
         override fun onStopped() = this@BasicBusMachine.onStopped()
+        override fun run() = this@BasicBusMachine.run()
     }
 }

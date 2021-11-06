@@ -159,7 +159,7 @@ internal class BasicRequestSetTest {
     class TestAgent : BasicAgent() {
         var sum = AtomicInteger(0)
 
-        override fun subscribe(notification: Notification<*>) = when (val message = notification.content) {
+        override fun receive(notification: Notification<*>) = when (val message = notification.content) {
             is TestRequest -> {
                 if (!message.cancelled) {
                     sum.addAndGet(message.value)
@@ -173,7 +173,7 @@ internal class BasicRequestSetTest {
             is FailingRequest -> {
                 message.fail(RuntimeException("This was to be expected!"))
             }
-            else -> super.subscribe(notification)
+            else -> super.receive(notification)
         }
     }
 
@@ -181,7 +181,7 @@ internal class BasicRequestSetTest {
         private var collector = StringBuilder()
         val value get() = collector.toString()
 
-        override fun subscribe(notification: Notification<*>) = when (val message = notification.content) {
+        override fun receive(notification: Notification<*>) = when (val message = notification.content) {
             is TestRequest -> {
                 if (!message.cancelled) {
                     collector.append(message.value.toChar())
@@ -195,7 +195,7 @@ internal class BasicRequestSetTest {
             is FailingRequest -> {
                 message.fail(RuntimeException("This was to be expected!"))
             }
-            else -> super.subscribe(notification)
+            else -> super.receive(notification)
         }
     }
 }

@@ -65,7 +65,7 @@ interface Request: Event {
     /** Add an action to perform when the request was cancelled. Fluid. */
     fun onCancellation(action: Request.() -> Unit): Request
     /** Triggers the specified action when the request is finished.  Fluid. */
-    fun whenFinished(action: Request.() -> Unit): Request
+    infix fun whenFinished(action: Request.() -> Unit): Request
     /** Propages the completion state to the specified request.  Fluid. */
     infix fun propagateTo(other: Request): Request
     /** Registers the specified observer for state changes. @return `true` if the observer was enregistered. */

@@ -14,7 +14,7 @@ interface BusHub : BusNode {
     val names: Voucher<Set<String>>
     /** Retrieves the member with the specified name, if available. */
     fun lookup(name: String): Voucher<BusNode>
-    /** Adds the specified node as a member to this hub under the specified name and returns a request for it. */
+    /** Adds the specified node as a member to this hub under the specified name; the request will succeed when node attached. */
     fun add(name: String, node: BusNode): Request
     /** Removes the member with the specified name and returns a voucher for it. */
     fun remove(name: String): Voucher<BusNode>
@@ -22,4 +22,6 @@ interface BusHub : BusNode {
     fun replace(name: String, substitute: BusNode): Voucher<BusNode>
     /** Renames the member with the specified name to the specified new name. */
     fun rename(name: String, newName: String): Request
+    /** Checks if the hub contains a member by the specified name. */
+    fun contains(name: String): Voucher<Boolean>
 }

@@ -41,7 +41,7 @@ internal class BasicMessageTest {
         testee.standby()
         // then
         assertThat(testee.recipient).isEqualTo(agent)
-        assertThat(testee.state).isEqualTo(PROCESSED)
+        assertThat(testee.state).`as`("${testee.states} does not end with ‹PROCESSED›").isEqualTo(PROCESSED)
         assertThat(testee.validFrom).isEqualTo(info.validFrom)
         assertThat(testee.validUpTo).isEqualTo(ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC))
         assertThat(testee.due).isEqualTo(testee.validFrom)
@@ -71,7 +71,7 @@ internal class BasicMessageTest {
         }
         // then
         assertThat(r2).isInstanceOf(NotificationAlreadyEnqueuedException::class.java)
-        assertThat(r1.state).isEqualTo(PROCESSED)
+        assertThat(r1.state).`as`("${r1.states} does not end with ‹PROCESSED›").isEqualTo(PROCESSED)
         assertThat(r1.validFrom).isEqualTo(info.validFrom)
         assertThat(r1.validUpTo).isEqualTo(ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC))
         assertThat(r1.due).isEqualTo(r1.validFrom)
@@ -90,12 +90,10 @@ internal class BasicMessageTest {
     class TestInformation(origin: Origin, priority: Priority = B2) : BasicInformation(origin, priority)
 
     class TestAgent : BasicAgent() {
-        override fun subscribe(notification: Notification<*>) = when(val message = notification.content) {
-            is Request -> {
-                message.succeed()
-            }
+        override fun receive(notification: Notification<*>) = when(val message = notification.content) {
+            is Request -> message.succeed()
             is TestInformation -> relax()
-            else -> super.subscribe(notification)
+            else -> super.receive(notification)
         }
     }
 

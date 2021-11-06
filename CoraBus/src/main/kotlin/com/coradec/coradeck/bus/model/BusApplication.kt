@@ -4,4 +4,4 @@
 
 package com.coradec.coradeck.bus.model
 
-interface BusMachine : BusHub, BusEngine
+interface BusApplication: BusMachine

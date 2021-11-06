@@ -4,6 +4,8 @@
 
 package com.coradec.coradeck.bus.model.impl
 
+import com.coradec.coradeck.bus.com.AttachRequest
+import com.coradec.coradeck.bus.com.DetachRequest
 import com.coradec.coradeck.bus.model.*
 import com.coradec.coradeck.bus.module.CoraBus
 import com.coradec.coradeck.bus.view.BusContext
@@ -21,8 +23,9 @@ open class BasicBusNode : BasicAgent(), DelegatedBusNode {
     override val context: BusContext? get() = delegate.context
     override val path: Path? get() = context?.path
     override val name: String? get() = context?.name
-    override fun attach(context: BusContext) = delegate.attach(context)
-    override fun detach() = delegate.detach()
+    override fun attach(context: BusContext): AttachRequest = delegate.attach(context)
+    override fun detach(): DetachRequest = delegate.detach()
+    override fun renameTo(name: String) = delegate.renameTo(name)
     override fun context(timeout: Long, timeoutUnit: TimeUnit): BusContext = delegate.context(timeout, timeoutUnit)
     override fun standby(delay: Timespan, state: BusNodeState) = delegate.standby(delay, state)
     override fun standby(state: BusNodeState) = delegate.standby(state)

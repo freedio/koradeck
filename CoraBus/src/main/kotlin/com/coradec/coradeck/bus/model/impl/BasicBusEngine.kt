@@ -9,7 +9,7 @@ import com.coradec.coradeck.bus.model.DelegatedBusEngine
 import com.coradec.coradeck.bus.model.EngineDelegator
 import com.coradec.coradeck.bus.module.CoraBus
 
-open class BasicBusEngine : BasicBusNode(), DelegatedBusEngine {
+abstract class BasicBusEngine : BasicBusNode(), DelegatedBusEngine {
     override val delegate: BusEngineDelegate = CoraBus.createEngine(InternalEngineDelegator())
 
     protected open fun onStarting() {}
@@ -30,5 +30,6 @@ open class BasicBusEngine : BasicBusNode(), DelegatedBusEngine {
         override fun onResumed() = this@BasicBusEngine.onResumed()
         override fun onStopping() = this@BasicBusEngine.onStopping()
         override fun onStopped() = this@BasicBusEngine.onStopped()
+        override fun run() = this@BasicBusEngine.run()
     }
 }

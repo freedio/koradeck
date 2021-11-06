@@ -8,10 +8,14 @@ import com.coradec.coradeck.com.ctrl.Observer
 import com.coradec.coradeck.com.model.*
 import com.coradec.coradeck.com.model.Notification.Companion.LOST_ITEMS
 import com.coradec.coradeck.com.model.NotificationState.*
+import com.coradec.coradeck.com.model.RequestState.SUCCESSFUL
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.model.Timespan
-import com.coradec.coradeck.core.util.*
+import com.coradec.coradeck.core.util.formatted
+import com.coradec.coradeck.core.util.here
+import com.coradec.coradeck.core.util.properties
+import com.coradec.coradeck.core.util.shortClassname
 import com.coradec.coradeck.session.model.Session
 import java.time.ZonedDateTime
 import java.util.*
@@ -43,9 +47,8 @@ open class BasicNotification<I: Information>(
     override var problem: Throwable? = null
     override val observerCount: Int get() = stateRegistry.size
     override var state: NotificationState
-        get() = synchronized(myStates) { myStates.last() }
+        get() = synchronized(myStates) { states.last() }
         set(state) {
-            interceptSetState(state)
             synchronized(myStates) {
                 if (state !in myStates) {
                     val event = StateChangedEvent(here, this, myStates.last(), state.apply { myStates += this })
@@ -54,7 +57,6 @@ open class BasicNotification<I: Information>(
             }
         }
 
-    protected open fun interceptSetState(state: NotificationState) = relax()
     override fun enregister(observer: Observer) =
         /*if (content is Request) (content as Request).enregister(observer) else*/ stateRegistry.add(observer)
     override fun deregister(observer: Observer) =
@@ -118,6 +120,6 @@ open class BasicNotification<I: Information>(
         "%s(%s)".format(shortClassname, properties.formatted)
 
     override fun andThen(action: () -> Unit) {
-        if (content is Request) (content as Request).whenState(RequestState.SUCCESSFUL, action) else whenState(PROCESSED, action)
+        if (content is Request) (content as Request).whenState(SUCCESSFUL, action) else whenState(PROCESSED, action)
     }
 }

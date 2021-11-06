@@ -11,6 +11,7 @@ import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.bus.view.BusHubView
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
+import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
 import com.coradec.coradeck.dir.model.Path
 import com.coradec.coradeck.dir.module.CoraDirImpl
@@ -81,11 +82,14 @@ class BusNodeImplTest {
         override fun onBusy(member: BusNode) {
             states += "busy"
         }
+
+        override fun link(name: String, node: BusNode) = relax()
+        override fun unlink(name: String) = relax()
     }
 
     class TestBusContext(
         override val hub: BusHubView,
-        override val name: String
+        override var name: String
     ) : BusContext {
         val states = mutableListOf<String>()
         override fun <D : BusNode> get(type: Class<D>): D? = null
@@ -115,6 +119,10 @@ class BusNodeImplTest {
 
         override fun busy() {
             states += "$member busy"
+        }
+
+        override fun rename(name: String) {
+            this.name = name
         }
     }
 

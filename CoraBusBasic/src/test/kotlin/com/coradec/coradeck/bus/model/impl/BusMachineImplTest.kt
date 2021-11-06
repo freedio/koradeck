@@ -11,6 +11,7 @@ import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.bus.view.BusHubView
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
+import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
 import com.coradec.coradeck.dir.model.Path
 import com.coradec.coradeck.dir.module.CoraDirImpl
@@ -42,7 +43,8 @@ class BusMachineImplTest {
         testee.add("node", node1)
         testee.add("engine", node2)
         testee.attach(TestBusContext(TestBusHubView(), "machine")).standby()
-        Thread.sleep(100)
+        node1.standby()
+        node2.standby()
         // then:
         Assertions.assertThat(testee.state).isEqualTo(BusNodeState.READY)
         Assertions.assertThat(node1.state).isEqualTo(BusNodeState.READY)
@@ -75,20 +77,25 @@ class BusMachineImplTest {
         testee.attach(TestBusContext(TestBusHubView(), "machine")).standby()
         testee.add("node", node1).standby()
         testee.add("engine", node2).standby()
+        node1.standby()
+        node2.standby()
         // then:
         Assertions.assertThat(testee.state).isEqualTo(BusNodeState.READY)
         Assertions.assertThat(node1.state).isEqualTo(BusNodeState.READY)
         Assertions.assertThat(node2.state).isEqualTo(BusNodeState.READY)
         // when:
         testee.detach().standby()
+        Thread.sleep(100)
         // then:
         Assertions.assertThat(testee.state).isEqualTo(BusNodeState.DETACHED)
         Assertions.assertThat(node1.state).isEqualTo(BusNodeState.DETACHED)
         Assertions.assertThat(node2.state).isEqualTo(BusNodeState.DETACHED)
         // when:
         testee.attach(TestBusContext(TestBusHubView(), "remachine")).standby()
-        testee.add("nodegain1", node1).standby()
-        testee.add("enginegain2", node2).standby()
+        testee.add("nodagain1", node1).standby()
+        testee.add("enginagain2", node2).standby()
+        node1.standby()
+        node2.standby()
         // then:
         Assertions.assertThat(testee.state).isEqualTo(BusNodeState.READY)
         Assertions.assertThat(node1.state).isEqualTo(BusNodeState.READY)
@@ -125,11 +132,14 @@ class BusMachineImplTest {
         override fun onBusy(member: BusNode) {
             states += "busy"
         }
+
+        override fun link(name: String, node: BusNode) = relax()
+        override fun unlink(name: String) = relax()
     }
 
     class TestBusContext(
         override val hub: BusHubView,
-        override val name: String
+        override var name: String
     ) : BusContext {
         val states = mutableListOf<String>()
         override fun <D : BusNode> get(type: Class<D>): D? = null
@@ -159,6 +169,10 @@ class BusMachineImplTest {
 
         override fun busy() {
             states += "$member busy"
+        }
+
+        override fun rename(name: String) {
+            this.name = name
         }
 
     }

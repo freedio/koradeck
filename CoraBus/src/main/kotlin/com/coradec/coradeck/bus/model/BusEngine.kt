@@ -4,4 +4,4 @@
 
 package com.coradec.coradeck.bus.model
 
-interface BusEngine : BusNode
+interface BusEngine : BusNode, Runnable

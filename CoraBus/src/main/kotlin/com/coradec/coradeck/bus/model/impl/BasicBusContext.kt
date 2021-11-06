@@ -10,7 +10,7 @@ import com.coradec.coradeck.bus.view.BusHubView
 import kotlin.reflect.KClass
 
 @Suppress("UNCHECKED_CAST")
-open class BasicBusContext(override val name: String, override val hub: BusHubView) : BusContext {
+open class BasicBusContext(override var name: String, override val hub: BusHubView) : BusContext {
     private var candidate: BusNode? = null
     override var member: BusNode? = null
 
@@ -18,6 +18,7 @@ open class BasicBusContext(override val name: String, override val hub: BusHubVi
     override fun <D : BusNode> get(type: KClass<D>): D? = if (type.isInstance(hub)) hub as D else hub[type]
     override fun leaving() = hub.onLeaving(member ?: throw IllegalStateException("There is no member that could leave!"))
     override fun left() {
+        hub.unlink(name)
         hub.onLeft(member ?: throw IllegalStateException("There is no member that could have left!"))
         member = null
     }
@@ -30,8 +31,15 @@ open class BasicBusContext(override val name: String, override val hub: BusHubVi
         if (node !== candidate) throw IllegalStateException("Candidate $node never announced itself!")
         member = node
         candidate = null
+        hub.link(name, node)
         hub.onJoined(node)
     }
-    override fun ready() = hub.onReady(member ?: throw IllegalStateException("There is no member that could become ready!"))
+    override fun ready() = member?.let {
+        hub.onReady(it)
+        hub.link(name, it)
+    } ?: throw IllegalStateException("There is no member that could become ready!")
     override fun busy() = hub.onBusy(member ?: throw IllegalStateException("There is no member that could become busy!"))
+    override fun rename(name: String) {
+        this.name = name
+    }
 }

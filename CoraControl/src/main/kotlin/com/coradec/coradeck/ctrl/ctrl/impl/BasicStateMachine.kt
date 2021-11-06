@@ -31,7 +31,7 @@ open class BasicStateMachine(initialState: State, override val finalState: State
     private val stateCallbacks = ConcurrentHashMap<State, CopyOnWriteArrayList<() -> Unit>>()
     private val prison = CopyOnWriteArrayList<Thread>()
 
-    override fun subscribe(notification: Notification<*>) {
+    override fun receive(notification: Notification<*>) {
         val message = notification.content
         val problems = mutableListOf<Exception>()
         subtrace("%s: processing «%s»", this, message)
@@ -69,7 +69,7 @@ open class BasicStateMachine(initialState: State, override val finalState: State
             ?: if (message !is StateTransitionRequest &&
                 message !is MachineStateChangedEvent &&
                 message !is StateMachineReadynessEvent
-            ) super.subscribe(notification)
+            ) super.receive(notification)
             else if (problems.isNotEmpty()) error(MultiException(problems), TEXT_DIED, this, state.name)
     }
 

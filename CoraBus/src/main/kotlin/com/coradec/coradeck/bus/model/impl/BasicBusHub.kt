@@ -24,6 +24,7 @@ open class BasicBusHub(protected val namespace: DirectoryNamespace = CoraDir.def
     override fun remove(name: String): Voucher<BusNode> = delegate.remove(name)
     override fun replace(name: String, substitute: BusNode): Voucher<BusNode> = delegate.replace(name, substitute)
     override fun rename(name: String, newName: String): Request = delegate.rename(name, newName)
+    override fun contains(name: String): Voucher<Boolean> = delegate.contains(name)
 
     protected fun leave() = delegate.leave()
 

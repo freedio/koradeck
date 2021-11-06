@@ -34,4 +34,6 @@ interface BusContext {
     fun ready()
     /** Indicates that the node has become busy (which practically means it is going down). */
     fun busy()
+    /** Changes the member name to the specified name. */
+    fun rename(name: String)
 }
