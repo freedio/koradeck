@@ -14,8 +14,8 @@ open class BasicBusContext(override var name: String, override val hub: BusHubVi
     private var candidate: BusNode? = null
     override var member: BusNode? = null
 
-    override fun <D : BusNode> get(type: Class<D>): D? = if (type.isInstance(hub)) hub as D else hub[type]
-    override fun <D : BusNode> get(type: KClass<D>): D? = if (type.isInstance(hub)) hub as D else hub[type]
+    override fun <D : BusNode> get(type: Class<D>): D? = hub[type]
+    override fun <D : BusNode> get(type: KClass<D>): D? = hub[type]
     override fun leaving() = hub.onLeaving(member ?: throw IllegalStateException("There is no member that could leave!"))
     override fun left() {
         hub.unlink(name)

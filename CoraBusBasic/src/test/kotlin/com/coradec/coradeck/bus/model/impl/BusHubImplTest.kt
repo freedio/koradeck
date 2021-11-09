@@ -105,8 +105,8 @@ class BusHubImplTest {
         softly.assertAll()
         // when:
         testee.attach(TestBusContext(TestBusHubView(), "recontainer")).standby()
-        testee.add("egain1", node1)
-        testee.add("egain2", node2)
+        testee.add("egain1", node1).standby()
+        testee.add("egain2", node2).standby()
         node1.standby()
         node2.standby()
         // then:

@@ -80,7 +80,8 @@ open class BusHubImpl(
 
     private fun acceptCandidate(request: AcceptCandidateRequest) {
         val name = request.name
-        val candEntry = candidates.mapNotNull { if (it.key.name == name) it else null }.single()
+        val candEntry = candidates.mapNotNull { if (it.key.name == name) it else null }.singleOrNull()
+            ?: throw IllegalStateException("Expected exactly one candidate with name ‹$name›, but got $candidates")
         val candidate = candEntry.value
         myMembers[name] = candidate
         candidates -= candEntry.key.apply { succeed() }
@@ -273,8 +274,8 @@ open class BusHubImpl(
         private val my = this@BusHubImpl
 
         override fun pathOf(name: String): Path = my.path.let { if (it == null) name else namespace.concat(it, name) }
-        override fun <D : BusNode> get(type: Class<D>): D? = my.get(type)
-        override fun <D : BusNode> get(type: KClass<D>): D? = my.get(type)
+        override fun <D : BusNode> get(type: Class<D>): D? = my.delegator?.node as D?
+        override fun <D : BusNode> get(type: KClass<D>): D? = my.delegator?.node as D?
         override fun onLeaving(member: BusNode) = my.onLeaving(member)
         override fun onLeft(member: BusNode) = my.onLeft(member)
         override fun onJoining(node: BusNode) = my.onJoining(node)
