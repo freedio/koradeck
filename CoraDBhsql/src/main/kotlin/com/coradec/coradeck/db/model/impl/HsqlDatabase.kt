@@ -20,6 +20,7 @@ import com.coradec.coradeck.db.util.toSqlTableName
 import com.coradec.coradeck.db.util.toSqlType
 import com.coradec.coradeck.type.model.Password
 import com.coradec.module.db.annot.Size
+import java.net.URI
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.Statement
@@ -28,14 +29,14 @@ import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation
 
 @Suppress("UNCHECKED_CAST")
-class HsqlDatabase(private val uri: String, private val username: String, private val password: Password): BasicBusHub(), Database {
+class HsqlDatabase(private val uri: URI, private val username: String, private val password: Password): BasicBusHub(), Database {
     var myConnection: Connection? = null
     override val connection: Connection get() = myConnection ?: throw IllegalStateException("Database «%s» not attached!")
     override val statement: Statement get() = connection.createStatement()
 
     override fun onInitializing() {
         super.onInitializing()
-        myConnection = DriverManager.getConnection(uri, username, password.decoded)
+        myConnection = DriverManager.getConnection(uri.toASCIIString(), username, password.decoded)
         route(GetTableVoucher::class, ::getTable)
         route(OpenTableVoucher::class, ::openTable)
         route(CreateTableVoucher::class, ::createTable)
@@ -51,7 +52,7 @@ class HsqlDatabase(private val uri: String, private val username: String, privat
         leave()
     }
 
-    override fun <Record : Any> getTable(model: KClass<Record>): RecordTable<Record> =
+    override fun <Record : Any> getTable(model: KClass<out Record>): RecordTable<Record> =
         accept(GetTableVoucher(here, model)).content.value
 
     private fun getTable(voucher: GetTableVoucher<*>) {

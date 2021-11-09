@@ -27,9 +27,11 @@ import com.coradec.coradeck.type.model.Password
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import com.coradec.module.db.annot.Size
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
+import java.net.URI
 import java.time.LocalDate
 import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
@@ -52,7 +54,7 @@ internal class HsqlDbTest {
                 CoraBusImpl(),
                 CoraDbHsql()
             )
-            database = CoraDB.database("jdbc:hsqldb:file:/tmp/dbtest/db", "sa", Password(""))
+            database = CoraDB.database(URI("jdbc:hsqldb:file:/tmp/dbtest/db"), "sa", Password(""))
             CoraBus.applicationBus.add("hsqlDB", database)
             database.standby()
             database.accept(OpenTableVoucher(here,TestClass::class)).content.value
@@ -62,6 +64,14 @@ internal class HsqlDbTest {
             }
             log.debug("Test suite initialized.")
             relax()
+        }
+
+        @AfterAll
+        @JvmStatic fun tearDown() {
+            log.debug("Tear down.")
+            database.detach().standby()
+            Thread.sleep(1000)
+            log.debug("Torn down.")
         }
     }
 

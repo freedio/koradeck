@@ -16,4 +16,5 @@ open class HsqlDbView<Record: Any>(
 ) : HsqlDbCollection<Record>(db, model), RecordView<Record> {
     override val selector = SqlSelection.ALL
     override val recordName: String = model.classname
+    override fun iterator(): Iterator<Record> = select(selector).iterator()
 }

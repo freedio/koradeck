@@ -13,7 +13,7 @@ import com.coradec.coradeck.db.model.RecordTable
 import com.coradec.coradeck.db.util.toSqlObjectName
 import kotlin.reflect.KClass
 
-class HsqlDbTable<Record : Any>(db: Database, model: KClass<out Record>) : HsqlDbCollection<Record>(db, model),
+class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCollection<Record>(db, model),
     RecordTable<Record> {
     override val selector = SqlSelection.ALL
     override val recordName: String = model.classname
@@ -81,4 +81,6 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<out Record>) : HsqlD
         statement.executeUpdate(stmt)
         connection.commit()
     }
+
+    override fun iterator(): Iterator<Record> = select(selector).iterator()
 }

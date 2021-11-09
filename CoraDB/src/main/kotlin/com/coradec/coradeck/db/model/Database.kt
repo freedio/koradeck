@@ -14,7 +14,7 @@ interface Database: BusHub {
     val connection: Connection
     val statement: Statement
 
-    fun <Record: Any> getTable(model: KClass<Record>): RecordTable<Record>
+    fun <Record: Any> getTable(model: KClass<out Record>): RecordTable<Record>
     fun createTable(tableName: String, columnDefinitions: Sequence<Pair<String, KType>>)
     fun close()
 }
