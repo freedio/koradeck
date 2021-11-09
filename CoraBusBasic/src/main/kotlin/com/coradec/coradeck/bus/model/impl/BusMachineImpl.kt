@@ -8,7 +8,7 @@ import com.coradec.coradeck.bus.model.BusMachineDelegate
 import com.coradec.coradeck.bus.model.BusNodeState
 import com.coradec.coradeck.bus.model.BusNodeStateTransition
 import com.coradec.coradeck.bus.model.MachineDelegator
-import com.coradec.coradeck.ctrl.module.CoraControl
+import com.coradec.coradeck.ctrl.module.CoraControl.IMMEX
 import com.coradec.coradeck.dir.model.DirectoryNamespace
 import com.coradec.coradeck.dir.module.CoraDir
 import com.coradec.coradeck.text.model.LocalText
@@ -39,7 +39,7 @@ open class BusMachineImpl(
                     delegator?.onStarting()
                 }
                 BusNodeState.STARTED -> {
-                    if (delegator != null) CoraControl.IMMEX.execute(delegator!!)
+                    delegator?.apply { IMMEX.execute(this) }
                     debug("Started %s ‹%s›.", mytype, name)
                     state = BusNodeState.STARTED
                     delegator?.onStarted()

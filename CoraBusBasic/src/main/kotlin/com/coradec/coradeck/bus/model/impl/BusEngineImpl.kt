@@ -36,7 +36,7 @@ open class BusEngineImpl(
                     delegator?.onStarting()
                 }
                 BusNodeState.STARTED -> {
-                    if (delegator != null) CoraControl.IMMEX.execute(delegator!!)
+                    delegator?.apply { CoraControl.IMMEX.execute(this) }
                     debug("Started %s ‹%s›.", mytype, name)
                     state = BusNodeState.STARTED
                     delegator?.onStarted()
