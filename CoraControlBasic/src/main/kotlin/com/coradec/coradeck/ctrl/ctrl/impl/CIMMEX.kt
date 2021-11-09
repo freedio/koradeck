@@ -41,7 +41,7 @@ object CIMMEX : Logger(), IMMEX {
     private val TEXT_SHUTTING_DOWN = LocalText("ShuttingDown")
     private val TEXT_SHUT_DOWN = LocalText("ShutDown")
     private val TEXT_DISPATCHER_INTERRUPTED = LocalText("DispatcherInterrupted")
-    private val TEXT_CIMMEX_DISABLED = LocalText("CimmexDisabled")
+    private val TEXT_CIMMEX_DISABLED = LocalText("CimmexDisabled1")
     private val TEXT_REMAINING_ITEMS = LocalText("RemainingItems1")
     private val TEXT_WAITING_FOR_SHUTDOWN_CLEARANCE = LocalText("WaitingForShutdownClearance")
     private val TEXT_SHUTDOWN_CLEARANCE_ACQUIRED = LocalText("ShutdownClearanceAcquired")
@@ -144,7 +144,7 @@ object CIMMEX : Logger(), IMMEX {
     }
 
     override fun <I : Information> inject(info: I): Notification<I> = Notification(info).also {
-        ifEnabled {
+        ifEnabled(it) {
             if (info.deferred) delayQueue.put(it) else inqueue.put(it)
             it.enqueue()
             addWorker()
@@ -152,7 +152,7 @@ object CIMMEX : Logger(), IMMEX {
     }
 
     override fun <I : Information, N : Notification<I>> inject(notification: N): N = notification.also {
-        ifEnabled {
+        ifEnabled(it) {
             if (notification.enqueued) throw NotificationAlreadyEnqueuedException(notification, notification.states)
             if (notification.deferred) delayQueue.put(it) else inqueue.put(it)
             notification.enqueue()
@@ -165,7 +165,7 @@ object CIMMEX : Logger(), IMMEX {
             val sync = Semaphore(0)
             defaultAgent.accept(Synchronization(sync))
             sync.acquire()
-        } else error(TEXT_CIMMEX_DISABLED)
+        } else error(TEXT_CIMMEX_DISABLED, "Synchronization")
     }
 
     override fun standby() = standby(PROP_SHUTDOWN_ALLOWANCE.value)
@@ -206,9 +206,9 @@ object CIMMEX : Logger(), IMMEX {
         return collector.toString()
     }
 
-    private fun ifEnabled(action: () -> Unit) {
+    private fun ifEnabled(note: Notification<*>, action: () -> Unit) {
         if (enabled.get()) action.invoke()
-        else error(TEXT_CIMMEX_DISABLED)
+        else error(TEXT_CIMMEX_DISABLED, note)
     }
 
     private class Timer : Thread("Timer") {
