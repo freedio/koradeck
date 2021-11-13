@@ -11,8 +11,10 @@ import com.coradec.coradeck.com.module.CoraCom.log
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.com.trouble.RequestFailedException
 import com.coradec.coradeck.conf.module.CoraConfImpl
+import com.coradec.coradeck.core.util.Files
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.relax
+import com.coradec.coradeck.core.util.toPath
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
 import com.coradec.coradeck.db.com.GetTableVoucher
 import com.coradec.coradeck.db.com.OpenTableVoucher
@@ -54,6 +56,7 @@ internal class HsqlDbTest {
                 CoraBusImpl(),
                 CoraDbHsql()
             )
+            Files.deleteTree("/tmp/dbtest/db".toPath())
             database = CoraDB.database(URI("jdbc:hsqldb:file:/tmp/dbtest/db"), "sa", Password(""))
             CoraBus.applicationBus.add("hsqlDB", database)
             database.standby()
