@@ -191,7 +191,7 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
             myStates += BUSY
         }
         return DetachRequest(this).apply {
-            accept(Detachment(this@BusNodeImpl, this, LinkedList(downstates.dropWhile { it <= this@BusNodeImpl.state }), null))
+            accept(Detachment(here, this, LinkedList(downstates.dropWhile { it <= this@BusNodeImpl.state }), null))
         }
     }
 
