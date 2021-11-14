@@ -7,7 +7,7 @@ package com.coradec.coradeck.db.ctrl.impl
 import com.coradec.coradeck.bus.module.CoraBus
 import com.coradec.coradeck.bus.module.CoraBusImpl
 import com.coradec.coradeck.bus.trouble.MemberNotFoundException
-import com.coradec.coradeck.com.module.CoraCom.log
+import com.coradec.coradeck.com.module.CoraCom
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.com.trouble.RequestFailedException
 import com.coradec.coradeck.conf.module.CoraConfImpl
@@ -56,21 +56,34 @@ internal class HsqlDbTest {
                 CoraBusImpl(),
                 CoraDbHsql()
             )
+            val log = CoraCom.log
+            log.debug("@0")
             Files.deleteTree("/tmp/dbtest/db".toPath())
+            log.debug("@1")
             database = CoraDB.database(URI("jdbc:hsqldb:file:/tmp/dbtest/db"), "sa", Password(""))
+            log.debug("@2")
             CoraBus.applicationBus.add("hsqlDB", database)
+            log.debug("@3")
             database.standby()
+            log.debug("@4")
             database.accept(OpenTableVoucher(here,TestClass::class)).content.value
+            log.debug("@5")
             database.accept(OpenTableVoucher(here, TestClass2::class)).content.value.let { table ->
+                log.debug("@5.0")
                 table += TestClass2("Jane", "Doe", LocalDate.of(2000, 1, 1), 2)
+                log.debug("@5.1")
                 table += TestClass2("Jack", "Daniels", LocalDate.of(1864, 4, 24), 1)
+                log.debug("@5.2")
             }
+            log.debug("@6")
             log.debug("Test suite initialized.")
+            log.debug("@7")
             relax()
         }
 
         @AfterAll
         @JvmStatic fun tearDown() {
+            val log = CoraCom.log
             log.debug("Tear down.")
             database.detach().standby()
             Thread.sleep(1000)
@@ -222,7 +235,6 @@ internal class HsqlDbTest {
                 )
             )
         }
-        log.debug("past testColumnDefinitions")
     }
 
     @Test

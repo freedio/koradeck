@@ -42,6 +42,11 @@ class HsqlDatabase(private val uri: URI, private val username: String, private v
         route(CreateTableVoucher::class, ::createTable)
     }
 
+    override fun onInitialized() {
+        super.onInitialized()
+        debug("Database ‹%s› initialized.")
+    }
+
     override fun onFinalizing() {
         super.onFinalizing()
         unroute(GetTableVoucher::class)
