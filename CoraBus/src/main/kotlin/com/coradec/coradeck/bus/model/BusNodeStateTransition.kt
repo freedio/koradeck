@@ -48,6 +48,7 @@ interface BusNodeStateTransition : Request {
             UnloadedTemplate,
             FinalizingBusyTemplate,
             FinalizingUnloadedTemplate,
+            FinalizingInitializingTemplate,
             FinalizingInitializedTemplate,
             FinalizedTemplate,
             DetachingFinalizedTemplate,
@@ -235,6 +236,13 @@ interface BusNodeStateTransition : Request {
 
         object FinalizingInitializedTemplate : Template {
             override val from: BusNodeState = INITIALIZED
+            override val unto: BusNodeState = FINALIZING
+
+            override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
+        }
+
+        object FinalizingInitializingTemplate : Template {
+            override val from: BusNodeState = INITIALIZING
             override val unto: BusNodeState = FINALIZING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
