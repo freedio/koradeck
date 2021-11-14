@@ -13,7 +13,6 @@ import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
-import com.coradec.coradeck.ctrl.module.CoraControl
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
 import com.coradec.coradeck.ctrl.trouble.CommandNotApprovedException
 import com.coradec.coradeck.module.model.CoraModules
@@ -25,7 +24,6 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 internal class BasicAgentTest {
-    val IMMEX = CoraControl.IMMEX
     @Test fun testRoutes() {
         // given:
         val testee = object: BasicAgent() {

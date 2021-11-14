@@ -13,9 +13,10 @@ import kotlin.reflect.full.IllegalCallableAccessException
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.isSubclassOf
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.jvmName
 
 val KClass<*>.classname: String
-    get() = (qualifiedName ?: throw IllegalStateException("Class $this has no qualified name!"))
+    get() = (qualifiedName ?: jvmName)
             .removePrefix("kotlin.")
             .removePrefix("java.lang.")
             .removePrefix("collections.")

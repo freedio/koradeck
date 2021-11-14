@@ -16,4 +16,6 @@ interface RecordTable<Record: Any>: RecordCollection<Record> {
     fun insert(elements: Sequence<Record>): Int
     fun delete(selector: Selection): Int
     fun update(selector: Selection, vararg fields: Pair<String, Any?>): Int
+    fun commit()
+    fun rollback()
 }

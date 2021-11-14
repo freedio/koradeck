@@ -89,7 +89,7 @@ open class BasicAgent() : Logger(), Agent {
         }
         is DummyRequest -> content.succeed().also { debug("DummyRequest processed.") }
         else -> {
-            error(TEXT_MESSAGE_NOT_UNDERSTOOD, content.classname, content)
+            error(TEXT_MESSAGE_NOT_UNDERSTOOD, content.classname, content, this@BasicAgent.classname)
             throw NotificationRejectedException(notification)
         }
     }
@@ -123,7 +123,7 @@ open class BasicAgent() : Logger(), Agent {
     companion object {
         private val AGENTS = ConcurrentHashMap<Int, Agent>()
         private val NEXT = AtomicInteger(0)
-        private val TEXT_MESSAGE_NOT_UNDERSTOOD = LocalText("MessageNotUnderstood2")
+        private val TEXT_MESSAGE_NOT_UNDERSTOOD = LocalText("MessageNotUnderstood3")
         private val TEXT_MESSAGE_NOT_APPROVED = LocalText("MessageNotApproved2")
         private val TEXT_COMMAND_FAILED = LocalText("CommandFailed2")
         private val TEXT_MESSAGE_FAILED = LocalText("MessageFailed2")

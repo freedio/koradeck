@@ -93,6 +93,7 @@ abstract class HsqlDbCollection<Record : Any>(
     override val all: Sequence<Record> get() = select(selector)
     override fun close() = db.close()
     fun commit() = connection.commit()
+    fun rollback() = connection.rollback()
     override fun select(selector: Selection): Sequence<Record> {
         val stmt = "select * from $tableName${selector.select}"
         debug("Executing query «$stmt»")
