@@ -8,6 +8,7 @@ import com.coradec.coradeck.bus.model.BusNode
 import com.coradec.coradeck.bus.model.impl.BasicBusHub
 import com.coradec.coradeck.com.model.RequestState.*
 import com.coradec.coradeck.com.model.Voucher
+import com.coradec.coradeck.core.util.classname
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.db.com.CreateTableVoucher
@@ -66,6 +67,7 @@ class HsqlDatabase(private val uri: URI, private val username: String, private v
 
     private fun openTable(voucher: OpenTableVoucher<*>) {
         val model = voucher.model
+        debug("Opening table ‹%s›...", model.classname)
         lookup(model.toSqlTableName()).whenVoucherFinished {
             when (state) {
                 FAILED -> CreateTableVoucher(here, model).also { accept(it) } as Voucher<BusNode>
@@ -77,6 +79,7 @@ class HsqlDatabase(private val uri: URI, private val username: String, private v
     private fun createTable(voucher: CreateTableVoucher<*>) {
         val name = voucher.model.toSqlTableName()
         val node = HsqlDbTable(this, voucher.model)
+        debug("Creating table ‹%s›", name)
         add(name, node).whenFinished {
             when (state) {
                 SUCCESSFUL -> {
@@ -95,6 +98,7 @@ class HsqlDatabase(private val uri: URI, private val username: String, private v
             val klass = type.classifier as KClass<*>
             "${name.toSqlObjectName()} ${klass.toSqlType(name, type.findAnnotation<Size>()?.value)}"
         }
+        detail("Creating table ‹%s› with columns ‹%s›.", tableName, viewspec)
         statement.executeUpdate("create table if not exists $tableName $viewspec")
     }
 }

@@ -19,6 +19,7 @@ import com.coradec.coradeck.ctrl.module.CoraControlImpl
 import com.coradec.coradeck.db.com.GetTableVoucher
 import com.coradec.coradeck.db.com.OpenTableVoucher
 import com.coradec.coradeck.db.ctrl.impl.SqlSelection.Companion.where
+import com.coradec.coradeck.db.model.ColumnDefinition
 import com.coradec.coradeck.db.model.Database
 import com.coradec.coradeck.db.module.CoraDB
 import com.coradec.coradeck.db.module.CoraDbHsql
@@ -229,10 +230,10 @@ internal class HsqlDbTest {
             // then:
             assertThat(result).containsAllEntriesOf(
                 mapOf(
-                    "VORNAME" to "VARCHAR(20)",
-                    "FAMILIEN_NAME" to "VARCHAR(40)",
-                    "GEBURTSDATUM" to "DATE",
-                    "GESCHLECHT" to "TINYINT"
+                    "VORNAME" to ColumnDefinition("VARCHAR(20)", false),
+                    "FAMILIEN_NAME" to ColumnDefinition("VARCHAR(40)", false),
+                    "GEBURTSDATUM" to ColumnDefinition("DATE", false),
+                    "GESCHLECHT" to ColumnDefinition("TINYINT", true)
                 )
             )
         }
@@ -247,10 +248,10 @@ internal class HsqlDbTest {
             // then:
             assertThat(result).containsAllEntriesOf(
                 mapOf(
-                    "VORNAME" to "VARCHAR(20)",
-                    "FAMILIEN_NAME" to "VARCHAR(40)",
-                    "GEBURTSDATUM" to "DATE",
-                    "GESCHLECHT" to "TINYINT"
+                    "VORNAME" to ColumnDefinition("VARCHAR(20)", false),
+                    "FAMILIEN_NAME" to ColumnDefinition("VARCHAR(40)", false),
+                    "GEBURTSDATUM" to ColumnDefinition("DATE", false),
+                    "GESCHLECHT" to ColumnDefinition("TINYINT", true)
                 )
             )
         }

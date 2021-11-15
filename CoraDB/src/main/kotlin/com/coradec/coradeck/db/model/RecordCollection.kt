@@ -19,7 +19,7 @@ interface RecordCollection<R: Any>: Iterable<R>, AutoCloseable {
     /** A set of SQL column names in the collection. */
     val columnNames: Sequence<String>
     /** A map of SQL column definitions in the collection by field name. */
-    val columnDefinitions: Map<String, String>
+    val columnDefinitions: Map<String, ColumnDefinition>
     /** A sequence of all the records in the collection.  The sequence can be traversed only once. */
     val all: Sequence<R>
     /** Number of entries in the collection. */

@@ -11,6 +11,7 @@ import com.coradec.coradeck.db.ctrl.impl.SqlSelection
 import com.coradec.coradeck.db.model.Database
 import com.coradec.coradeck.db.model.RecordTable
 import com.coradec.coradeck.db.util.toSqlObjectName
+import com.coradec.coradeck.db.util.toSqlValueRepr
 import kotlin.reflect.KClass
 
 class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCollection<Record>(db, model),

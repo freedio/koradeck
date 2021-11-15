@@ -25,7 +25,7 @@ fun <Record : Any> ResultSet.encode(model: KClass<Record>): Record = when (model
             .mapKeys { (name, _) -> name.toSqlObjectName() }
             .map { Pair(it.value.name, getObjectOrNull(it.key).toSqlFieldValue()) }.toMap()
         val pcon = model.primaryConstructor ?: throw IllegalArgumentException("$model has no primary constructor!")
-        val args = pcon.valueParameters.map { Pair(it, it.name) }.toMap().mapValues { sqlValues[it.value] }
+        val args = pcon.valueParameters.associateWith { it.name }.mapValues { sqlValues[it.value] }
         log.debug("Calling ${pcon.name}(${args.entries
             .joinToString { "${it.key.name}:${it.key.type} = ${it.value.formatted}:${it.value?.javaClass?.name}" }})")
         pcon.callBy(args)

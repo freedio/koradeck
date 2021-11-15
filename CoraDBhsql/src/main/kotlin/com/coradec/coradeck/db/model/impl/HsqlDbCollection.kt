@@ -6,14 +6,10 @@ package com.coradec.coradeck.db.model.impl
 
 import com.coradec.coradeck.bus.model.impl.BasicBusNode
 import com.coradec.coradeck.db.ctrl.Selection
+import com.coradec.coradeck.db.model.ColumnDefinition
 import com.coradec.coradeck.db.model.Database
 import com.coradec.coradeck.db.model.RecordCollection
 import com.coradec.coradeck.db.util.*
-import com.coradec.module.db.annot.Size
-import java.math.BigDecimal
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.memberProperties
@@ -30,21 +26,23 @@ abstract class HsqlDbCollection<Record : Any>(
         ?: throw IllegalArgumentException("Unsupported model: $model")
     override val columnNames: Sequence<String>
         get() = connection.metaData.getColumns(null, null, tableName, null)
-            .seqOf(ColumnMetadata::class).map { it.columnName }.ifEmpty {
-                fieldNames.map { it.toSqlObjectName() }
-            }
+            .seqOf(ColumnMetadata::class).map { it.columnName }.ifEmpty { fieldNames.map { it.toSqlObjectName() } }
     private val tableNames: Sequence<String>
         get() = connection.metaData
             .getTables(null, null, tableName, listOf("TABLE").toTypedArray())
             .seqOf(TableMetadata::class).map { it.tableName }
     override val fields: Map<String, KType>
         get() = model.members.filter { it.name in fieldNames }.associate { Pair(it.name, it.returnType) }
-    override val columnDefinitions: Map<String, String>
-        get() = connection.metaData
-            .getColumns(null, null, tableName, null)
-            .listOf(ColumnMetadata::class).map { Pair(it.columnName, it.typeName.withSize(it.columnSize)) }.ifEmpty {
-                fields.map { Pair(it.key.toSqlObjectName(), it.value.toSqlType(it.key)) }
-            }.toMap()
+    override val columnDefinitions: Map<String, ColumnDefinition>
+        get() = connection.metaData.getColumns(null, null, tableName, null)
+            .listOf(ColumnMetadata::class)
+            .map { Pair(it.columnName, ColumnDefinition(it.typeName.withSize(it.columnSize), it.nullable == 1)) }
+            .ifEmpty {
+                fields.map {
+                    Pair(it.key.toSqlObjectName(), ColumnDefinition(it.value.toSqlType(it.key), it.value.isMarkedNullable))
+                }
+            }
+            .toMap()
 
     private fun count(selector: Selection): Int {
         val stmt = "select count(*) from $tableName${selector.filter}"
@@ -52,42 +50,7 @@ abstract class HsqlDbCollection<Record : Any>(
         return statement.executeQuery(stmt).checkedSingleOf(Int::class)
     }
 
-    private fun String.withSize(columnSize: Int?): String = if (columnSize == null) this else when (this) {
-        "VARCHAR", "CHAR", "LONGVARCHAR" -> "$this($columnSize)"
-        "VARBINARY", "BINARY" -> "#this($columnSize)"
-        else -> this
-    }
-
-    protected fun Any?.toSqlValueRepr() = when (this) {
-        null -> "NULL"
-        is String -> "'$this'"
-        is LocalDate -> "DATE '$this'"
-        is LocalTime -> "TIME '$this'"
-        is LocalDateTime -> "TIMESTAMP '${this.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))}'"
-        else -> toString()
-    }
-
-    private fun Pair<KClass<*>, List<Annotation>>.toSqlType(): String = first.toSqlType(second)
-    private fun KClass<*>.toSqlType(annotations: List<Annotation>): String = when (this) {
-        String::class -> "VARCHAR(%d)".format((annotations.singleOrNull { it is Size } as? Size)?.value
-            ?: throw IllegalArgumentException("Missing String @Size for ${this.java.name}"))
-        Boolean::class -> "BIT"
-        Byte::class -> "TINYINT"
-        Short::class -> "SMALLINT"
-        Int::class -> "INTEGER"
-        Long::class -> "BIGINT"
-        Float::class -> "FLOAT"
-        Double::class -> "DOUBLE"
-        BigDecimal::class -> "NUMERIC"
-        LocalDate::class -> "DATE"
-        LocalTime::class -> "TIME"
-        LocalDateTime::class -> "TIMESTAMP"
-        else -> throw IllegalArgumentException("Type \"$this\" cannot be translated to SQL!")
-    }
-
-    override fun onInitializing() {
-        super.onInitializing()
-    }
+    fun Pair<KClass<*>, List<Annotation>>.toSqlType(): String = first.toSqlType(second)
 
     override val size: Int get() = count(selector)
     override val all: Sequence<Record> get() = select(selector)

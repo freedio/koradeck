@@ -11,6 +11,7 @@ import com.coradec.module.db.annot.Size
 import java.math.BigDecimal
 import java.sql.ResultSet
 import java.time.*
+import java.time.format.DateTimeFormatter
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
 import kotlin.reflect.KClass
@@ -81,3 +82,37 @@ fun KType.toSqlType(name: String): String = when (val klass = this.classifier as
 }
 
 private fun sizeRequired(name: String, size: Int?): Int = size ?: throw IllegalArgumentException("Field «$name»: size is required!")
+
+fun String.withSize(columnSize: Int?): String = if (columnSize == null) this else when (this) {
+    "VARCHAR", "CHAR", "LONGVARCHAR" -> "$this($columnSize)"
+    "VARBINARY", "BINARY" -> "#this($columnSize)"
+    else -> this
+}
+
+fun Any?.toSqlValueRepr() = when (this) {
+    null -> "NULL"
+    is String -> "'$this'"
+    is LocalDate -> "DATE '$this'"
+    is LocalTime -> "TIME '$this'"
+    is LocalDateTime -> "TIMESTAMP '${this.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))}'"
+    is ZonedDateTime -> "TIMESTAMP '${this.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssXXX"))}'"
+    is OffsetTime -> "TIMESTAMP '${this.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssXXX"))}'"
+    else -> toString()
+}
+
+fun KClass<*>.toSqlType(annotations: List<Annotation>): String = when (this) {
+    String::class -> "VARCHAR(%d)".format((annotations.singleOrNull { it is Size } as? Size)?.value
+        ?: throw IllegalArgumentException("Missing String @Size for ${this.java.name}"))
+    Boolean::class -> "BIT"
+    Byte::class -> "TINYINT"
+    Short::class -> "SMALLINT"
+    Int::class -> "INTEGER"
+    Long::class -> "BIGINT"
+    Float::class -> "FLOAT"
+    Double::class -> "DOUBLE"
+    BigDecimal::class -> "NUMERIC"
+    LocalDate::class -> "DATE"
+    LocalTime::class -> "TIME"
+    LocalDateTime::class -> "TIMESTAMP"
+    else -> throw IllegalArgumentException("Type \"$this\" cannot be translated to SQL!")
+}
