@@ -66,10 +66,11 @@ internal class HsqlDbTest {
             log.debug("@3")
             database.standby()
             log.debug("@4")
-            database.accept(OpenTableVoucher(here,TestClass::class)).content.value
+            database.accept(OpenTableVoucher(here,TestClass::class)).standby()
             log.debug("@5")
             database.accept(OpenTableVoucher(here, TestClass2::class)).content.value.let { table ->
                 log.debug("@5.0")
+                Thread.sleep(500)
                 table += TestClass2("Jane", "Doe", LocalDate.of(2000, 1, 1), 2)
                 log.debug("@5.1")
                 table += TestClass2("Jack", "Daniels", LocalDate.of(1864, 4, 24), 1)
