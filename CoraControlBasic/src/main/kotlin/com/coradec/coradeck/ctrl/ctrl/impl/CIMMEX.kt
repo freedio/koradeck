@@ -133,7 +133,7 @@ object CIMMEX : Logger(), IMMEX {
     }
 
     private fun addExecutor() {
-        if (enabled.get() && taskqueue.size > executors.size && workers.size < PROP_MAX_EXECUTORS.value) startExecutor()
+        if (enabled.get() && taskqueue.size > executors.size && executors.size < PROP_MAX_EXECUTORS.value) startExecutor()
     }
 
     override fun execute(executable: Runnable) = execute(executable, defaultPriority)
