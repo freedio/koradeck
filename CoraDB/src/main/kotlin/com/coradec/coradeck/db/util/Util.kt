@@ -4,6 +4,7 @@
 
 package com.coradec.coradeck.db.util
 
+import com.coradec.coradeck.core.model.SqlTransformable
 import com.coradec.coradeck.core.util.classname
 import com.coradec.coradeck.core.util.contains
 import com.coradec.module.db.annot.Size
@@ -15,6 +16,8 @@ import java.util.stream.StreamSupport
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.KType
+import kotlin.reflect.full.companionObject
+import kotlin.reflect.full.companionObjectInstance
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
 
@@ -49,12 +52,13 @@ fun KClass<*>.toSqlType(name: String, size: Int?): String = when (this) {
     in LocalDate::class -> "DATE"
     in LocalDateTime::class -> "TIMESTAMP"
     in LocalTime::class -> "TIME"
-    in OffsetTime::class -> "TIME WITH TIMEZONE"
-    in ZonedDateTime::class -> "TIMESTAMP WITH TIMEZONE"
+    in OffsetTime::class -> "TIME WITH TIME ZONE"
+    in ZonedDateTime::class -> "TIMESTAMP WITH TIME ZONE"
     else -> throw IllegalArgumentException("Cannot determine external value of type $this")
 }
 
-fun KType.toSqlType(name: String): String = when (this.classifier as KClass<*>) {
+@Suppress("UNCHECKED_CAST")
+fun KType.toSqlType(name: String): String = when (val klass = this.classifier as KClass<*>) {
     in String::class -> "VARCHAR(${sizeRequired(name, this.findAnnotation<Size>()?.value)})"
     in Byte::class -> "TINYINT"
     in Short::class -> "SMALLINT"
@@ -67,8 +71,12 @@ fun KType.toSqlType(name: String): String = when (this.classifier as KClass<*>) 
     in LocalDate::class -> "DATE"
     in LocalDateTime::class -> "TIMESTAMP"
     in LocalTime::class -> "TIME"
-    in OffsetTime::class -> "TIME WITH TIMEZONE"
-    in ZonedDateTime::class -> "TIMESTAMP WITH TIMEZONE"
+    in OffsetTime::class -> "TIME WITH TIME ZONE"
+    in ZonedDateTime::class -> "TIMESTAMP WITH TIME ZONE"
+    in SqlTransformable::class -> (klass.companionObject?.memberProperties
+        ?.singleOrNull { it.name == "sqlType" } as? KProperty1<Any, String>)
+        ?.get(klass.companionObjectInstance ?: throw IllegalStateException("SqlTransformable without companion object!"))
+        ?: throw IllegalStateException("SqlTransformable without companion object or companion property ‹sqlType›!")
     else -> throw IllegalArgumentException("Cannot determine external value of type $this")
 }
 
