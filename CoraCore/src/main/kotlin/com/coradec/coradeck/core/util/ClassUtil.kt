@@ -11,7 +11,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KVisibility.PUBLIC
 import kotlin.reflect.full.IllegalCallableAccessException
 import kotlin.reflect.full.findAnnotation
-import kotlin.reflect.full.isSubclassOf
+import kotlin.reflect.full.isSuperclassOf
 import kotlin.reflect.full.memberProperties
 import kotlin.reflect.jvm.jvmName
 
@@ -31,7 +31,7 @@ val Any.properties: Map<String, Any?> get() =
         .filter { prop -> prop.visibility == PUBLIC && prop.findAnnotation<NonRepresentable>() == null }
         .associate { prop -> Pair(prop.name, try { prop.call(this@properties) }
         catch (e: IllegalCallableAccessException) { println("Property $classname.${prop.name} is not accessible!"); null}) }
-operator fun KClass<*>.contains(other: KClass<*>) = isSubclassOf(other)
+operator fun KClass<*>.contains(other: KClass<*>) = isSuperclassOf(other)
 operator fun KClass<*>.contains(instance: Any) = isInstance(instance)
 operator fun Set<Class<*>>.contains(instance: Any) = any { it.isInstance(instance) }
 
