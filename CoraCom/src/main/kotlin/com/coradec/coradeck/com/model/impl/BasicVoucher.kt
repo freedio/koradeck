@@ -77,7 +77,7 @@ open class BasicVoucher<V>(
 
     override fun forwardTo(voucher: Voucher<V>) {
         whenFinished {
-            if (current != null) voucher.value = current!!
+            if (valueSet) voucher.value = current as V
             when (state) {
                 SUCCESSFUL -> voucher.succeed()
                 FAILED -> voucher.fail(reason)
