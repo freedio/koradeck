@@ -42,4 +42,8 @@ open class BasicBusContext(override var name: String, override val hub: BusHubVi
     override fun rename(name: String) {
         this.name = name
     }
+
+    override fun crashed() {
+        member?.apply { hub.onCrashed(this) }
+    }
 }

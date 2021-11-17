@@ -36,4 +36,6 @@ interface BusContext {
     fun busy()
     /** Changes the member name to the specified name. */
     fun rename(name: String)
+    /** Indicates that the node, being an engine, has crashed. */
+    fun crashed()
 }

@@ -4,11 +4,7 @@
 
 package com.coradec.coradeck.bus.model.impl
 
-import com.coradec.coradeck.bus.model.BusMachineDelegate
-import com.coradec.coradeck.bus.model.BusNodeState
-import com.coradec.coradeck.bus.model.BusNodeStateTransition
-import com.coradec.coradeck.bus.model.MachineDelegator
-import com.coradec.coradeck.ctrl.module.CoraControl.IMMEX
+import com.coradec.coradeck.bus.model.*
 import com.coradec.coradeck.dir.model.DirectoryNamespace
 import com.coradec.coradeck.dir.module.CoraDir
 import com.coradec.coradeck.text.model.LocalText
@@ -39,7 +35,7 @@ open class BusMachineImpl(
                     delegator?.onStarting()
                 }
                 BusNodeState.STARTED -> {
-                    delegator?.apply { IMMEX.execute(this) }
+                    run()
                     debug("Started %s ‹%s›.", mytype, name)
                     state = BusNodeState.STARTED
                     delegator?.onStarted()
@@ -48,6 +44,7 @@ open class BusMachineImpl(
                 BusNodeState.STOPPING -> {
                     busify(name)
                     debug("Stopping %s ‹%s›.", mytype, name)
+                    stop()
                     state = BusNodeState.STOPPING
                     delegator?.onStopping()
                 }
@@ -72,9 +69,38 @@ open class BusMachineImpl(
         }
     }
 
-    override fun run() = delegator?.run() ?: error(TEXT_NOT_RUNNING)
+    override fun crash() {
+        context?.crashed()
+    }
+
+    override fun run() {
+        delegator?.apply {
+            fun execute() {
+                try {
+                    run()
+                } catch (e: InterruptedException) {
+                    warn(TEXT_ENGINE_INTERRUPTED)
+                } catch (e: Exception) {
+                    error(e, TEXT_ENGINE_CRASHED)
+                    crash()
+                }
+            }
+            Thread(::execute, "Bus-%04d".format(BusEngine.ID_ENGINE.incrementAndGet())).apply {
+                if (delegator != null) delegator!!.thread = this
+                start()
+            }
+        } ?: error(TEXT_NOT_RUNNING)
+    }
+
+    private fun stop() {
+        delegator?.apply {
+            thread.interrupt()
+        }
+    }
 
     companion object {
         private val TEXT_NOT_RUNNING = LocalText("NotRunning")
+        private val TEXT_ENGINE_INTERRUPTED = LocalText("EngineInterrupted")
+        private val TEXT_ENGINE_CRASHED = LocalText("EngineCrashed")
     }
 }

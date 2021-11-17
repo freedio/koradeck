@@ -5,6 +5,8 @@
 package com.coradec.coradeck.bus.model
 
 interface EngineDelegator: NodeDelegator, Runnable {
+    var thread: Thread
+
     fun onStarting()
     fun onStarted()
     fun onPausing()

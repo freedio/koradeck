@@ -13,6 +13,7 @@ import com.coradec.coradeck.dir.module.CoraDir
 
 abstract class BasicBusMachine(namespace: DirectoryNamespace = CoraDir.defaultNamespace) : BasicBusHub(namespace), DelegatedBusMachine {
     override val delegate: BusMachineDelegate = CoraBus.createMachine(InternalMachineDelegator())
+    protected lateinit var thread: Thread
 
     protected open fun onStarting() {}
     protected open fun onStarted() {}
@@ -24,6 +25,12 @@ abstract class BasicBusMachine(namespace: DirectoryNamespace = CoraDir.defaultNa
     protected open fun onStopped() {}
 
     protected open inner class InternalMachineDelegator : InternalHubDelegator(), MachineDelegator {
+        override var thread: Thread
+            get() = this@BasicBusMachine.thread
+            set(value) {
+                this@BasicBusMachine.thread = value
+            }
+
         override fun onStarting() = this@BasicBusMachine.onStarting()
         override fun onStarted() = this@BasicBusMachine.onStarted()
         override fun onPausing() = this@BasicBusMachine.onPausing()

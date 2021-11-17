@@ -27,8 +27,10 @@ interface BusHubView {
     fun onReady(member: BusNode)
     /** Invoked when the member becomes busy. */
     fun onBusy(member: BusNode)
+    /** Invoked when the member, being an engine, has crashed. */
+    fun onCrashed(member: BusNode)
     /** Links the new member with the specified name to the hub. */
     fun link(name: String, node: BusNode)
-    /** Unlinks the gone member with the specified name from  the hub. */
+    /** Unlinks the gone member with the specified name from the hub. */
     fun unlink(name: String)
 }

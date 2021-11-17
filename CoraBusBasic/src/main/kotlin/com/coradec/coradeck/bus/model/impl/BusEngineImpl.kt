@@ -4,19 +4,16 @@
 
 package com.coradec.coradeck.bus.model.impl
 
-import com.coradec.coradeck.bus.model.BusEngineDelegate
-import com.coradec.coradeck.bus.model.BusNodeState
-import com.coradec.coradeck.bus.model.BusNodeStateTransition
-import com.coradec.coradeck.bus.model.EngineDelegator
-import com.coradec.coradeck.ctrl.module.CoraControl
+import com.coradec.coradeck.bus.model.*
+import com.coradec.coradeck.bus.model.BusNodeState.*
 import com.coradec.coradeck.text.model.LocalText
 
 @Suppress("UNCHECKED_CAST")
 open class BusEngineImpl(
     override val delegator: EngineDelegator? = null
 ) : BusNodeImpl(delegator), BusEngineDelegate {
-    override val upstates: List<BusNodeState> get() = super.upstates + listOf(BusNodeState.STARTING, BusNodeState.STARTED)
-    override val downstates: List<BusNodeState> get() = listOf(BusNodeState.STOPPING, BusNodeState.STOPPED) + super.downstates
+    override val upstates: List<BusNodeState> get() = super.upstates + listOf(STARTING, STARTED)
+    override val downstates: List<BusNodeState> get() = listOf(STOPPING, STOPPED) + super.downstates
     override val mytype = "engine"
     override val myType = "Engine"
 
@@ -25,37 +22,38 @@ open class BusEngineImpl(
             val context = transition.context
             val name = name ?: context?.name ?: throw IllegalStateException("Name must be present here!")
             when (transition.unto) {
-                BusNodeState.INITIALIZED -> {
+                INITIALIZED -> {
                     debug("Initialized %s ‹%s›.", mytype, name)
-                    state = BusNodeState.INITIALIZED
+                    state = INITIALIZED
                     delegator?.onInitialized()
                 }
-                BusNodeState.STARTING -> {
+                STARTING -> {
                     debug("Starting %s ‹%s›.", mytype, name)
-                    state = BusNodeState.STARTING
+                    state = STARTING
                     delegator?.onStarting()
                 }
-                BusNodeState.STARTED -> {
-                    delegator?.apply { CoraControl.IMMEX.execute(this) }
+                STARTED -> {
+                    run()
                     debug("Started %s ‹%s›.", mytype, name)
-                    state = BusNodeState.STARTED
+                    state = STARTED
                     delegator?.onStarted()
                     readify(name)
                 }
-                BusNodeState.STOPPING -> {
+                STOPPING -> {
                     busify(name)
                     debug("Stopping %s ‹%s›.", mytype, name)
-                    state = BusNodeState.STOPPING
+                    stop()
+                    state = STOPPING
                     delegator?.onStopping()
                 }
-                BusNodeState.STOPPED -> {
+                STOPPED -> {
                     debug("Stopped %s ‹%s›.", mytype, name)
-                    state = BusNodeState.UNLOADED
+                    state = UNLOADED
                     delegator?.onStopped()
                 }
-                BusNodeState.FINALIZING -> {
+                FINALIZING -> {
                     debug("Finalizing %s ‹%s›.", mytype, name)
-                    state = BusNodeState.FINALIZING
+                    state = FINALIZING
                     delegator?.onFinalizing()
                 }
                 else -> super.stateChanged(transition)
@@ -67,9 +65,38 @@ open class BusEngineImpl(
         }
     }
 
-    override fun run() = delegator?.run() ?: error(TEXT_NOT_RUNNING)
+    override fun crash() {
+        context?.crashed()
+    }
+
+    override fun run() {
+        delegator?.apply {
+            fun execute() {
+                try {
+                    run()
+                } catch (e: InterruptedException) {
+                    warn(TEXT_ENGINE_INTERRUPTED, this)
+                } catch (e: Exception) {
+                    error(e, TEXT_ENGINE_CRASHED, this)
+                    crash()
+                }
+            }
+            Thread(::execute, "Bus-%04d".format(BusEngine.ID_ENGINE.incrementAndGet())).apply {
+                thread = this
+                start()
+            }
+        } ?: error(TEXT_NOT_RUNNING)
+    }
+
+    private fun stop() {
+        delegator?.apply {
+            thread.interrupt()
+        }
+    }
 
     companion object {
         private val TEXT_NOT_RUNNING = LocalText("NotRunning")
+        private val TEXT_ENGINE_INTERRUPTED = LocalText("EngineInterrupted1")
+        private val TEXT_ENGINE_CRASHED = LocalText("EngineCrashed1")
     }
 }

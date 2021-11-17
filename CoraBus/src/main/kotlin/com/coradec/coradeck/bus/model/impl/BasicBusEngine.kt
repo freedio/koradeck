@@ -11,6 +11,7 @@ import com.coradec.coradeck.bus.module.CoraBus
 
 abstract class BasicBusEngine : BasicBusNode(), DelegatedBusEngine {
     override val delegate: BusEngineDelegate = CoraBus.createEngine(InternalEngineDelegator())
+    protected lateinit var thread: Thread
 
     protected open fun onStarting() {}
     protected open fun onStarted() {}
@@ -22,6 +23,12 @@ abstract class BasicBusEngine : BasicBusNode(), DelegatedBusEngine {
     protected open fun onStopped() {}
 
     protected open inner class InternalEngineDelegator : InternalNodeDelegator(), EngineDelegator {
+        override var thread: Thread
+            get() = this@BasicBusEngine.thread
+            set(value) {
+                this@BasicBusEngine.thread = value
+            }
+
         override fun onStarting() = this@BasicBusEngine.onStarting()
         override fun onStarted() = this@BasicBusEngine.onStarted()
         override fun onPausing() = this@BasicBusEngine.onPausing()

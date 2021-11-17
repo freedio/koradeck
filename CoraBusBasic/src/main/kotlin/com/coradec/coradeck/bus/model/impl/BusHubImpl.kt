@@ -253,6 +253,7 @@ open class BusHubImpl(
     protected open fun onLeft(member: BusNode) {}
     protected open fun onReady(member: BusNode) {}
     protected open fun onBusy(member: BusNode) {}
+    protected open fun onCrashed(member: BusNode) { leave() }
     protected open fun link(name: String, member: BusNode) {}
     protected open fun unlink(name: String) {
         accept(UnlinkMemberRequest(here, name))
@@ -282,6 +283,7 @@ open class BusHubImpl(
         override fun onJoined(node: BusNode) = my.onJoined(node)
         override fun onReady(member: BusNode) = my.onReady(member)
         override fun onBusy(member: BusNode) = my.onBusy(member)
+        override fun onCrashed(member: BusNode) = my.onCrashed(member)
         override fun link(name: String, node: BusNode) = my.link(name, node)
         override fun unlink(name: String) = my.unlink(name)
     }

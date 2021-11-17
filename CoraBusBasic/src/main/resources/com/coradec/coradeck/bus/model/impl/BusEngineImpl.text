@@ -1,2 +1,4 @@
 # Localized textbase for default locale of class BusEngineImpl
 NotRunning: Machine implementation not running, because method ‹run()› was not overridden!
+EngineInterrupted1: Bus engine ‹%s› was interrupted.
+EngineCrashed1: Bus engine ‹%s› crashed!

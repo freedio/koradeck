@@ -86,6 +86,7 @@ object SystemBus : BasicBusHub(CoraDir.rootNamespace) {
         override fun onJoined(node: BusNode) = relax()
         override fun onReady(member: BusNode) = relax()
         override fun onBusy(member: BusNode) = relax()
+        override fun onCrashed(member: BusNode) = relax()
         override fun link(name: String, node: BusNode) = relax()
         override fun unlink(name: String) = relax()
     }

@@ -4,4 +4,10 @@
 
 package com.coradec.coradeck.bus.model
 
-interface BusEngine : BusNode, Runnable
+import java.util.concurrent.atomic.AtomicInteger
+
+interface BusEngine : BusNode, Runnable {
+    companion object {
+        val ID_ENGINE = AtomicInteger(0)
+    }
+}

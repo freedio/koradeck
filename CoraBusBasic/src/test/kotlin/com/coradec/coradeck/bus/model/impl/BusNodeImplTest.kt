@@ -83,6 +83,10 @@ class BusNodeImplTest {
             states += "busy"
         }
 
+        override fun onCrashed(member: BusNode) {
+            states += "crashed"
+        }
+
         override fun link(name: String, node: BusNode) = relax()
         override fun unlink(name: String) = relax()
     }
@@ -119,6 +123,10 @@ class BusNodeImplTest {
 
         override fun busy() {
             states += "$member busy"
+        }
+
+        override fun crashed() {
+            states += "$member crashed"
         }
 
         override fun rename(name: String) {
