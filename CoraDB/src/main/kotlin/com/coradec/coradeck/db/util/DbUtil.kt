@@ -40,6 +40,7 @@ fun Any?.toSqlFieldValue(): Any? = when (this) {
     else -> this
 }
 
+@Suppress("UNCHECKED_CAST")
 fun KClass<*>.toSqlType(name: String, size: Int?): String = when (this) {
     in String::class -> "VARCHAR(${sizeRequired(name, size)})"
     in Byte::class -> "TINYINT"
@@ -55,6 +56,10 @@ fun KClass<*>.toSqlType(name: String, size: Int?): String = when (this) {
     in LocalTime::class -> "TIME"
     in OffsetTime::class -> "TIME WITH TIME ZONE"
     in ZonedDateTime::class -> "TIMESTAMP WITH TIME ZONE"
+    in SqlTransformable::class -> (companionObject?.memberProperties
+        ?.singleOrNull { it.name == "sqlType" } as? KProperty1<Any, String>)
+        ?.get(companionObjectInstance ?: throw IllegalStateException("SqlTransformable without companion object!"))
+        ?: throw IllegalStateException("SqlTransformable without companion object or companion property ‹sqlType›!")
     else -> throw IllegalArgumentException("Cannot determine external value of type $this")
 }
 
@@ -97,9 +102,11 @@ fun Any?.toSqlValueRepr() = when (this) {
     is LocalDateTime -> "TIMESTAMP '${this.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))}'"
     is ZonedDateTime -> "TIMESTAMP '${this.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssXXX"))}'"
     is OffsetTime -> "TIMESTAMP '${this.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssXXX"))}'"
+    is SqlTransformable -> toSqlValue()
     else -> toString()
 }
 
+@Suppress("UNCHECKED_CAST")
 fun KClass<*>.toSqlType(annotations: List<Annotation>): String = when (this) {
     String::class -> "VARCHAR(%d)".format((annotations.singleOrNull { it is Size } as? Size)?.value
         ?: throw IllegalArgumentException("Missing String @Size for ${this.java.name}"))
@@ -114,5 +121,9 @@ fun KClass<*>.toSqlType(annotations: List<Annotation>): String = when (this) {
     LocalDate::class -> "DATE"
     LocalTime::class -> "TIME"
     LocalDateTime::class -> "TIMESTAMP"
+    in SqlTransformable::class -> (companionObject?.memberProperties
+        ?.singleOrNull { it.name == "sqlType" } as? KProperty1<Any, String>)
+        ?.get(companionObjectInstance ?: throw IllegalStateException("SqlTransformable without companion object!"))
+        ?: throw IllegalStateException("SqlTransformable without companion object or companion property ‹sqlType›!")
     else -> throw IllegalArgumentException("Type \"$this\" cannot be translated to SQL!")
 }

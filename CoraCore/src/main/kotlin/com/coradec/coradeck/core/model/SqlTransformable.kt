@@ -4,4 +4,6 @@
 
 package com.coradec.coradeck.core.model
 
-interface SqlTransformable
+interface SqlTransformable {
+    fun toSqlValue(): String
+}
