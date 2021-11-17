@@ -16,18 +16,13 @@ import com.coradec.coradeck.db.com.GetTableVoucher
 import com.coradec.coradeck.db.com.OpenTableVoucher
 import com.coradec.coradeck.db.model.Database
 import com.coradec.coradeck.db.model.RecordTable
-import com.coradec.coradeck.db.util.toSqlObjectName
 import com.coradec.coradeck.db.util.toSqlTableName
-import com.coradec.coradeck.db.util.toSqlType
 import com.coradec.coradeck.type.model.Password
-import com.coradec.module.db.annot.Size
 import java.net.URI
 import java.sql.Connection
 import java.sql.DriverManager
 import java.sql.Statement
 import kotlin.reflect.KClass
-import kotlin.reflect.KType
-import kotlin.reflect.full.findAnnotation
 
 @Suppress("UNCHECKED_CAST")
 class HsqlDatabase(private val uri: URI, private val username: String, private val password: Password): BasicBusHub(), Database {
@@ -61,6 +56,9 @@ class HsqlDatabase(private val uri: URI, private val username: String, private v
     override fun <Record : Any> getTable(model: KClass<out Record>): RecordTable<Record> =
         accept(GetTableVoucher(here, model)).content.value
 
+    override fun <Record : Any> openTable(model: KClass<out Record>): RecordTable<Record> =
+        accept(OpenTableVoucher(here, model)).content.value
+
     private fun getTable(voucher: GetTableVoucher<*>) {
         lookup(voucher.model.toSqlTableName()).forwardTo(voucher as Voucher<BusNode>)
     }
@@ -93,12 +91,13 @@ class HsqlDatabase(private val uri: URI, private val username: String, private v
         }
     }
 
-    override fun createTable(tableName: String, columnDefinitions: Sequence<Pair<String, KType>>) {
-        val viewspec = columnDefinitions.joinToString(",", "(", ")") { (name, type) ->
-            val klass = type.classifier as KClass<*>
-            "${name.toSqlObjectName()} ${klass.toSqlType(name, type.findAnnotation<Size>()?.value)}"
-        }
-        detail("Creating table ‹%s› with columns ‹%s›.", tableName, viewspec)
-        statement.executeUpdate("create table if not exists $tableName $viewspec")
-    }
+// obsolete as of 2021-11-15
+//    override fun createTable(tableName: String, columnDefinitions: Sequence<Pair<String, KType>>) {
+//        val viewspec = columnDefinitions.joinToString(",", "(", ")") { (name, type) ->
+//            val klass = type.classifier as KClass<*>
+//            "${name.toSqlObjectName()} ${klass.toSqlType(name, type.findAnnotation<Size>()?.value)}"
+//        }
+//        detail("Creating table ‹%s› with columns ‹%s›.", tableName, viewspec)
+//        statement.executeUpdate("create table if not exists $tableName $viewspec")
+//    }
 }

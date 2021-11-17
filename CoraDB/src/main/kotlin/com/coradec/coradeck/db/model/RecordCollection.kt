@@ -4,10 +4,11 @@
 
 package com.coradec.coradeck.db.model
 
+import com.coradec.coradeck.bus.model.BusNode
 import com.coradec.coradeck.db.ctrl.Selection
 import kotlin.reflect.KType
 
-interface RecordCollection<R: Any>: Iterable<R>, AutoCloseable {
+interface RecordCollection<R: Any>: BusNode, Iterable<R>, AutoCloseable {
     /** Map of field types by name. */
     val fields: Map<String, KType>
     /** Name of the record in the collection (corresponds to the record's class name). */
