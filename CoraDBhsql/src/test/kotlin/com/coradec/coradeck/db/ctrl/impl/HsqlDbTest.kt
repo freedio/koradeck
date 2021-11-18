@@ -19,15 +19,18 @@ import com.coradec.coradeck.ctrl.module.CoraControlImpl
 import com.coradec.coradeck.db.com.GetTableVoucher
 import com.coradec.coradeck.db.com.OpenTableVoucher
 import com.coradec.coradeck.db.ctrl.impl.SqlSelection.Companion.where
-import com.coradec.coradeck.db.model.ColumnDefinition
 import com.coradec.coradeck.db.model.Database
+import com.coradec.coradeck.db.model.impl.BasicColumnDefinition
 import com.coradec.coradeck.db.module.CoraDB
 import com.coradec.coradeck.db.module.CoraDbHsql
+import com.coradec.coradeck.db.util.generate
 import com.coradec.coradeck.dir.module.CoraDirImpl
 import com.coradec.coradeck.module.model.CoraModules
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.model.Password
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
+import com.coradec.module.db.annot.Generated
+import com.coradec.module.db.annot.Primary
 import com.coradec.module.db.annot.Size
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
@@ -59,7 +62,7 @@ internal class HsqlDbTest {
             )
             val log = CoraCom.log
             log.debug("@0")
-            Files.deleteTree("/tmp/dbtest/db".toPath())
+            Files.deleteTree("/tmp/dbtest".toPath())
             log.debug("@1")
             database = CoraDB.database(URI("jdbc:hsqldb:file:/tmp/dbtest/db"), "sa", Password(""))
             log.debug("@2")
@@ -155,7 +158,7 @@ internal class HsqlDbTest {
             // when:
             val result = testee.fieldNames.toList()
             // then:
-            assertThat(result).hasSameElementsAs(listOf("vorname", "familienName", "geburtsdatum", "geschlecht"))
+            assertThat(result).hasSameElementsAs(listOf("vorname", "familienName", "geburtsdatum", "geschlecht", "name"))
         }
     }
 
@@ -193,7 +196,8 @@ internal class HsqlDbTest {
                     "familienName" to Pair(String::class, 40),
                     "geburtsdatum" to Pair(LocalDate::class, null),
                     "geschlecht" to Pair(Byte::class, null),
-                    "vorname" to Pair(String::class, 20)
+                    "vorname" to Pair(String::class, 20),
+                    "name" to Pair(String::class, 60)
                 )
             )
         }
@@ -217,7 +221,7 @@ internal class HsqlDbTest {
             // when:
             val result = testee.columnNames.toList()
             // then:
-            assertThat(result).hasSameElementsAs(listOf("VORNAME", "FAMILIEN_NAME", "GEBURTSDATUM", "GESCHLECHT"))
+            assertThat(result).hasSameElementsAs(listOf("VORNAME", "FAMILIEN_NAME", "GEBURTSDATUM", "GESCHLECHT", "NAME"))
         }
     }
 
@@ -230,10 +234,10 @@ internal class HsqlDbTest {
             // then:
             assertThat(result).containsAllEntriesOf(
                 mapOf(
-                    "VORNAME" to ColumnDefinition("VARCHAR(20)", false),
-                    "FAMILIEN_NAME" to ColumnDefinition("VARCHAR(40)", false),
-                    "GEBURTSDATUM" to ColumnDefinition("DATE", false),
-                    "GESCHLECHT" to ColumnDefinition("TINYINT", true)
+                    "VORNAME" to BasicColumnDefinition("VARCHAR(20)"),
+                    "FAMILIEN_NAME" to BasicColumnDefinition("VARCHAR(40)"),
+                    "GEBURTSDATUM" to BasicColumnDefinition("DATE"),
+                    "GESCHLECHT" to BasicColumnDefinition("TINYINT", true)
                 )
             )
         }
@@ -248,10 +252,11 @@ internal class HsqlDbTest {
             // then:
             assertThat(result).containsAllEntriesOf(
                 mapOf(
-                    "VORNAME" to ColumnDefinition("VARCHAR(20)", false),
-                    "FAMILIEN_NAME" to ColumnDefinition("VARCHAR(40)", false),
-                    "GEBURTSDATUM" to ColumnDefinition("DATE", false),
-                    "GESCHLECHT" to ColumnDefinition("TINYINT", true)
+                    "VORNAME" to BasicColumnDefinition("VARCHAR(20)"),
+                    "FAMILIEN_NAME" to BasicColumnDefinition("VARCHAR(40)"),
+                    "GEBURTSDATUM" to BasicColumnDefinition("DATE"),
+                    "GESCHLECHT" to BasicColumnDefinition("TINYINT", true),
+                    "NAME" to BasicColumnDefinition("VARCHAR(60)")
                 )
             )
         }
@@ -325,7 +330,10 @@ internal class HsqlDbTest {
         val familienName: @Size(40) String,
         val geburtsdatum: LocalDate,
         val geschlecht: Byte?
-    )
+    ) {
+        val name: @Primary @Generated("VORNAME || ' ' || FAMILIEN_NAME", true) @Size(60) String
+            get() = generate("$vorname $familienName")
+    }
 
     data class TestClass3(
         val vorname: @Size(20) String,

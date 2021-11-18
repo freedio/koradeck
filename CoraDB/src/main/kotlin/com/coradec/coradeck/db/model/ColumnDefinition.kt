@@ -4,10 +4,10 @@
 
 package com.coradec.coradeck.db.model
 
-import com.coradec.coradeck.db.model.impl.BasicColumnDefinition
-
 interface ColumnDefinition {
-    companion object {
-        operator fun invoke(sqlType: String, nullable: Boolean): ColumnDefinition = BasicColumnDefinition(sqlType, nullable)
-    }
+    val sqlType: String
+    val nullable: Boolean
+    val primary: Boolean
+    val generated: String?
+    val always: Boolean
 }

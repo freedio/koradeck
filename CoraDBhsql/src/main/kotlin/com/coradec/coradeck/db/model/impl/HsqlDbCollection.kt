@@ -10,18 +10,24 @@ import com.coradec.coradeck.db.model.ColumnDefinition
 import com.coradec.coradeck.db.model.Database
 import com.coradec.coradeck.db.model.RecordCollection
 import com.coradec.coradeck.db.util.*
+import com.coradec.module.db.annot.Generated
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
+import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
 
 abstract class HsqlDbCollection<Record : Any>(
-    private val db: Database,
+    protected val db: Database,
     private val model: KClass<out Record>
 ) : BasicBusNode(), RecordCollection<Record> {
     protected abstract val selector: Selection
     protected val connection = db.connection
     protected val statement = db.statement
     override val fieldNames: Sequence<String> get() = model.memberProperties.map { it.name }.asSequence()
+    override val insertFieldNames: Sequence<String> get() =
+        model.memberProperties
+            .filter { p -> model.members.single { it.name == p.name }.returnType.findAnnotation<Generated>() == null }
+            .map { it.name }.asSequence()
     override val tableName: String = model.simpleName?.toSqlObjectName()
         ?: throw IllegalArgumentException("Unsupported model: $model")
     override val columnNames: Sequence<String>
@@ -36,10 +42,10 @@ abstract class HsqlDbCollection<Record : Any>(
     override val columnDefinitions: Map<String, ColumnDefinition>
         get() = connection.metaData.getColumns(null, null, tableName, null)
             .listOf(ColumnMetadata::class)
-            .map { Pair(it.columnName, ColumnDefinition(it.typeName.withSize(it.columnSize), it.nullable == 1)) }
+            .map { Pair(it.columnName, BasicColumnDefinition(it.typeName.withSize(it.columnSize),it.nullable == 1)) }
             .ifEmpty {
                 fields.map {
-                    Pair(it.key.toSqlObjectName(), ColumnDefinition(it.value.toSqlType(it.key), it.value.isMarkedNullable))
+                    Pair(it.key.toSqlObjectName(), it.value.toColumnDef(it.key))
                 }
             }
             .toMap()

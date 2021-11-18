@@ -7,7 +7,11 @@ package com.coradec.coradeck.db.util
 import com.coradec.coradeck.core.model.SqlTransformable
 import com.coradec.coradeck.core.util.classname
 import com.coradec.coradeck.core.util.contains
+import com.coradec.coradeck.db.model.ColumnDefinition
+import com.coradec.coradeck.db.model.impl.BasicColumnDefinition
 import com.coradec.coradeck.type.module.CoraType
+import com.coradec.module.db.annot.Generated
+import com.coradec.module.db.annot.Primary
 import com.coradec.module.db.annot.Size
 import java.math.BigDecimal
 import java.sql.ResultSet
@@ -68,9 +72,18 @@ fun KClass<*>.toSqlType(name: String, size: Int?): String = when (this) {
     else -> throw IllegalArgumentException("Cannot determine external value of type $this")
 }
 
+fun KType.toColumnDef(name: String): ColumnDefinition {
+    val sqlType = this.toSqlType(name)
+    val nullable: Boolean = isMarkedNullable
+    val primary: Boolean = findAnnotation<Primary>() != null
+    val generated: String? = findAnnotation<Generated>()?.type
+    val always: Boolean = findAnnotation<Generated>()?.always ?: false
+    return BasicColumnDefinition(sqlType, nullable, primary, generated, always)
+}
+
 @Suppress("UNCHECKED_CAST")
 fun KType.toSqlType(name: String): String = when (val klass = this.classifier as KClass<*>) {
-    in String::class -> "VARCHAR(${sizeRequired(name, this.findAnnotation<Size>()?.value)})"
+    in String::class -> "VARCHAR(${sizeRequired(name, findAnnotation<Size>()?.value)})"
     in Byte::class -> "TINYINT"
     in Short::class -> "SMALLINT"
     in Int::class -> "INTEGER"
@@ -78,7 +91,7 @@ fun KType.toSqlType(name: String): String = when (val klass = this.classifier as
     in Float::class -> "FLOAT"
     in Double::class -> "DOUBLE"
     in BigDecimal::class -> "DECIMAL" // or "NUMERIC"
-    in ByteArray::class -> "VARBINARY(${sizeRequired(name, this.findAnnotation<Size>()?.value)})"
+    in ByteArray::class -> "VARBINARY(${sizeRequired(name, findAnnotation<Size>()?.value)})"
     in LocalDate::class -> "DATE"
     in LocalDateTime::class -> "TIMESTAMP"
     in LocalTime::class -> "TIME"
@@ -132,3 +145,5 @@ fun KClass<*>.toSqlType(annotations: List<Annotation>): String = when (this) {
         ?: throw IllegalStateException("SqlTransformable without companion object or companion property ‹sqlType›!")
     else -> throw IllegalArgumentException("Type \"$this\" cannot be translated to SQL!")
 }
+
+fun <T> generate(expr: T) = expr
