@@ -7,6 +7,7 @@ package com.coradec.coradeck.db.util
 import com.coradec.coradeck.core.model.SqlTransformable
 import com.coradec.coradeck.core.util.classname
 import com.coradec.coradeck.core.util.contains
+import com.coradec.coradeck.type.module.CoraType
 import com.coradec.module.db.annot.Size
 import java.math.BigDecimal
 import java.sql.ResultSet
@@ -33,11 +34,15 @@ fun <T : Any> KClass<T>.toSqlTableName(): String = classname.toSqlObjectName()
 val <T : Any> KClass<T>.fields: Map<String, KProperty1<T, *>> get() = memberProperties.associateBy { it.name }
 fun <T : Any> ResultSet.streamOf(klass: KClass<T>): Stream<T> = StreamSupport.stream(ResultSetSpliterator(this, klass), false)
 fun <T : Any> ResultSet.asSequence(model: KClass<T>): Sequence<T> = Sequence { ResultSetIterator(this, model) }
-fun Any?.toSqlFieldValue(): Any? = when (this) {
+fun Any?.toSqlFieldValue(type: KType): Any? = when (this) {
     is java.sql.Date -> toLocalDate()
     is java.sql.Time -> toLocalTime()
     is java.sql.Timestamp -> toLocalDateTime()
-    else -> this
+    is OffsetDateTime -> ZonedDateTime.from(this)
+    else -> when (type) {
+        in SqlTransformable::class -> CoraType.castTo(this, type)
+        else -> this
+    }
 }
 
 @Suppress("UNCHECKED_CAST")

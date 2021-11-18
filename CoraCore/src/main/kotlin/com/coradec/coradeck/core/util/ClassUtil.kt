@@ -8,6 +8,7 @@ import com.coradec.coradeck.core.annot.NonRepresentable
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.impl.ClassOrigin
 import kotlin.reflect.KClass
+import kotlin.reflect.KType
 import kotlin.reflect.KVisibility.PUBLIC
 import kotlin.reflect.full.IllegalCallableAccessException
 import kotlin.reflect.full.findAnnotation
@@ -32,6 +33,7 @@ val Any.properties: Map<String, Any?> get() =
         .associate { prop -> Pair(prop.name, try { prop.call(this@properties) }
         catch (e: IllegalCallableAccessException) { println("Property $classname.${prop.name} is not accessible!"); null}) }
 operator fun KClass<*>.contains(other: KClass<*>) = isSuperclassOf(other)
+operator fun KClass<*>.contains(type: KType) = isSuperclassOf(type.classifier as KClass<*>)
 operator fun KClass<*>.contains(instance: Any) = isInstance(instance)
 operator fun Set<Class<*>>.contains(instance: Any) = any { it.isInstance(instance) }
 

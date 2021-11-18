@@ -90,14 +90,4 @@ class HsqlDatabase(private val uri: URI, private val username: String, private v
             }
         }
     }
-
-// obsolete as of 2021-11-15
-//    override fun createTable(tableName: String, columnDefinitions: Sequence<Pair<String, KType>>) {
-//        val viewspec = columnDefinitions.joinToString(",", "(", ")") { (name, type) ->
-//            val klass = type.classifier as KClass<*>
-//            "${name.toSqlObjectName()} ${klass.toSqlType(name, type.findAnnotation<Size>()?.value)}"
-//        }
-//        detail("Creating table ‹%s› with columns ‹%s›.", tableName, viewspec)
-//        statement.executeUpdate("create table if not exists $tableName $viewspec")
-//    }
 }

@@ -23,10 +23,10 @@ fun <Record : Any> ResultSet.encode(model: KClass<Record>): Record = when (model
     else -> {
         val sqlValues: Map<String, Any?> = model.fields
             .mapKeys { (name, _) -> name.toSqlObjectName() }
-            .map { Pair(it.value.name, getObjectOrNull(it.key).toSqlFieldValue()) }.toMap()
+            .map { Pair(it.value.name, getObjectOrNull(it.key).toSqlFieldValue(it.value.returnType)) }.toMap()
         val pcon = model.primaryConstructor ?: throw IllegalArgumentException("$model has no primary constructor!")
         val args = pcon.valueParameters.associateWith { it.name }.mapValues { sqlValues[it.value] }
-        log.trace("Calling ${pcon.name}(${args.entries
+        log.debug("Calling ${pcon.name}(${args.entries
             .joinToString { "${it.key.name}:${it.key.type} = ${it.value.formatted}:${it.value?.javaClass?.name}" }})")
         pcon.callBy(args)
     }
