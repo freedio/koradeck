@@ -115,7 +115,7 @@ open class BusHubImpl(
                 candidates[request] = node
                 request.succeed()
             }
-            debug("Candidates: %s, Members: %s.", candidates.entries, myMembers.entries)
+            trace("Candidates: %s, Members: %s.", candidates.entries, myMembers.entries)
         } catch (e: Exception) {
             request.fail(e)
         }
@@ -207,7 +207,7 @@ open class BusHubImpl(
                 BusNodeState.UNLOADED -> {
                     debug("Unloaded %s ‹%s›.", mytype, name)
                     state = BusNodeState.UNLOADED
-                    delegator?.onLoaded()
+                    delegator?.onUnloaded()
                 }
                 BusNodeState.FINALIZING -> {
                     debug("Finalizing %s ‹%s›.", mytype, name)
@@ -268,7 +268,7 @@ open class BusHubImpl(
     private class RemoveMemberVoucher(origin: Origin, val name: String) : BasicVoucher<BusNode>(origin)
     private class RenameMemberRequest(origin: Origin, val name: String, val newName: String) : BasicRequest(origin)
     private class ReplaceMemberVoucher(origin: Origin, val name: String, val substitute: BusNode) : BasicVoucher<BusNode>(origin)
-    private class UnlinkMemberRequest(origin: Origin, val name: String) : BasicRequest(origin)
+    internal class UnlinkMemberRequest(origin: Origin, val name: String) : BasicRequest(origin)
     private class NamesVoucher(origin: Origin) : BasicVoucher<Set<String>>(origin)
 
     private inner class InternalBusHubView : BusHubView {

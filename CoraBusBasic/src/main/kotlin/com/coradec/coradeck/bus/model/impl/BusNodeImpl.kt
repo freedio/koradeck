@@ -219,12 +219,11 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
             if (state in myStates) return
             stateRegistry.add(object : Observer {
                 override fun onNotification(event: Event): Boolean = when (event) {
-                    is NodeStateChangedEvent ->
-                        (event.current == state).also {
-                            if (it) {
-                                latch.countDown()
-                            }
+                    is NodeStateChangedEvent -> (event.current == state).also {
+                        if (it) {
+                            latch.countDown()
                         }
+                    }
                     else -> false
                 }
             })
@@ -242,14 +241,14 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
         override val trigger: AttachRequest,
         override val states: Queue<BusNodeState>,
         override val context: BusContext?
-    ): BasicInformation(origin), TransitionTrigger
+    ) : BasicInformation(origin), TransitionTrigger
 
     class Detachment(
         origin: Origin,
         override val trigger: DetachRequest,
         override val states: Queue<BusNodeState>,
         override val context: BusContext?
-    ): BasicInformation(origin), TransitionTrigger
+    ) : BasicInformation(origin), TransitionTrigger
 
     companion object {
         @JvmStatic
