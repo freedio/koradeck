@@ -13,7 +13,12 @@ interface Database: BusHub {
     val connection: Connection
     val statement: Statement
 
+    /** Retrieves the existing table with the specified record model. */
     fun <Record: Any> getTable(model: KClass<out Record>): RecordTable<Record>
+    /** Opens the table with the specified record model, creating it if necessary. */
     fun <Record: Any> openTable(model: KClass<out Record>): RecordTable<Record>
+    /** Closes the database. */
     fun close()
+    /** Marks the current transaction as failed. */
+    fun failed()
 }

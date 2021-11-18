@@ -15,10 +15,10 @@ import com.coradec.coradeck.db.model.Database
 import com.coradec.coradeck.db.model.RecordTable
 import com.coradec.coradeck.db.util.toSqlObjectName
 import com.coradec.coradeck.db.util.toSqlValueRepr
+import com.coradec.coradeck.text.model.LocalText
 import kotlin.reflect.KClass
 
-class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCollection<Record>(db, model),
-    RecordTable<Record> {
+class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCollection<Record>(db, model), RecordTable<Record> {
     override val selector = SqlSelection.ALL
     override val recordName: String = model.classname
 
@@ -50,21 +50,31 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
 
     private fun assertTable() {
         val stmt = "create table if not exists $tableName (${columnDefinitions.entries.joinToString { "${it.key} ${it.value}" }})"
-        debug("Executing command «$stmt»")
-        statement.executeUpdate(stmt)
-        connection.commit()
+        try {
+            debug("Executing command «$stmt»")
+            statement.executeUpdate(stmt)
+        } catch (e: Exception) {
+            error(e, TEXT_TABLE_CREATION_FAILED, tableName)
+            db.failed()
+            throw e
+        }
     }
 
     private fun discardTable() {
         val stmt = "drop table $tableName"
-        statement.executeUpdate(stmt)
-        connection.commit()
+        try {
+            statement.executeUpdate(stmt)
+        } catch (e: Exception) {
+            error(e, TEXT_TABLE_DROP_FAILED, tableName)
+            db.failed()
+            throw e
+        }
     }
 
     private fun insertRecord(voucher: InsertRecordVoucher) {
         val element = voucher.element
         try {
-            val record = element::class.members.filter { it.name in fieldNames }.associate { Pair(it.name, it.call(element)) }
+            val record = element::class.members.filter { it.name in insertFieldNames }.associate { Pair(it.name, it.call(element)) }
             val stmt = "insert into %s (%s) values (%s)".format(
                 tableName,
                 record.keys.joinToString { it.toSqlObjectName() },
@@ -74,7 +84,8 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
             voucher.value = statement.executeUpdate(stmt)
             voucher.succeed()
         } catch (e: Exception) {
-            error(e)
+            error(e, TEXT_INSERT_FAILED, tableName)
+            db.failed()
             voucher.fail(e)
         }
     }
@@ -97,7 +108,8 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
             voucher.value = elementCount
             voucher.succeed()
         } catch (e: Exception) {
-            error(e)
+            error(e, TEXT_INSERTS_FAILED, tableName)
+            db.failed()
             voucher.fail(e)
         }
     }
@@ -117,7 +129,8 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
             voucher.value = statement.executeUpdate(stmt)
             voucher.succeed()
         } catch (e: Exception) {
-            error(e)
+            error(e, TEXT_UPDATE_FAILED)
+            db.failed()
             voucher.fail(e)
         }
     }
@@ -130,7 +143,8 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
             voucher.value = statement.executeUpdate(stmt)
             voucher.succeed()
         } catch (e: Exception) {
-            error(e)
+            error(e, TEXT_DELETE_FAILED)
+            db.failed()
             voucher.fail(e)
         }
     }
@@ -142,4 +156,13 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
     class UpdateRecordVoucher(origin: Origin, val selector: Selection, val fields: Sequence<Pair<String, Any?>>):
         BasicVoucher<Int>(origin)
     class DeleteRecordsVoucher(origin: Origin, val selector: Selection): BasicVoucher<Int>(origin)
+
+    companion object {
+        val TEXT_TABLE_CREATION_FAILED = LocalText("TableCreationFailed1")
+        val TEXT_TABLE_DROP_FAILED = LocalText("TableDropFailed1")
+        val TEXT_INSERT_FAILED = LocalText("InsertFailed1")
+        val TEXT_INSERTS_FAILED = LocalText("InsertsFailed1")
+        val TEXT_UPDATE_FAILED = LocalText("UpdateFailed1")
+        val TEXT_DELETE_FAILED = LocalText("DeleteFailed1")
+    }
 }

@@ -1,0 +1,8 @@
+# Localized text base for default locale of class HsqlDbTable
+
+TableCreationFailed1: Failed to create table ‹%s›!
+TableDropFailed1: Failed to drop table ‹%s›!
+InsertFailed1: Failed to insert into table ‹%s›!
+InsertsFailed1: Failed to insert rows into table ‹%s›!
+UpdateFailed1: Failed to update table ‹%s›!
+DeleteFailed1: Failed to delete a row from table ‹%s›!

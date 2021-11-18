@@ -11,6 +11,7 @@ import com.coradec.coradeck.com.model.Voucher
 import com.coradec.coradeck.core.util.classname
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.relax
+import com.coradec.coradeck.ctrl.module.unsubscribe
 import com.coradec.coradeck.db.com.CreateTableVoucher
 import com.coradec.coradeck.db.com.GetTableVoucher
 import com.coradec.coradeck.db.com.OpenTableVoucher
@@ -25,10 +26,16 @@ import java.sql.Statement
 import kotlin.reflect.KClass
 
 @Suppress("UNCHECKED_CAST")
-class HsqlDatabase(private val uri: URI, private val username: String, private val password: Password): BasicBusHub(), Database {
+class HsqlDatabase(
+    private val uri: URI,
+    private val username: String,
+    private val password: Password,
+    val autocommit: Boolean = false
+): BasicBusHub(), Database {
     var myConnection: Connection? = null
     override val connection: Connection get() = myConnection ?: throw IllegalStateException("Database «%s» not attached!")
     override val statement: Statement get() = connection.createStatement()
+    private var failed: Boolean = false
 
     override fun onInitializing() {
         super.onInitializing()
@@ -41,16 +48,22 @@ class HsqlDatabase(private val uri: URI, private val username: String, private v
     override fun onInitialized() {
         super.onInitialized()
         debug("Database ‹%s› initialized.")
+        statement.executeUpdate("set autocommit $autocommit")
     }
 
     override fun onFinalizing() {
         super.onFinalizing()
-        unroute(GetTableVoucher::class)
+        if (failed) connection.rollback() else connection.commit()
+        unsubscribe()
         connection.close()
     }
 
     override fun close() {
         leave()
+    }
+
+    override fun failed() {
+        failed = true
     }
 
     override fun <Record : Any> getTable(model: KClass<out Record>): RecordTable<Record> =

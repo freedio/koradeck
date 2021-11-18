@@ -15,8 +15,10 @@ interface RecordCollection<R: Any>: BusNode, Iterable<R>, AutoCloseable {
     val recordName: String
     /** SQL name of the collection, also called "table name", even for views and other collections. */
     val tableName: String
-    /** A set of field names in the collection. */
+    /** A sequence of field names in the collection. */
     val fieldNames: Sequence<String>
+    /** A sequence of field names for insertion ([fieldNames] without generated fields). */
+    val insertFieldNames: Sequence<String>
     /** A set of SQL column names in the collection. */
     val columnNames: Sequence<String>
     /** A map of SQL column definitions in the collection by field name. */
