@@ -7,16 +7,17 @@ package com.coradec.coradeck.db.util
 import com.coradec.coradeck.core.model.SqlTransformable
 import com.coradec.coradeck.core.util.classname
 import com.coradec.coradeck.core.util.contains
+import com.coradec.coradeck.db.annot.Generated
+import com.coradec.coradeck.db.annot.Primary
+import com.coradec.coradeck.db.annot.Size
 import com.coradec.coradeck.db.model.ColumnDefinition
 import com.coradec.coradeck.db.model.impl.BasicColumnDefinition
 import com.coradec.coradeck.type.module.CoraType
-import com.coradec.module.db.annot.Generated
-import com.coradec.module.db.annot.Primary
-import com.coradec.module.db.annot.Size
 import java.math.BigDecimal
 import java.sql.ResultSet
 import java.time.*
 import java.time.format.DateTimeFormatter
+import java.util.*
 import java.util.stream.Stream
 import java.util.stream.StreamSupport
 import kotlin.reflect.KClass
@@ -44,6 +45,7 @@ fun Any?.toSqlFieldValue(type: KType): Any? = when (this) {
     is java.sql.Timestamp -> toLocalDateTime()
     is OffsetDateTime -> ZonedDateTime.from(this)
     else -> when (type) {
+        in Currency::class -> CoraType.castTo(this, type)
         in SqlTransformable::class -> CoraType.castTo(this, type)
         else -> this
     }
@@ -65,6 +67,7 @@ fun KClass<*>.toSqlType(name: String, size: Int?): String = when (this) {
     in LocalTime::class -> "TIME"
     in OffsetTime::class -> "TIME WITH TIME ZONE"
     in ZonedDateTime::class -> "TIMESTAMP WITH TIME ZONE"
+    in Currency::class -> "VARCHAR(7)"
     in SqlTransformable::class -> (companionObject?.memberProperties
         ?.singleOrNull { it.name == "sqlType" } as? KProperty1<Any, String>)
         ?.get(companionObjectInstance ?: throw IllegalStateException("SqlTransformable without companion object!"))
@@ -97,6 +100,7 @@ fun KType.toSqlType(name: String): String = when (val klass = this.classifier as
     in LocalTime::class -> "TIME"
     in OffsetTime::class -> "TIME WITH TIME ZONE"
     in ZonedDateTime::class -> "TIMESTAMP WITH TIME ZONE"
+    in Currency::class -> "VARCHAR(7)"
     in SqlTransformable::class -> (klass.companionObject?.memberProperties
         ?.singleOrNull { it.name == "sqlType" } as? KProperty1<Any, String>)
         ?.get(klass.companionObjectInstance ?: throw IllegalStateException("SqlTransformable without companion object!"))
@@ -120,6 +124,7 @@ fun Any?.toSqlValueRepr() = when (this) {
     is LocalDateTime -> "TIMESTAMP '${this.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))}'"
     is ZonedDateTime -> "TIMESTAMP '${this.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssXXX"))}'"
     is OffsetTime -> "TIMESTAMP '${this.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssXXX"))}'"
+    is Currency -> "'${this.currencyCode}'"
     is SqlTransformable -> toSqlValue()
     else -> toString()
 }
@@ -139,6 +144,7 @@ fun KClass<*>.toSqlType(annotations: List<Annotation>): String = when (this) {
     LocalDate::class -> "DATE"
     LocalTime::class -> "TIME"
     LocalDateTime::class -> "TIMESTAMP"
+    Currency::class -> "VARCHAR(7)"
     in SqlTransformable::class -> (companionObject?.memberProperties
         ?.singleOrNull { it.name == "sqlType" } as? KProperty1<Any, String>)
         ?.get(companionObjectInstance ?: throw IllegalStateException("SqlTransformable without companion object!"))
