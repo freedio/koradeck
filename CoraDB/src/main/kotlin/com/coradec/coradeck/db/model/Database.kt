@@ -17,6 +17,8 @@ interface Database: BusHub {
     fun <Record: Any> getTable(model: KClass<out Record>): RecordTable<Record>
     /** Opens the table with the specified record model, creating it if necessary. */
     fun <Record: Any> openTable(model: KClass<out Record>): RecordTable<Record>
+    /** Resets the database to the initial state after creation by deleting all structures. */
+    fun reset()
     /** Closes the database. */
     fun close()
     /** Marks the current transaction as failed. */

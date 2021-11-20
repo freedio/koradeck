@@ -5,6 +5,7 @@
 package com.coradec.coradeck.bus.model.impl
 
 import com.coradec.coradeck.bus.model.*
+import com.coradec.coradeck.bus.model.BusNodeState.*
 import com.coradec.coradeck.bus.trouble.MemberNotFoundException
 import com.coradec.coradeck.bus.view.BusHubView
 import com.coradec.coradeck.com.model.Request
@@ -32,12 +33,8 @@ open class BusHubImpl(
     private val candidates = mutableMapOf<AddMemberRequest, BusNode>()
     override val mytype = "hub"
     override val myType = "Hub"
-    override val upstates: List<BusNodeState> get() = super.upstates + sequenceOf(BusNodeState.LOADING, BusNodeState.LOADED)
-    override val downstates: List<BusNodeState>
-        get() = listOf(
-            BusNodeState.UNLOADING,
-            BusNodeState.UNLOADED
-        ) + super.downstates
+    override val upstates: List<BusNodeState> get() = super.upstates + listOf(LOADING, LOADED)
+    override val downstates: List<BusNodeState> get() = listOf(UNLOADING, UNLOADED) + super.downstates
 
     init {
         route(LookupMemberVoucher::class, ::lookupMember)
@@ -166,14 +163,14 @@ open class BusHubImpl(
             val context = transition.context
             val name = name ?: context?.name ?: throw IllegalStateException("Name must be present here!")
             when (transition.unto) {
-                BusNodeState.INITIALIZED -> {
+                INITIALIZED -> {
                     debug("Initialized %s ‹%s›.", mytype, name)
-                    state = BusNodeState.INITIALIZED
+                    state = INITIALIZED
                     delegator?.onInitialized()
                 }
-                BusNodeState.LOADING -> {
+                LOADING -> {
                     debug("Loading %s ‹%s›.", mytype, name)
-                    state = BusNodeState.LOADING
+                    state = LOADING
                     delegator?.onLoading()
                     accept(
                         createItemSet(this, candidates.map { (addMemReq, node) ->
@@ -190,28 +187,28 @@ open class BusHubImpl(
                     )
                     return // avoid succeeding prematurely
                 }
-                BusNodeState.LOADED -> {
+                LOADED -> {
                     debug("Loaded %s ‹%s›.", mytype, name)
-                    state = BusNodeState.LOADED
+                    state = LOADED
                     delegator?.onLoaded()
                     readify(name)
                 }
-                BusNodeState.UNLOADING -> {
+                UNLOADING -> {
                     busify(name)
                     debug("Unloading %s ‹%s›.", mytype, name)
-                    state = BusNodeState.UNLOADING
+                    state = UNLOADING
                     delegator?.onUnloading()
                     unloadMembers(transition)
                     return // avoid succeeding prematurely
                 }
-                BusNodeState.UNLOADED -> {
+                UNLOADED -> {
                     debug("Unloaded %s ‹%s›.", mytype, name)
-                    state = BusNodeState.UNLOADED
+                    state = UNLOADED
                     delegator?.onUnloaded()
                 }
-                BusNodeState.FINALIZING -> {
+                FINALIZING -> {
                     debug("Finalizing %s ‹%s›.", mytype, name)
-                    state = BusNodeState.FINALIZING
+                    state = FINALIZING
                     delegator?.onFinalizing()
                 }
                 else -> super.stateChanged(transition)
@@ -232,7 +229,7 @@ open class BusHubImpl(
                 myMembers.map { (_, node) -> node.detach() },
                 this
             ).propagateTo(transition)
-        ) andThen { debug("Transition: ${transition.state}") }
+        )
 //        memberCheck.acquire(memberCount)
     }
 

@@ -1,0 +1,3 @@
+# Localized text base for default locale of class HsqlDatabase
+
+DroppingTable1: Dropping table «%s».

@@ -15,282 +15,282 @@ interface BusNodeStateTransition : Request {
     val unto: BusNodeState
     val context: BusContext?
 
-    interface Template {
+    interface Templet {
         val from: BusNodeState
         val unto: BusNodeState
         fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition
     }
 
     companion object {
-        val transitions: Set<Template> get() = setOf(
-            ResettingTemplate,
-            AttachingTemplate,
-            AttachedTemplate,
-            InitializingTemplate,
-            InitializedTemplate,
-            LoadingTemplate,
-            LoadedTemplate,
-            StartingInitializedTemplate,
-            StartingLoadedTemplate,
-            StartedTemplate,
-            PausingTemplate,
-            PausedTemplate,
-            ResumingTemplate,
-            ResumedTemplate,
-            StoppingStartedTemplate,
-            StoppingBusyTemplate,
-            StoppedTemplate,
-            StoppingPausedTemplate,
-            UnloadingBusyTemplate,
-            UnloadingStoppedTemplate,
-            UnloadingLoadingTemplate,
-            UnloadingLoadedTemplate,
-            UnloadedTemplate,
-            FinalizingBusyTemplate,
-            FinalizingUnloadedTemplate,
-            FinalizingInitializingTemplate,
-            FinalizingInitializedTemplate,
-            FinalizedTemplate,
-            DetachingFinalizedTemplate,
-            DetachingInitializingTemplate,
-            DetachingAttachedTemplate,
-            DetachingAttachingTemplate,
-            DetachingFinalizingTemplate,
-            DetachedTemplate
+        private val transitions: Set<Templet> get() = setOf(
+            ResettingTemplet,
+            AttachingTemplet,
+            AttachedTemplet,
+            InitializingTemplet,
+            InitializedTemplet,
+            LoadingTemplet,
+            LoadedTemplet,
+            StartingInitializedTemplet,
+            StartingLoadedTemplet,
+            StartedTemplet,
+            PausingTemplet,
+            PausedTemplet,
+            ResumingTemplet,
+            ResumedTemplet,
+            StoppingStartedTemplet,
+            StoppingBusyTemplet,
+            StoppedTemplet,
+            StoppingPausedTemplet,
+            UnloadingBusyTemplet,
+            UnloadingStoppedTemplet,
+            UnloadingLoadingTemplet,
+            UnloadingLoadedTemplet,
+            UnloadedTemplet,
+            FinalizingBusyTemplet,
+            FinalizingUnloadedTemplet,
+            FinalizingInitializingTemplet,
+            FinalizingInitializedTemplet,
+            FinalizedTemplet,
+            DetachingFinalizedTemplet,
+            DetachingInitializingTemplet,
+            DetachingAttachedTemplet,
+            DetachingAttachingTemplet,
+            DetachingFinalizingTemplet,
+            DetachedTemplet
         )
 
-        object ResettingTemplate : Template {
+        object ResettingTemplet : Templet {
             override val from: BusNodeState = DETACHED
             override val unto: BusNodeState = UNATTACHED
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object AttachingTemplate : Template {
+        object AttachingTemplet : Templet {
             override val from: BusNodeState = UNATTACHED
             override val unto: BusNodeState = ATTACHING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object AttachedTemplate : Template {
+        object AttachedTemplet : Templet {
             override val from: BusNodeState = ATTACHING
             override val unto: BusNodeState = ATTACHED
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object InitializingTemplate : Template {
+        object InitializingTemplet : Templet {
             override val from: BusNodeState = ATTACHED
             override val unto: BusNodeState = INITIALIZING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object InitializedTemplate : Template {
+        object InitializedTemplet : Templet {
             override val from: BusNodeState = INITIALIZING
             override val unto: BusNodeState = INITIALIZED
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object LoadingTemplate : Template {
+        object LoadingTemplet : Templet {
             override val from: BusNodeState = INITIALIZED
             override val unto: BusNodeState = LOADING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object LoadedTemplate : Template {
+        object LoadedTemplet : Templet {
             override val from: BusNodeState = LOADING
             override val unto: BusNodeState = LOADED
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object StartingInitializedTemplate : Template {
+        object StartingInitializedTemplet : Templet {
             override val from: BusNodeState = INITIALIZED
             override val unto: BusNodeState = STARTING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object StartingLoadedTemplate : Template {
+        object StartingLoadedTemplet : Templet {
             override val from: BusNodeState = LOADED
             override val unto: BusNodeState = STARTING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object StartedTemplate : Template {
+        object StartedTemplet : Templet {
             override val from: BusNodeState = STARTING
             override val unto: BusNodeState = STARTED
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object PausingTemplate : Template {
+        object PausingTemplet : Templet {
             override val from: BusNodeState = STARTED
             override val unto: BusNodeState = PAUSING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object PausedTemplate : Template {
+        object PausedTemplet : Templet {
             override val from: BusNodeState = PAUSING
             override val unto: BusNodeState = PAUSED
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object ResumingTemplate : Template {
+        object ResumingTemplet : Templet {
             override val from: BusNodeState = PAUSED
             override val unto: BusNodeState = RESUMING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object ResumedTemplate : Template {
+        object ResumedTemplet : Templet {
             override val from: BusNodeState = RESUMING
             override val unto: BusNodeState = STARTED
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object StoppingPausedTemplate : Template {
+        object StoppingPausedTemplet : Templet {
             override val from: BusNodeState = PAUSED
             override val unto: BusNodeState = STOPPING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object StoppingStartedTemplate : Template {
+        object StoppingStartedTemplet : Templet {
             override val from: BusNodeState = STARTED
             override val unto: BusNodeState = STOPPING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object StoppingBusyTemplate : Template {
+        object StoppingBusyTemplet : Templet {
             override val from: BusNodeState = BUSY
             override val unto: BusNodeState = STOPPING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object StoppedTemplate : Template {
+        object StoppedTemplet : Templet {
             override val from: BusNodeState = STOPPING
             override val unto: BusNodeState = STOPPED
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object UnloadingStoppedTemplate : Template {
+        object UnloadingStoppedTemplet : Templet {
             override val from: BusNodeState = STOPPED
             override val unto: BusNodeState = UNLOADING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object UnloadingLoadingTemplate : Template {
+        object UnloadingLoadingTemplet : Templet {
             override val from: BusNodeState = LOADING
             override val unto: BusNodeState = UNLOADING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object UnloadingLoadedTemplate : Template {
+        object UnloadingLoadedTemplet : Templet {
             override val from: BusNodeState = LOADED
             override val unto: BusNodeState = UNLOADING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object UnloadingBusyTemplate : Template {
+        object UnloadingBusyTemplet : Templet {
             override val from: BusNodeState = BUSY
             override val unto: BusNodeState = UNLOADING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object UnloadedTemplate : Template {
+        object UnloadedTemplet : Templet {
             override val from: BusNodeState = UNLOADING
             override val unto: BusNodeState = UNLOADED
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object FinalizingUnloadedTemplate : Template {
+        object FinalizingUnloadedTemplet : Templet {
             override val from: BusNodeState = UNLOADED
             override val unto: BusNodeState = FINALIZING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object FinalizingBusyTemplate : Template {
+        object FinalizingBusyTemplet : Templet {
             override val from: BusNodeState = BUSY
             override val unto: BusNodeState = FINALIZING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object FinalizingInitializedTemplate : Template {
+        object FinalizingInitializedTemplet : Templet {
             override val from: BusNodeState = INITIALIZED
             override val unto: BusNodeState = FINALIZING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object FinalizingInitializingTemplate : Template {
+        object FinalizingInitializingTemplet : Templet {
             override val from: BusNodeState = INITIALIZING
             override val unto: BusNodeState = FINALIZING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object FinalizedTemplate : Template {
+        object FinalizedTemplet : Templet {
             override val from: BusNodeState = FINALIZING
             override val unto: BusNodeState = FINALIZED
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object DetachingFinalizedTemplate : Template {
+        object DetachingFinalizedTemplet : Templet {
             override val from: BusNodeState = FINALIZED
             override val unto: BusNodeState = DETACHING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object DetachingAttachingTemplate : Template {
+        object DetachingAttachingTemplet : Templet {
             override val from: BusNodeState = ATTACHING
             override val unto: BusNodeState = DETACHING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object DetachingAttachedTemplate : Template {
+        object DetachingAttachedTemplet : Templet {
             override val from: BusNodeState = ATTACHED
             override val unto: BusNodeState = DETACHING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object DetachingInitializingTemplate : Template {
+        object DetachingInitializingTemplet : Templet {
             override val from: BusNodeState = INITIALIZING
             override val unto: BusNodeState = DETACHING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object DetachingFinalizingTemplate : Template {
+        object DetachingFinalizingTemplet : Templet {
             override val from: BusNodeState = FINALIZING
             override val unto: BusNodeState = DETACHING
 
             override fun transition(origin: Origin, context: BusContext?): BusNodeStateTransition = BasicNodeStateTransition(origin, from, unto, context)
         }
 
-        object DetachedTemplate : Template {
+        object DetachedTemplet : Templet {
             override val from: BusNodeState = DETACHING
             override val unto: BusNodeState = DETACHED
 

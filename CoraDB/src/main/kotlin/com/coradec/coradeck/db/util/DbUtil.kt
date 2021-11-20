@@ -8,6 +8,7 @@ import com.coradec.coradeck.core.model.SqlTransformable
 import com.coradec.coradeck.core.util.classname
 import com.coradec.coradeck.core.util.contains
 import com.coradec.coradeck.db.annot.Generated
+import com.coradec.coradeck.db.annot.Indexed
 import com.coradec.coradeck.db.annot.Primary
 import com.coradec.coradeck.db.annot.Size
 import com.coradec.coradeck.db.model.ColumnDefinition
@@ -79,9 +80,10 @@ fun KType.toColumnDef(name: String): ColumnDefinition {
     val sqlType = this.toSqlType(name)
     val nullable: Boolean = isMarkedNullable
     val primary: Boolean = findAnnotation<Primary>() != null
+    val indexed: Boolean = findAnnotation<Indexed>() != null
     val generated: String? = findAnnotation<Generated>()?.type
     val always: Boolean = findAnnotation<Generated>()?.always ?: false
-    return BasicColumnDefinition(sqlType, nullable, primary, generated, always)
+    return BasicColumnDefinition(sqlType, nullable, primary, indexed, generated, always)
 }
 
 @Suppress("UNCHECKED_CAST")

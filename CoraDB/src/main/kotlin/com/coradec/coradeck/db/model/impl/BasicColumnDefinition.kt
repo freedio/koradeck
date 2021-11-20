@@ -11,6 +11,7 @@ data class BasicColumnDefinition(
     override val sqlType: String,
     override val nullable: Boolean = false,
     override val primary: Boolean = false,
+    override val indexed: Boolean = false,
     override val generated: String? = null,
     override val always: Boolean = false
 ) : ColumnDefinition {

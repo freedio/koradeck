@@ -8,6 +8,7 @@ interface ColumnDefinition {
     val sqlType: String
     val nullable: Boolean
     val primary: Boolean
+    val indexed: Boolean
     val generated: String?
     val always: Boolean
 }

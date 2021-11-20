@@ -8,7 +8,7 @@ import com.coradec.coradeck.bus.model.BusNode
 import com.coradec.coradeck.db.ctrl.Selection
 import kotlin.reflect.KType
 
-interface RecordCollection<R: Any>: BusNode, Iterable<R>, AutoCloseable {
+interface RecordCollection<Record: Any>: BusNode, Iterable<Record>, AutoCloseable {
     /** Map of field types by name. */
     val fields: Map<String, KType>
     /** Name of the record in the collection (corresponds to the record's class name). */
@@ -24,10 +24,10 @@ interface RecordCollection<R: Any>: BusNode, Iterable<R>, AutoCloseable {
     /** A map of SQL column definitions in the collection by field name. */
     val columnDefinitions: Map<String, ColumnDefinition>
     /** A sequence of all the records in the collection.  The sequence can be traversed only once. */
-    val all: Sequence<R>
+    val all: Sequence<Record>
     /** Number of entries in the collection. */
     val size: Int
 
     /** A sequence of the records in this collection limited to the specified selector. */
-    fun select(selector: Selection): Sequence<R>
+    fun select(selector: Selection): Sequence<Record>
 }

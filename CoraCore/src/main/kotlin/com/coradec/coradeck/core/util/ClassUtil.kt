@@ -18,20 +18,31 @@ import kotlin.reflect.jvm.jvmName
 
 val KClass<*>.classname: String
     get() = (qualifiedName ?: jvmName)
-            .removePrefix("kotlin.")
-            .removePrefix("java.lang.")
-            .removePrefix("collections.")
+        .removePrefix("kotlin.")
+        .removePrefix("java.lang.")
+        .removePrefix("java.util.")
+        .removePrefix("collections.")
+        .removePrefix("reflect.")
 val KClass<*>.shortClassname: String get() = (simpleName ?: throw IllegalStateException("Class $this has no simple name!"))
 val Any.classname: String get() = this::class.classname
 val Any.shortClassname: String get() = this::class.shortClassname
 val Any.identityHashCode: Int get() = System.identityHashCode(this)
 val KClass<*>.asOrigin: Origin get() = ClassOrigin(this)
 val Any.asOrigin: Origin get() = this::class.asOrigin
-val Any.properties: Map<String, Any?> get() =
-    this::class.memberProperties
-        .filter { prop -> prop.visibility == PUBLIC && prop.findAnnotation<NonRepresentable>() == null }
-        .associate { prop -> Pair(prop.name, try { prop.call(this@properties) }
-        catch (e: IllegalCallableAccessException) { println("Property $classname.${prop.name} is not accessible!"); null}) }
+val Any.properties: Map<String, Any?>
+    get() =
+        this::class.memberProperties
+            .filter { prop -> prop.visibility == PUBLIC && prop.findAnnotation<NonRepresentable>() == null }
+            .associate { prop ->
+                Pair(
+                    prop.name, try {
+                        prop.call(this@properties)
+                    } catch (e: IllegalCallableAccessException) {
+                        println("Property $classname.${prop.name} is not accessible!"); null
+                    }
+                )
+            }
+
 operator fun KClass<*>.contains(other: KClass<*>) = isSuperclassOf(other)
 operator fun KClass<*>.contains(type: KType) = isSuperclassOf(type.classifier as KClass<*>)
 operator fun KClass<*>.contains(instance: Any) = isInstance(instance)

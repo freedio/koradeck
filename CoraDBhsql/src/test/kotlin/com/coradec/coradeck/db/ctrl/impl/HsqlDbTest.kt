@@ -16,6 +16,9 @@ import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.core.util.toPath
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
+import com.coradec.coradeck.db.annot.Generated
+import com.coradec.coradeck.db.annot.Primary
+import com.coradec.coradeck.db.annot.Size
 import com.coradec.coradeck.db.com.GetTableVoucher
 import com.coradec.coradeck.db.com.OpenTableVoucher
 import com.coradec.coradeck.db.ctrl.impl.SqlSelection.Companion.where
@@ -29,9 +32,6 @@ import com.coradec.coradeck.module.model.CoraModules
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.model.Password
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
-import com.coradec.module.db.annot.Generated
-import com.coradec.module.db.annot.Primary
-import com.coradec.module.db.annot.Size
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -39,6 +39,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import java.net.URI
 import java.time.LocalDate
+import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
 
@@ -81,8 +82,10 @@ internal class HsqlDbTest {
                 log.debug("@5.2")
             }
             log.debug("@6")
-            log.debug("Test suite initialized.")
+            database.accept(OpenTableVoucher(here, TestClassWithCurrency::class)).standby()
             log.debug("@7")
+            log.debug("Test suite initialized.")
+            log.debug("@8")
             relax()
         }
 
@@ -318,6 +321,18 @@ internal class HsqlDbTest {
         }
     }
 
+    @Test fun testCurrency() {
+        // given:
+        val francs = Currency.getInstance("CHF")
+        val table = database.getTable(TestClassWithCurrency::class)
+        table += TestClassWithCurrency(3.1415926, francs)
+        // when:
+        val record = table.all.single()
+        // then:
+        assertThat(record.amount).isEqualTo(3.1415926)
+        assertThat(record.currency).isEqualTo(francs)
+    }
+
     data class TestClass(
         val vorname: @Size(20) String,
         val familienName: @Size(40) String,
@@ -340,6 +355,11 @@ internal class HsqlDbTest {
         val familienName: @Size(40) String,
         val geburtsdatum: LocalDate,
         val geschlecht: Byte?
+    )
+
+    data class TestClassWithCurrency(
+        val amount: Double,
+        val currency: Currency
     )
 
 }

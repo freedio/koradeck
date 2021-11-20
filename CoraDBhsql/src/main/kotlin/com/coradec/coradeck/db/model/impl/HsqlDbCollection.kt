@@ -5,12 +5,12 @@
 package com.coradec.coradeck.db.model.impl
 
 import com.coradec.coradeck.bus.model.impl.BasicBusNode
+import com.coradec.coradeck.db.annot.Generated
 import com.coradec.coradeck.db.ctrl.Selection
 import com.coradec.coradeck.db.model.ColumnDefinition
 import com.coradec.coradeck.db.model.Database
 import com.coradec.coradeck.db.model.RecordCollection
 import com.coradec.coradeck.db.util.*
-import com.coradec.module.db.annot.Generated
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation

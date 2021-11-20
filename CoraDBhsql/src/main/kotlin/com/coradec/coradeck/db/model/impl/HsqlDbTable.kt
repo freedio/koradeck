@@ -49,14 +49,25 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
     }
 
     private fun assertTable() {
-        val stmt = "create table if not exists $tableName (${columnDefinitions.entries.joinToString { "${it.key} ${it.value}" }})"
+        val create = "create table if not exists $tableName (${columnDefinitions.entries.joinToString { "${it.key} ${it.value}" }})"
         try {
-            debug("Executing command «$stmt»")
-            statement.executeUpdate(stmt)
+            debug("Executing SQL statement «%s».", create)
+            statement.executeUpdate(create)
         } catch (e: Exception) {
             error(e, TEXT_TABLE_CREATION_FAILED, tableName)
             db.failed()
             throw e
+        }
+        columnDefinitions.forEach { (colName, colDef) ->
+            if (colDef.indexed) {
+                val index = "create index if not exists ${colName}_NDX on $tableName ($colName)"
+                try {
+                    debug("Executing SQL statement «%s».", index)
+                    statement.executeUpdate(index)
+                } catch (e: Exception) {
+                    warn(e, TEXT_INDEXING_FAILED, tableName, colName)
+                }
+            }
         }
     }
 
@@ -159,6 +170,7 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
 
     companion object {
         val TEXT_TABLE_CREATION_FAILED = LocalText("TableCreationFailed1")
+        val TEXT_INDEXING_FAILED = LocalText("IndexingFailed2")
         val TEXT_TABLE_DROP_FAILED = LocalText("TableDropFailed1")
         val TEXT_INSERT_FAILED = LocalText("InsertFailed1")
         val TEXT_INSERTS_FAILED = LocalText("InsertsFailed1")

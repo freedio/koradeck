@@ -6,3 +6,4 @@ InsertFailed1: Failed to insert into table ‹%s›!
 InsertsFailed1: Failed to insert rows into table ‹%s›!
 UpdateFailed1: Failed to update table ‹%s›!
 DeleteFailed1: Failed to delete a row from table ‹%s›!
+IndexingFailed2: Failed to create index on table ‹%› for column ‹%s›!

@@ -17,7 +17,9 @@ import com.coradec.coradeck.db.com.GetTableVoucher
 import com.coradec.coradeck.db.com.OpenTableVoucher
 import com.coradec.coradeck.db.model.Database
 import com.coradec.coradeck.db.model.RecordTable
+import com.coradec.coradeck.db.util.seqOf
 import com.coradec.coradeck.db.util.toSqlTableName
+import com.coradec.coradeck.text.model.LocalText
 import com.coradec.coradeck.type.model.Password
 import java.net.URI
 import java.sql.Connection
@@ -72,6 +74,18 @@ class HsqlDatabase(
     override fun <Record : Any> openTable(model: KClass<out Record>): RecordTable<Record> =
         accept(OpenTableVoucher(here, model)).content.value
 
+    override fun reset() {
+        val tableTypes = listOf("TABLE", "VIEW")
+        connection.metaData.getTables(null, null, null, null)
+            .seqOf(TableMetadata::class)
+            .filter { it.tableType in  tableTypes}
+            .map { it.tableName }
+            .forEach { tableName ->
+            info(TEXT_DROPPING_TABLE, tableName)
+                statement.executeUpdate("drop table $tableName")
+            }
+    }
+
     private fun getTable(voucher: GetTableVoucher<*>) {
         lookup(voucher.model.toSqlTableName()).forwardTo(voucher as Voucher<BusNode>)
     }
@@ -102,5 +116,9 @@ class HsqlDatabase(
                 else -> relax()
             }
         }
+    }
+
+    companion object {
+        private val TEXT_DROPPING_TABLE = LocalText("DroppingTable1")
     }
 }

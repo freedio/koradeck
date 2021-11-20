@@ -2,7 +2,7 @@
  * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
  */
 
-package com.coradec.module.db.annot
+package com.coradec.coradeck.db.annot
 
 import kotlin.annotation.AnnotationTarget.*
 
