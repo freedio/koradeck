@@ -19,7 +19,10 @@ interface ClassPathResource {
     val content: String
     val file: File
 
+    /** If the resource exits, execute the specified function on it. */
     fun ifExists(function: ClassPathResource.() -> Unit): Boolean
+    /** Delete the resource, if it exists. */
+    fun delete()
 
     companion object {
         /**

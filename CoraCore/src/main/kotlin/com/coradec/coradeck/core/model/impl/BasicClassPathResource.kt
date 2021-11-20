@@ -6,6 +6,7 @@ package com.coradec.coradeck.core.model.impl
 
 import com.coradec.coradeck.core.model.ClassPathResource
 import com.coradec.coradeck.core.trouble.ClassPathResourceNotFoundException
+import com.coradec.coradeck.core.util.swallow
 import java.io.File
 import java.io.InputStream
 import java.net.URL
@@ -24,4 +25,6 @@ class BasicClassPathResource(override val path: String, val encoding: Charset = 
 
     override fun ifExists(function: ClassPathResource.() -> Unit): Boolean = (resource != null)
         .also { if (it) function.invoke(this) }
+
+    override fun delete() = ifExists { file.delete() }.swallow()
 }
