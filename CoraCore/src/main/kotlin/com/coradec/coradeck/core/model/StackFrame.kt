@@ -15,6 +15,6 @@ interface StackFrame: Origin {
     val lineNumber: Int
 
     companion object {
-        operator fun invoke(frame: StackTraceElement) = BasicStackFrame(frame)
+        operator fun invoke(frame: StackTraceElement, effective: Any? = null) = BasicStackFrame(frame, effective)
     }
 }

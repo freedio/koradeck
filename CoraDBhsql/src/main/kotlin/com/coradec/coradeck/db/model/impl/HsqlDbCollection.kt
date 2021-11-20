@@ -21,7 +21,7 @@ abstract class HsqlDbCollection<Record : Any>(
     private val model: KClass<out Record>
 ) : BasicBusNode(), RecordCollection<Record> {
     protected abstract val selector: Selection
-    protected val connection = db.connection
+    private val connection = db.connection
     protected val statement = db.statement
     override val fieldNames: Sequence<String> get() = model.memberProperties.map { it.name }.asSequence()
     override val insertFieldNames: Sequence<String> get() =

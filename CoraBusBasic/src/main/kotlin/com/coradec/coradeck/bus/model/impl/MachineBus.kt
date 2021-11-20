@@ -12,6 +12,6 @@ object MachineBus : BasicBusHub(CoraDir.defaultNamespace) {
     private val MACHINE_BUS_NAME = InetAddress.getLocalHost().hostName
 
     init {
-        CoraBus.systemBus.add(MACHINE_BUS_NAME, this)
+        CoraBus.systemBus.add(MACHINE_BUS_NAME, memberView)
     }
 }

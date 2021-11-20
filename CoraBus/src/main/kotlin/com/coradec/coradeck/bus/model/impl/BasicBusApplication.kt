@@ -13,6 +13,6 @@ abstract class BasicBusApplication(name: String, args: List<String>): BasicBusMa
 
     init {
         @Suppress("LeakingThis")
-        CoraBus.applicationBus.add(appName, this)
+        CoraBus.applicationBus.add(appName, memberView)
     }
 }

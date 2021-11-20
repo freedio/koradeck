@@ -4,11 +4,10 @@
 
 package com.coradec.coradeck.bus.model.impl
 
-import com.coradec.coradeck.bus.model.BusHub
-import com.coradec.coradeck.bus.model.BusNode
 import com.coradec.coradeck.bus.model.BusNodeState
 import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.bus.view.BusHubView
+import com.coradec.coradeck.bus.view.MemberView
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.util.relax
@@ -57,38 +56,39 @@ class BusNodeImplTest {
         private val states = mutableListOf<String>()
 
         override fun pathOf(name: String): Path = "=$name"
-        override fun <D : BusNode> get(type: Class<D>): D? = null
-        override fun <D : BusNode> get(type: KClass<D>): D? = null
-        override fun onLeaving(member: BusNode) {
+        override fun get(type: Class<*>): MemberView? = null
+        override fun get(type: KClass<*>): MemberView? = null
+        override fun onLeaving(member: MemberView) {
             states += "leaving"
         }
 
-        override fun onLeft(member: BusNode) {
+        override fun onLeft(member: MemberView) {
             states += "left"
         }
 
-        override fun onJoining(node: BusNode) {
+        override fun onJoining(node: MemberView) {
             states += "joining"
         }
 
-        override fun onJoined(node: BusNode) {
+        override fun onJoined(node: MemberView) {
             states += "joined"
         }
 
-        override fun onReady(member: BusNode) {
+        override fun onReady(member: MemberView) {
             states += "ready"
         }
 
-        override fun onBusy(member: BusNode) {
+        override fun onBusy(member: MemberView) {
             states += "busy"
         }
 
-        override fun onCrashed(member: BusNode) {
+        override fun onCrashed(member: MemberView) {
             states += "crashed"
         }
 
-        override fun link(name: String, node: BusNode) = relax()
+        override fun link(name: String, node: MemberView) = relax()
         override fun unlink(name: String) = relax()
+        override fun rename(name: String, newName: String) = relax()
     }
 
     class TestBusContext(
@@ -96,9 +96,9 @@ class BusNodeImplTest {
         override var name: String
     ) : BusContext {
         val states = mutableListOf<String>()
-        override fun <D : BusNode> get(type: Class<D>): D? = null
-        override fun <D : BusNode> get(type: KClass<D>): D? = null
-        override val member: BusNode? = null
+        override fun get(type: Class<*>): MemberView? = null
+        override fun get(type: KClass<*>): MemberView? = null
+        override val member: MemberView? = null
         override val path: Path = "/test/heinzel"
 
         override fun leaving() {
@@ -109,11 +109,11 @@ class BusNodeImplTest {
             states += "$member left"
         }
 
-        override fun joining(node: BusNode) {
+        override fun joining(node: MemberView) {
             states += "$node joining"
         }
 
-        override fun joined(node: BusNode) {
+        override fun joined(node: MemberView) {
             states += "$node joined"
         }
 
@@ -129,10 +129,9 @@ class BusNodeImplTest {
             states += "$member crashed"
         }
 
-        override fun rename(name: String) {
+        override fun renameTo(name: String) {
             this.name = name
         }
     }
 
-    class TestBusHub : BusHubImpl(), BusHub
 }

@@ -8,22 +8,26 @@ import com.coradec.coradeck.bus.com.AttachRequest
 import com.coradec.coradeck.bus.com.DetachRequest
 import com.coradec.coradeck.bus.com.NodeStateChangedEvent
 import com.coradec.coradeck.bus.com.TransitionTrigger
-import com.coradec.coradeck.bus.model.*
+import com.coradec.coradeck.bus.model.BusNodeDelegate
+import com.coradec.coradeck.bus.model.BusNodeState
 import com.coradec.coradeck.bus.model.BusNodeState.*
+import com.coradec.coradeck.bus.model.BusNodeStateTransition
+import com.coradec.coradeck.bus.model.NodeDelegator
 import com.coradec.coradeck.bus.trouble.NodeNotAttachedException
 import com.coradec.coradeck.bus.trouble.StateUnknownException
 import com.coradec.coradeck.bus.trouble.StateUnreachableException
-import com.coradec.coradeck.bus.trouble.TransitionNotFoundException
 import com.coradec.coradeck.bus.view.BusContext
+import com.coradec.coradeck.bus.view.MemberView
 import com.coradec.coradeck.com.ctrl.Observer
 import com.coradec.coradeck.com.model.Event
 import com.coradec.coradeck.com.model.Request
-import com.coradec.coradeck.com.model.impl.BasicInformation
+import com.coradec.coradeck.com.model.impl.BasicCommand
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Timespan
 import com.coradec.coradeck.core.util.*
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
 import com.coradec.coradeck.dir.model.Path
+import com.coradec.coradeck.session.model.Session
 import com.coradec.coradeck.text.model.LocalText
 import java.util.*
 import java.util.concurrent.CopyOnWriteArraySet
@@ -46,6 +50,11 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
     override var context: BusContext? = null
     override val path: Path? get() = context?.path
     override val name: String? get() = context?.name
+    override val memberView: MemberView get() = memberView(Session.current)
+
+    override fun memberView(session: Session): MemberView =
+        session.view[this, MemberView::class] ?: InternalMemberView(session).also { session.view[this, MemberView::class] = it }
+
     override var state: BusNodeState
         get() = synchronized(myStates) { myStates.last() }
         set(state) {
@@ -77,23 +86,12 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
             DETACHED
         )
 
-    private fun transition(initial: BusNodeState, terminal: BusNodeState, context: BusContext?): BusNodeStateTransition =
-        BusNodeStateTransition(this, initial, terminal, context) ?: throw TransitionNotFoundException(initial, terminal)
-
     init {
+        approve(Trajectory::class)
         route(BusNodeStateTransition::class, ::stateChanged)
         route(TransitionTrigger::class, ::triggerTransition)
-        route(AttachRequest::class, ::succeed)
-        route(DetachRequest::class, ::succeed)
-    }
-
-    private fun succeed(request: Request) = request.succeed()
-
-    private fun triggerTransition(trigger: TransitionTrigger) {
-        val next = trigger.states.poll()
-        trace("%s.%d: next = %s", trigger.shortClassname, trigger.identityHashCode, next ?: "none.")
-        if (next != null) accept(transition(state, next, trigger.context)) andThen { accept(trigger) }
-        else trigger.trigger.succeed()
+        route(AttachRequest::class, ::attach)
+        route(DetachRequest::class, ::detach)
     }
 
     protected open fun stateChanged(transition: BusNodeStateTransition) {
@@ -106,7 +104,8 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
                     debug("Attaching %s ‹%s› to context ‹%s›.", mytype, name, contxt.path)
                     state = ATTACHING
                     delegator?.onAttaching(contxt)
-                    contxt.joining(this)
+                    contxt.joining(transition.member)
+                    transition.succeed()
                 }
                 ATTACHED -> {
                     val contxt = ctxt ?: throw IllegalArgumentException("Context not specified!")
@@ -114,46 +113,52 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
                     debug("Attached %s ‹%s› to context ‹%s›.", mytype, name, contxt.path)
                     context = contxt
                     delegator?.onAttached(contxt)
-                    contxt.joined(this)
+                    contxt.joined(transition.member)
+                    transition.succeed()
                 }
                 INITIALIZING -> {
                     debug("Initializing %s ‹%s›.", mytype, name)
                     state = INITIALIZING
                     delegator?.onInitializing()
+                    transition.succeed()
                 }
                 INITIALIZED -> {
                     state = INITIALIZED
                     delegator?.onInitialized()
                     debug("Initialized %s ‹%s›.", mytype, name)
                     readify(name)
+                    transition.succeed()
                 }
                 FINALIZING -> {
                     busify(name)
                     debug("Finalizing %s ‹%s›.", mytype, name)
                     state = FINALIZING
                     delegator?.onFinalizing()
+                    transition.succeed()
                 }
                 FINALIZED -> {
                     state = FINALIZED
                     delegator?.onFinalized()
                     debug("Finalized %s ‹%s›.", mytype, name)
+                    transition.succeed()
                 }
                 DETACHING -> {
                     debug("Detaching %s ‹%s›.", mytype, name)
                     state = DETACHING
                     delegator?.onDetaching(detachForced.getAndSet(true))
                     context?.leaving()
+                    transition.succeed()
                 }
                 DETACHED -> {
                     context?.left()
                     context = null
                     state = DETACHED
                     delegator?.onDetached()
+                    transition.succeed()
                     debug("Detached %s ‹%s›.", mytype, name)
                 }
                 else -> throw StateUnknownException(terminalState)
             }
-            transition.succeed()
         } catch (e: Exception) {
             error(e, TEXT_TRANSITION_FAILED, transition.from, transition.unto, ctxt ?: "none")
             transition.fail(e)
@@ -175,34 +180,42 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
         delegator?.onBusy()
     }
 
-    private fun attachRequest(context: BusContext): AttachRequest {
+    private fun attach(request: AttachRequest) {
         if (state == DETACHED) {
             myStates.clear()
             myStates += UNATTACHED
         }
-        return AttachRequest(this, context).apply {
-            accept(Attachment(here, this, LinkedList(upstates.dropWhile { it <= this@BusNodeImpl.state }), context))
-        }
+        val context = request.context
+        debug("Attach: upstates = ${upstates.filter { it !in states }}")
+        accept(Trajectory(this, upstates.filter { it !in states }, context)).content.propagateTo(request)
     }
 
-    private fun detachRequest(): DetachRequest {
+    private fun detach(request: DetachRequest) {
         if (state == READY) {
             myStates -= READY
             myStates += BUSY
         }
-        return DetachRequest(this).apply {
-            accept(Detachment(here, this, LinkedList(downstates.dropWhile { it <= this@BusNodeImpl.state }), null))
-        }
+        debug("Detach: downstates = ${downstates.filter { it !in states }}")
+        accept(Trajectory(this, downstates.filter { it !in states })).content.propagateTo(request)
     }
 
-    override fun attach(context: BusContext): AttachRequest = attachRequest(context)
-    override fun detach(): DetachRequest = detachRequest()
+    private fun triggerTransition(trigger: TransitionTrigger) {
+        val iterator = trigger.states
+        if (iterator.hasNext()) {
+            val next = iterator.next()
+            trace("%s.%d: next = %s", trigger.shortClassname, trigger.identityHashCode, next)
+            accept(BasicNodeStateTransition(this, state, next, trigger.memberView, trigger.context)).content andThen
+                    { accept(trigger) }
+        } else trigger.trigger.succeed()
+    }
+
+    override fun attach(context: BusContext): AttachRequest = accept(AttachRequest(caller, context)).content
+    override fun detach(): DetachRequest = accept(DetachRequest(caller)).content
     override fun renameTo(name: String) {
         debug("Renaming member «%s» to «%s».", this.name ?: "unknown", name)
-        context?.rename(name) ?: throw NodeNotAttachedException()
+        context?.renameTo(name) ?: throw NodeNotAttachedException()
     }
 
-    override fun leave() = accept(detach()).swallow()
     override fun context(timeout: Long, timeoutUnit: TimeUnit): BusContext {
         if (contextPresent.await(timeout, timeoutUnit)) return context!!
         else throw TimeoutException("Context not available within $timeout $timeoutUnit!")
@@ -231,24 +244,27 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
         if (delay.amount == 0L) latch.await() else if (!latch.await(delay.amount, delay.unit)) throw TimeoutException()
     }
 
-    fun <D : BusNode> get(type: Class<D>): D? = context?.get(type)
-    fun <D : BusNode> get(type: KClass<D>): D? = context?.get(type)
+    fun get(type: Class<*>): MemberView? = context?.get(type)
+    fun get(type: KClass<*>): MemberView? = context?.get(type)
 
     override fun toString(): String = if (attached) "%s «$name»".format(this.classname) else super.toString()
 
-    class Attachment(
+    internal inner class Trajectory(
         origin: Origin,
-        override val trigger: AttachRequest,
-        override val states: Queue<BusNodeState>,
-        override val context: BusContext?
-    ) : BasicInformation(origin), TransitionTrigger
+        private val stateList: List<BusNodeState>,
+        private val context: BusContext? = null
+    ): BasicCommand(origin) {
+        override fun execute() {
+            if (stateList.isEmpty()) succeed()
+            else accept(TransitionTrigger(this@BusNodeImpl, this, stateList.iterator(), context, memberView(session)))
+        }
+    }
 
-    class Detachment(
-        origin: Origin,
-        override val trigger: DetachRequest,
-        override val states: Queue<BusNodeState>,
-        override val context: BusContext?
-    ) : BasicInformation(origin), TransitionTrigger
+    private inner class InternalMemberView(session: Session) : AbstractMemberView(session) {
+        override fun attach(context: BusContext): Request = this@BusNodeImpl.attach(context)
+        override fun standby() = this@BusNodeImpl.standby()
+        override fun detach(): Request = this@BusNodeImpl.detach()
+    }
 
     companion object {
         @JvmStatic
