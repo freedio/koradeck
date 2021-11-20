@@ -14,6 +14,7 @@ interface Session {
     val user: String
     val authenticated: Boolean
     val createdOn: Thread
+    val view: Views
 
     companion object {
         val secureSessions = System.getProperty("cora.sessions")?.let {

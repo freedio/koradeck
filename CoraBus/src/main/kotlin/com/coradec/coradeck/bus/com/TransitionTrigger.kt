@@ -6,12 +6,15 @@ package com.coradec.coradeck.bus.com
 
 import com.coradec.coradeck.bus.model.BusNodeState
 import com.coradec.coradeck.bus.view.BusContext
-import com.coradec.coradeck.com.model.Information
+import com.coradec.coradeck.bus.view.MemberView
 import com.coradec.coradeck.com.model.Request
-import java.util.*
+import com.coradec.coradeck.com.model.impl.BasicInformation
+import com.coradec.coradeck.core.model.Origin
 
-interface TransitionTrigger: Information {
-    val context: BusContext?
-    val states: Queue<BusNodeState>
-    val trigger: Request
-}
+class TransitionTrigger(
+    origin: Origin,
+    val trigger: Request,
+    val states: Iterator<BusNodeState>,
+    val context: BusContext?,
+    val memberView: MemberView
+): BasicInformation(origin)

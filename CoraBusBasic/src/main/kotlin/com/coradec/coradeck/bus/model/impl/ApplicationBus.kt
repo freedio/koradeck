@@ -6,11 +6,12 @@ package com.coradec.coradeck.bus.model.impl
 
 import com.coradec.coradeck.bus.module.CoraBus
 import com.coradec.coradeck.dir.module.CoraDir
+import com.coradec.coradeck.session.model.Session
 
 object ApplicationBus : BasicBusHub(CoraDir.defaultNamespace) {
     private const val APPLICATION_BUS_NAME = "apps"
 
     init {
-        CoraBus.machineBus.add(APPLICATION_BUS_NAME, this)
+        CoraBus.machineBus.add(APPLICATION_BUS_NAME, memberView(Session.current))
     }
 }

@@ -5,10 +5,10 @@
 package com.coradec.coradeck.bus.model.impl
 
 import com.coradec.coradeck.bus.model.BusHub
-import com.coradec.coradeck.bus.model.BusNode
 import com.coradec.coradeck.bus.model.BusNodeState
 import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.bus.view.BusHubView
+import com.coradec.coradeck.bus.view.MemberView
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.util.relax
@@ -40,8 +40,8 @@ class BusMachineImplTest {
         val node1 = BusNodeImpl()
         val node2 = BusEngineImpl()
         // when:
-        testee.add("node", node1)
-        testee.add("engine", node2)
+        testee.add("node", node1.memberView)
+        testee.add("engine", node2.memberView)
         testee.attach(TestBusContext(TestBusHubView(), "machine")).standby()
         node1.standby()
         node2.standby()
@@ -56,8 +56,8 @@ class BusMachineImplTest {
         Assertions.assertThat(node1.state).isEqualTo(BusNodeState.DETACHED)
         Assertions.assertThat(node2.state).isEqualTo(BusNodeState.DETACHED)
         // when:
-        testee.add("nodegain1", node1)
-        testee.add("enginegain2", node2)
+        testee.add("nodegain1", node1.memberView)
+        testee.add("enginegain2", node2.memberView)
         testee.attach(TestBusContext(TestBusHubView(), "remachine")).standby()
         Thread.sleep(100)
         // then:
@@ -73,10 +73,12 @@ class BusMachineImplTest {
         val testee = BusMachineImpl()
         val node1 = BusNodeImpl()
         val node2 = BusEngineImpl()
+        val member1 = node1.memberView
+        val member2 = node2.memberView
         // when:
         testee.attach(TestBusContext(TestBusHubView(), "machine")).standby()
-        testee.add("node", node1).standby()
-        testee.add("engine", node2).standby()
+        testee.add("node", member1).standby()
+        testee.add("engine", member2).standby()
         node1.standby()
         node2.standby()
         // then:
@@ -92,8 +94,8 @@ class BusMachineImplTest {
         Assertions.assertThat(node2.state).isEqualTo(BusNodeState.DETACHED)
         // when:
         testee.attach(TestBusContext(TestBusHubView(), "remachine")).standby()
-        testee.add("nodagain1", node1).standby()
-        testee.add("enginagain2", node2).standby()
+        testee.add("nodagain1", member1).standby()
+        testee.add("enginagain2", member2).standby()
         node1.standby()
         node2.standby()
         // then:
@@ -107,38 +109,39 @@ class BusMachineImplTest {
         private val states = mutableListOf<String>()
 
         override fun pathOf(name: String): Path = "=$name"
-        override fun <D : BusNode> get(type: Class<D>): D? = null
-        override fun <D : BusNode> get(type: KClass<D>): D? = null
-        override fun onLeaving(member: BusNode) {
+        override fun get(type: Class<*>): MemberView? = null
+        override fun get(type: KClass<*>): MemberView? = null
+        override fun onLeaving(member: MemberView) {
             states += "leaving"
         }
 
-        override fun onLeft(member: BusNode) {
+        override fun onLeft(member: MemberView) {
             states += "left"
         }
 
-        override fun onJoining(node: BusNode) {
+        override fun onJoining(node: MemberView) {
             states += "joining"
         }
 
-        override fun onJoined(node: BusNode) {
+        override fun onJoined(node: MemberView) {
             states += "joined"
         }
 
-        override fun onReady(member: BusNode) {
+        override fun onReady(member: MemberView) {
             states += "ready"
         }
 
-        override fun onBusy(member: BusNode) {
+        override fun onBusy(member: MemberView) {
             states += "busy"
         }
 
-        override fun onCrashed(member: BusNode) {
+        override fun onCrashed(member: MemberView) {
             states += "crashed"
         }
 
-        override fun link(name: String, node: BusNode) = relax()
+        override fun link(name: String, node: MemberView) = relax()
         override fun unlink(name: String) = relax()
+        override fun rename(name: String, newName: String) = relax()
     }
 
     class TestBusContext(
@@ -146,9 +149,9 @@ class BusMachineImplTest {
         override var name: String
     ) : BusContext {
         val states = mutableListOf<String>()
-        override fun <D : BusNode> get(type: Class<D>): D? = null
-        override fun <D : BusNode> get(type: KClass<D>): D? = null
-        override val member: BusNode? = null
+        override fun get(type: Class<*>): MemberView? = null
+        override fun get(type: KClass<*>): MemberView? = null
+        override val member: MemberView? = null
         override val path: Path = "/test/heinzel"
 
         override fun leaving() {
@@ -159,11 +162,11 @@ class BusMachineImplTest {
             states += "$member left"
         }
 
-        override fun joining(node: BusNode) {
+        override fun joining(node: MemberView) {
             states += "$node joining"
         }
 
-        override fun joined(node: BusNode) {
+        override fun joined(node: MemberView) {
             states += "$node joined"
         }
 
@@ -179,7 +182,7 @@ class BusMachineImplTest {
             states += "$member crashed"
         }
 
-        override fun rename(name: String) {
+        override fun renameTo(name: String) {
             this.name = name
         }
 

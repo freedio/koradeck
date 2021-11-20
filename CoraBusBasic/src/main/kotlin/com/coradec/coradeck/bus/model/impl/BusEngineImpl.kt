@@ -26,11 +26,13 @@ open class BusEngineImpl(
                     debug("Initialized %s ‹%s›.", mytype, name)
                     state = INITIALIZED
                     delegator?.onInitialized()
+                    transition.succeed()
                 }
                 STARTING -> {
                     debug("Starting %s ‹%s›.", mytype, name)
                     state = STARTING
                     delegator?.onStarting()
+                    transition.succeed()
                 }
                 STARTED -> {
                     run()
@@ -38,6 +40,7 @@ open class BusEngineImpl(
                     state = STARTED
                     delegator?.onStarted()
                     readify(name)
+                    transition.succeed()
                 }
                 STOPPING -> {
                     busify(name)
@@ -45,20 +48,22 @@ open class BusEngineImpl(
                     stop()
                     state = STOPPING
                     delegator?.onStopping()
+                    transition.succeed()
                 }
                 STOPPED -> {
                     debug("Stopped %s ‹%s›.", mytype, name)
                     state = UNLOADED
                     delegator?.onStopped()
+                    transition.succeed()
                 }
                 FINALIZING -> {
                     debug("Finalizing %s ‹%s›.", mytype, name)
                     state = FINALIZING
                     delegator?.onFinalizing()
+                    transition.succeed()
                 }
                 else -> super.stateChanged(transition)
             }
-            transition.succeed()
         } catch (e: Exception) {
             error(e, TEXT_TRANSITION_FAILED, transition.from, transition.unto, context ?: "none")
             transition.fail(e)

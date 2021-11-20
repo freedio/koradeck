@@ -5,10 +5,11 @@
 package com.coradec.coradeck.bus.model
 
 import com.coradec.coradeck.bus.view.BusContext
+import com.coradec.coradeck.bus.view.MemberView
 
 interface NodeDelegator {
     /** The node to which all actions are delegated. */
-    val node: BusNode
+    val node: MemberView
 
     /** Invoked before the node is attached to the specified context.  The node can throw an exception to refuse. */
     fun onAttaching(context: BusContext)

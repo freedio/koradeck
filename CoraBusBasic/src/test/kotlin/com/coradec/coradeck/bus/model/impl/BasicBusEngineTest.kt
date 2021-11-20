@@ -30,7 +30,7 @@ internal class BasicBusEngineTest {
     @BeforeEach
     fun setupTest() {
         myContainer = TestBusHub()
-        CoraBus.applicationBus.add("Container", container).standby()
+        CoraBus.applicationBus.add("Container", container.memberView).standby()
     }
 
     @AfterEach
@@ -62,7 +62,7 @@ internal class BasicBusEngineTest {
         assertThat(testee.state).isEqualTo(UNATTACHED)
         assertThat(testee.running.get()).isFalse()
         // when
-        container.add("Testee", testee)
+        container.add("Testee", testee.memberView)
         testee.standby()
         // then
         assertThat(testee.attached)

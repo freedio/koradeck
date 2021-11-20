@@ -28,7 +28,7 @@ internal class BasicBusNodeTest {
 
     @BeforeEach fun setupTest() {
         myContainer = TestBusHub()
-        applicationBus.add("Container", container).standby()
+        applicationBus.add("Container", container.memberView).standby()
     }
 
     @AfterEach fun tearDownTest() {
@@ -57,7 +57,7 @@ internal class BasicBusNodeTest {
         val testee = TestBusNode()
         assertThat(testee.state).isEqualTo(UNATTACHED)
         // when
-        container.add("Testee", testee)
+        container.add("Testee", testee.memberView)
         testee.standby()
         // then
         assertThat(testee.attached)
@@ -75,7 +75,7 @@ internal class BasicBusNodeTest {
         val testee = TestBusNode()
         assertThat(testee.state).isEqualTo(UNATTACHED)
         // when
-        container.add("Testee", testee)
+        container.add("Testee", testee.memberView)
         testee.standby()
         // then
         assertThat(testee.attached)

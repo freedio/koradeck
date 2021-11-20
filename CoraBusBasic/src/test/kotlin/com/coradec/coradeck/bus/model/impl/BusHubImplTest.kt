@@ -4,11 +4,11 @@
 
 package com.coradec.coradeck.bus.model.impl
 
-import com.coradec.coradeck.bus.model.BusNode
 import com.coradec.coradeck.bus.model.BusNodeState.*
 import com.coradec.coradeck.bus.trouble.MemberNotFoundException
 import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.bus.view.BusHubView
+import com.coradec.coradeck.bus.view.MemberView
 import com.coradec.coradeck.com.module.CoraCom
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.com.trouble.RequestFailedException
@@ -44,8 +44,8 @@ class BusHubImplTest {
         val node1 = BusNodeImpl()
         val node2 = BusNodeImpl()
         // when:
-        testee.add("e1", node1)
-        testee.add("e2", node2)
+        testee.add("e1", node1.memberView)
+        testee.add("e2", node2.memberView)
         testee.attach(TestBusContext(TestBusHubView(), "container")).standby()
         node1.standby()
         node2.standby()
@@ -64,8 +64,8 @@ class BusHubImplTest {
         softly.assertThat(node2.state).isEqualTo(DETACHED)
         softly.assertAll()
         // when:
-        testee.add("egain1", node1)
-        testee.add("egain2", node2)
+        testee.add("egain1", node1.memberView)
+        testee.add("egain2", node2.memberView)
         testee.attach(TestBusContext(TestBusHubView(), "recontainer")).standby()
         node1.standby()
         node2.standby()
@@ -87,8 +87,8 @@ class BusHubImplTest {
         val node2 = BusNodeImpl()
         // when:
         testee.attach(TestBusContext(TestBusHubView(), "container")).standby()
-        testee.add("e1", node1).standby()
-        testee.add("e2", node2).standby()
+        testee.add("e1", node1.memberView).standby()
+        testee.add("e2", node2.memberView).standby()
         // then:
         var softly = SoftAssertions()
         softly.assertThat(testee.state).isEqualTo(READY)
@@ -105,8 +105,8 @@ class BusHubImplTest {
         softly.assertAll()
         // when:
         testee.attach(TestBusContext(TestBusHubView(), "recontainer")).standby()
-        testee.add("egain1", node1).standby()
-        testee.add("egain2", node2).standby()
+        testee.add("egain1", node1.memberView).standby()
+        testee.add("egain2", node2.memberView).standby()
         node1.standby()
         node2.standby()
         // then:
@@ -125,14 +125,16 @@ class BusHubImplTest {
         val testee = BusHubImpl()
         val node1 = BusNodeImpl()
         val node2 = BusNodeImpl()
+        val member1 = node1.memberView
+        val member2 = node2.memberView
         // when:
-        testee.add("e1", node1)
-        testee.add("e2", node2)
+        testee.add("e1", member1)
+        testee.add("e2", member2)
         testee.attach(TestBusContext(TestBusHubView(), "container")).standby()
         // then:
         assertThat(testee.names.value).containsExactlyInAnyOrder("e1", "e2")
-        assertThat(testee.members.value).containsAllEntriesOf(mapOf("e1" to node1, "e2" to node2))
-        assertThat(testee.lookup("e1").value).isEqualTo(node1)
+        assertThat(testee.members.value).containsAllEntriesOf(mapOf("e1" to member1, "e2" to member2))
+        assertThat(testee.lookup("e1").value).isEqualTo(member1)
         try {
             testee.lookup("e0").value
             fail("Expected failure!")
@@ -149,8 +151,8 @@ class BusHubImplTest {
         }
         // then:
         assertThat(testee.names.value).containsExactlyInAnyOrder("e2")
-        assertThat(testee.members.value).containsAllEntriesOf(mapOf("e2" to node2))
-        assertThat(testee.lookup("e2").value).isEqualTo(node2)
+        assertThat(testee.members.value).containsAllEntriesOf(mapOf("e2" to member2))
+        assertThat(testee.lookup("e2").value).isEqualTo(member2)
         try {
             testee.lookup("e1").value
             fail("Expected failure!")
@@ -162,8 +164,8 @@ class BusHubImplTest {
         testee.rename("e2", "e1").standby()
         // then:
         assertThat(testee.names.value).containsExactlyInAnyOrder("e1")
-        assertThat(testee.members.value).containsAllEntriesOf(mapOf("e1" to node2))
-        assertThat(testee.lookup("e1").value).isEqualTo(node2)
+        assertThat(testee.members.value).containsAllEntriesOf(mapOf("e1" to member2))
+        assertThat(testee.lookup("e1").value).isEqualTo(member2)
         try {
             testee.lookup("e2").value
             fail("Expected failure!")
@@ -172,11 +174,11 @@ class BusHubImplTest {
         }
         CoraCom.log.debug("***********************************************************")
         // when:
-        testee.replace("e1", node1).standby()
+        testee.replace("e1", member2).standby()
         // then:
         assertThat(testee.names.value).containsExactlyInAnyOrder("e1")
-        assertThat(testee.members.value).containsAllEntriesOf(mapOf("e1" to node1))
-        assertThat(testee.lookup("e1").value).isEqualTo(node1)
+        assertThat(testee.members.value).containsAllEntriesOf(mapOf("e1" to member2))
+        assertThat(testee.lookup("e1").value).isEqualTo(member2)
         // finally:
         testee.detach().standby()
     }
@@ -185,38 +187,39 @@ class BusHubImplTest {
         private val states = mutableListOf<String>()
 
         override fun pathOf(name: String): Path = "=$name"
-        override fun <D : BusNode> get(type: Class<D>): D? = null
-        override fun <D : BusNode> get(type: KClass<D>): D? = null
-        override fun onLeaving(member: BusNode) {
+        override fun get(type: Class<*>): MemberView? = null
+        override fun get(type: KClass<*>): MemberView? = null
+        override fun onLeaving(member: MemberView) {
             states += "leaving"
         }
 
-        override fun onLeft(member: BusNode) {
+        override fun onLeft(member: MemberView) {
             states += "left"
         }
 
-        override fun onJoining(node: BusNode) {
+        override fun onJoining(node: MemberView) {
             states += "joining"
         }
 
-        override fun onJoined(node: BusNode) {
+        override fun onJoined(node: MemberView) {
             states += "joined"
         }
 
-        override fun onReady(member: BusNode) {
+        override fun onReady(member: MemberView) {
             states += "ready"
         }
 
-        override fun onBusy(member: BusNode) {
+        override fun onBusy(member: MemberView) {
             states += "busy"
         }
 
 
-        override fun onCrashed(member: BusNode) {
+        override fun onCrashed(member: MemberView) {
             states += "crashed"
         }
-        override fun link(name: String, node: BusNode) = relax()
+        override fun link(name: String, node: MemberView) = relax()
         override fun unlink(name: String) = relax()
+        override fun rename(name: String, newName: String) = relax()
     }
 
     class TestBusContext(
@@ -224,9 +227,9 @@ class BusHubImplTest {
         override var name: String
     ) : BusContext {
         private val states = mutableListOf<String>()
-        override fun <D : BusNode> get(type: Class<D>): D? = null
-        override fun <D : BusNode> get(type: KClass<D>): D? = null
-        override val member: BusNode? = null
+        override fun get(type: Class<*>): MemberView? = null
+        override fun get(type: KClass<*>): MemberView? = null
+        override val member: MemberView? = null
         override val path: Path = "/test/heinzel"
 
         override fun leaving() {
@@ -237,11 +240,11 @@ class BusHubImplTest {
             states += "$member left"
         }
 
-        override fun joining(node: BusNode) {
+        override fun joining(node: MemberView) {
             states += "$node joining"
         }
 
-        override fun joined(node: BusNode) {
+        override fun joined(node: MemberView) {
             states += "$node joined"
         }
 
@@ -257,7 +260,7 @@ class BusHubImplTest {
             states += "$member crashed"
         }
 
-        override fun rename(name: String) {
+        override fun renameTo(name: String) {
             this.name = name
         }
 

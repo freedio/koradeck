@@ -6,6 +6,7 @@ package com.coradec.coradeck.db.model.impl
 
 import com.coradec.coradeck.bus.model.BusNode
 import com.coradec.coradeck.bus.model.impl.BasicBusHub
+import com.coradec.coradeck.bus.view.MemberView
 import com.coradec.coradeck.com.model.RequestState.*
 import com.coradec.coradeck.com.model.Voucher
 import com.coradec.coradeck.core.util.classname
@@ -33,7 +34,7 @@ class HsqlDatabase(
     private val username: String,
     private val password: Password,
     val autocommit: Boolean = false
-): BasicBusHub(), Database {
+) : BasicBusHub(), Database {
     var myConnection: Connection? = null
     override val connection: Connection get() = myConnection ?: throw IllegalStateException("Database «%s» not attached!")
     override val statement: Statement get() = connection.createStatement()
@@ -76,18 +77,20 @@ class HsqlDatabase(
 
     override fun reset() {
         val tableTypes = listOf("TABLE", "VIEW")
+        names.value.forEach { member -> remove(member) }
         connection.metaData.getTables(null, null, null, null)
             .seqOf(TableMetadata::class)
-            .filter { it.tableType in  tableTypes}
+            .filter { it.tableType in tableTypes }
             .map { it.tableName }
             .forEach { tableName ->
-            info(TEXT_DROPPING_TABLE, tableName)
+                info(TEXT_DROPPING_TABLE, tableName)
                 statement.executeUpdate("drop table $tableName")
             }
     }
 
     private fun getTable(voucher: GetTableVoucher<*>) {
-        lookup(voucher.model.toSqlTableName()).forwardTo(voucher as Voucher<BusNode>)
+        lookup(voucher.model.toSqlTableName()).forwardAs(voucher as Voucher<RecordTableView<*>>) { member, session ->
+            member.view[session, RecordTableView::class] }
     }
 
     private fun openTable(voucher: OpenTableVoucher<*>) {
@@ -95,17 +98,18 @@ class HsqlDatabase(
         debug("Opening table ‹%s›...", model.classname)
         lookup(model.toSqlTableName()).whenVoucherFinished {
             when (state) {
-                FAILED -> CreateTableVoucher(here, model).also { accept(it) } as Voucher<BusNode>
+                FAILED -> CreateTableVoucher(here, model).also { accept(it) } as Voucher<MemberView>
                 else -> this
-            }.forwardTo(voucher as Voucher<BusNode>)
+            }.forwardTo(voucher as Voucher<MemberView>)
         }
     }
 
     private fun createTable(voucher: CreateTableVoucher<*>) {
         val name = voucher.model.toSqlTableName()
         val node = HsqlDbTable(this, voucher.model)
+        val memberView = node.memberView
         debug("Creating table ‹%s›", name)
-        add(name, node).whenFinished {
+        add(name, memberView).whenFinished {
             when (state) {
                 SUCCESSFUL -> {
                     (voucher as Voucher<BusNode>).value = node

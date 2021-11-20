@@ -28,11 +28,13 @@ open class BusMachineImpl(
                     debug("Loaded %s ‹%s›.", mytype, name)
                     state = BusNodeState.LOADED
                     delegator?.onLoaded()
+                    transition.succeed()
                 }
                 BusNodeState.STARTING -> {
                     debug("Starting %s ‹%s›.", mytype, name)
                     state = BusNodeState.STARTING
                     delegator?.onStarting()
+                    transition.succeed()
                 }
                 BusNodeState.STARTED -> {
                     run()
@@ -40,6 +42,7 @@ open class BusMachineImpl(
                     state = BusNodeState.STARTED
                     delegator?.onStarted()
                     readify(name)
+                    transition.succeed()
                 }
                 BusNodeState.STOPPING -> {
                     busify(name)
@@ -47,22 +50,23 @@ open class BusMachineImpl(
                     stop()
                     state = BusNodeState.STOPPING
                     delegator?.onStopping()
+                    transition.succeed()
                 }
                 BusNodeState.STOPPED -> {
                     debug("Stopped %s ‹%s›.", mytype, name)
                     state = BusNodeState.STOPPED
                     delegator?.onStopped()
+                    transition.succeed()
                 }
                 BusNodeState.UNLOADING -> {
                     debug("Unloading %s ‹%s›.", mytype, name)
                     state = BusNodeState.UNLOADING
                     delegator?.onUnloading()
                     unloadMembers(transition)
-                    return // avoid succeeding prematurely
+//                    return // avoid succeeding prematurely
                 }
                 else -> super.stateChanged(transition)
             }
-            transition.succeed()
         } catch (e: Exception) {
             error(e, TEXT_TRANSITION_FAILED, transition.from, transition.unto, context ?: "none")
             transition.fail(e)

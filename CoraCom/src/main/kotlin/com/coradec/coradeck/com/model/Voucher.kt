@@ -5,6 +5,7 @@
 package com.coradec.coradeck.com.model
 
 import com.coradec.coradeck.core.model.Timespan
+import com.coradec.coradeck.session.model.Session
 import java.util.concurrent.TimeoutException
 
 interface Voucher<V>: Request {
@@ -14,8 +15,10 @@ interface Voucher<V>: Request {
     var value: V
     /** Like 'value', but waits for at most the specified timespan before failing with a timeout exception or returning the value. */
     @Throws(TimeoutException::class) fun value(t: Timespan): V
-    /** Forwards the value into the specified other voucher as soon as it is available, and the termination state as well. */
+    /** Forwards the value and termination state into the specified other voucher as soon as it is available. */
     fun forwardTo(voucher: Voucher<V>)
+    /** Forwards the value, transformed by the specified transformation, and termination state into the specified other voucher. */
+    fun <X> forwardAs(voucher: Voucher<X>, transform: (V, Session) -> X )
     /** Triggers the specified action when the request is finished.  Fluid. */
     fun whenVoucherFinished(action: Voucher<V>.() -> Unit): Voucher<V>
 }

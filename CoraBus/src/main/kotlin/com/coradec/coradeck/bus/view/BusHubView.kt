@@ -4,7 +4,6 @@
 
 package com.coradec.coradeck.bus.view
 
-import com.coradec.coradeck.bus.model.BusNode
 import com.coradec.coradeck.dir.model.Path
 import kotlin.reflect.KClass
 
@@ -12,25 +11,27 @@ interface BusHubView {
     /** The path of the member with the specified name. */
     fun pathOf(name: String): Path
     /** Looks up the superior with the specified type, if there is any. */
-    operator fun <D : BusNode> get(type: Class<D>): D?
+    operator fun get(type: Class<*>): MemberView?
     /** Looks up the superior with the specified type, if there is any. */
-    operator fun <D : BusNode> get(type: KClass<D>): D?
+    operator fun get(type: KClass<*>): MemberView?
     /** Invoked when the specified member is leaving the context. */
-    fun onLeaving(member: BusNode)
+    fun onLeaving(member: MemberView)
     /** Invoked when the specified member left the context. */
-    fun onLeft(member: BusNode)
+    fun onLeft(member: MemberView)
     /** Invoked when the specified candidate is about to join the context. */
-    fun onJoining(node: BusNode)
+    fun onJoining(node: MemberView)
     /** Invoked when the specified member joined the context. */
-    fun onJoined(node: BusNode)
+    fun onJoined(node: MemberView)
     /** Invoked when the member becomes ready. */
-    fun onReady(member: BusNode)
+    fun onReady(member: MemberView)
     /** Invoked when the member becomes busy. */
-    fun onBusy(member: BusNode)
+    fun onBusy(member: MemberView)
     /** Invoked when the member, being an engine, has crashed. */
-    fun onCrashed(member: BusNode)
+    fun onCrashed(member: MemberView)
     /** Links the new member with the specified name to the hub. */
-    fun link(name: String, node: BusNode)
+    fun link(name: String, node: MemberView)
     /** Unlinks the gone member with the specified name from the hub. */
     fun unlink(name: String)
+    /** Renames the member with the specified name to the specified new name. */
+    fun rename(name: String, newName: String)
 }

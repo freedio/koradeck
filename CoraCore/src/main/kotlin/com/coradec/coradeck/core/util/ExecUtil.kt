@@ -11,18 +11,18 @@ import com.coradec.coradeck.core.model.StackTrace
 import kotlin.reflect.KClass
 
 private const val base = 3
-val caller: StackFrame get() = getStackFrame(base)
-val caller2: StackFrame get() = getStackFrame(base + 1)
-val caller3: StackFrame get() = getStackFrame(base + 2)
+val Any.caller: StackFrame get() = getStackFrame(base, this)
+val Any.caller2: StackFrame get() = getStackFrame(base + 1, this)
+val Any.caller3: StackFrame get() = getStackFrame(base + 2, this)
 val callerStack: StackTrace get() = StackTrace(Thread.currentThread().stackTrace.map { StackFrame(it) })
-val here: StackFrame get() = caller2
+val Any.here: StackFrame get() = caller2
 
-fun getStackFrame(index: Int): StackFrame = StackFrame(Thread.currentThread().stackTrace
+fun getStackFrame(index: Int, effective: Any): StackFrame = StackFrame(Thread.currentThread().stackTrace
     .drop(index)
     .dropWhile { it.methodName.startsWith("access$") }
     .dropWhile { it.className.startsWith("jdk.") || it.className.startsWith("java.") }
     .dropWhile { "${it.className}.${it.methodName}" == "com.coradec.coradeck.core.util.ExecUtilKt.<clinit>" }
-    .first()
+    .first(), effective
 )
 
 fun callerStackFrame(after: String): StackFrame = StackFrame(Thread.currentThread().stackTrace

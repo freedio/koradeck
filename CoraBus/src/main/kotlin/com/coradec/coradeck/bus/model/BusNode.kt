@@ -4,15 +4,16 @@
 
 package com.coradec.coradeck.bus.model
 
-import com.coradec.coradeck.bus.com.AttachRequest
-import com.coradec.coradeck.bus.com.DetachRequest
 import com.coradec.coradeck.bus.trouble.NodeNotAttachedException
 import com.coradec.coradeck.bus.trouble.StateUnreachableException
 import com.coradec.coradeck.bus.view.BusContext
+import com.coradec.coradeck.bus.view.MemberView
 import com.coradec.coradeck.com.model.Recipient
+import com.coradec.coradeck.com.model.Request
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Timespan
 import com.coradec.coradeck.dir.model.Path
+import com.coradec.coradeck.session.model.Session
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
@@ -31,11 +32,16 @@ interface BusNode : Origin, Recipient {
     val path: Path?
     /** The name of this node in its context.  Absent if unattached. */
     val name: String?
+    /** The member view of the current session. */
+    val memberView: MemberView
+
+    /** Returns a view on the member in the context of the specified session. */
+    fun memberView(session: Session): MemberView
 
     /** Attaches this node to the specified bus context and initializaes it. */
-    fun attach(context: BusContext): AttachRequest
+    fun attach(context: BusContext): Request
     /** Terminates this node and detaches it from the specified bus context. */
-    fun detach(): DetachRequest
+    fun detach(): Request
     /** Changes the name of node to the specified name. */
     @Throws(NodeNotAttachedException::class) fun renameTo(name: String)
     /** The bus context.  Will wait up to [timeout] [timeoutUnit]s for the node to be connected, then throw TimeoutException. */
