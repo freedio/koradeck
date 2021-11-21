@@ -4,9 +4,7 @@
 
 package com.coradec.coradeck.db.model.impl
 
-import com.coradec.coradeck.bus.model.BusNode
 import com.coradec.coradeck.bus.model.impl.BasicBusHub
-import com.coradec.coradeck.bus.view.MemberView
 import com.coradec.coradeck.com.model.RequestState.*
 import com.coradec.coradeck.com.model.Voucher
 import com.coradec.coradeck.core.util.classname
@@ -89,8 +87,8 @@ class HsqlDatabase(
     }
 
     private fun getTable(voucher: GetTableVoucher<*>) {
-        lookup(voucher.model.toSqlTableName()).forwardAs(voucher as Voucher<RecordTableView<*>>) { member, session ->
-            member.view[session, RecordTableView::class] }
+        lookup(voucher.model.toSqlTableName()).forwardAs(voucher as Voucher<RecordTable<*>>) { member, session ->
+            member.getView(session, RecordTable::class) }
     }
 
     private fun openTable(voucher: OpenTableVoucher<*>) {
@@ -98,9 +96,11 @@ class HsqlDatabase(
         debug("Opening table ‹%s›...", model.classname)
         lookup(model.toSqlTableName()).whenVoucherFinished {
             when (state) {
-                FAILED -> CreateTableVoucher(here, model).also { accept(it) } as Voucher<MemberView>
-                else -> this
-            }.forwardTo(voucher as Voucher<MemberView>)
+                FAILED -> CreateTableVoucher(here, model).also { accept(it) }.forwardTo(voucher as Voucher<Any?>)
+                else -> forwardAs(voucher as Voucher<RecordTable<*>>) { member, session ->
+                    member.getView(session, RecordTable::class)
+                }
+            }
         }
     }
 
@@ -112,7 +112,8 @@ class HsqlDatabase(
         add(name, memberView).whenFinished {
             when (state) {
                 SUCCESSFUL -> {
-                    (voucher as Voucher<BusNode>).value = node
+                    (voucher as Voucher<RecordTable<*>>).value =
+                        memberView.getView(voucher.session, RecordTable::class)
                     voucher.succeed()
                 }
                 FAILED -> voucher.fail(reason)

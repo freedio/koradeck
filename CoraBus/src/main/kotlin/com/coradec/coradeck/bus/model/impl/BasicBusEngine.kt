@@ -25,9 +25,7 @@ abstract class BasicBusEngine : BasicBusNode(), DelegatedBusEngine {
     protected open inner class InternalEngineDelegator : InternalNodeDelegator(), EngineDelegator {
         override var thread: Thread
             get() = this@BasicBusEngine.thread
-            set(value) {
-                this@BasicBusEngine.thread = value
-            }
+            set(value) { this@BasicBusEngine.thread = value }
 
         override fun onStarting() = this@BasicBusEngine.onStarting()
         override fun onStarted() = this@BasicBusEngine.onStarted()

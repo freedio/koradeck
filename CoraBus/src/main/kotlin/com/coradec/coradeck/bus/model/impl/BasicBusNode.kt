@@ -16,7 +16,10 @@ import com.coradec.coradeck.core.model.Timespan
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
 import com.coradec.coradeck.dir.model.Path
 import com.coradec.coradeck.session.model.Session
+import com.coradec.coradeck.session.trouble.ViewNotFoundException
+import com.coradec.coradeck.session.view.View
 import java.util.concurrent.TimeUnit
+import kotlin.reflect.KClass
 
 open class BasicBusNode : BasicAgent(), DelegatedBusNode {
     override val delegate: BusNodeDelegate = CoraBus.createNode(InternalNodeDelegator())
@@ -50,6 +53,7 @@ open class BasicBusNode : BasicAgent(), DelegatedBusNode {
     protected open fun onDetached() {}
     protected open fun onReady() {}
     protected open fun onBusy() {}
+    protected open fun <V : View> lookupView(session: Session, type: KClass<V>): V? = null
 
     protected open inner class InternalNodeDelegator : NodeDelegator {
         override val node: MemberView get() = this@BasicBusNode.memberView
@@ -63,5 +67,8 @@ open class BasicBusNode : BasicAgent(), DelegatedBusNode {
         override fun onDetached() = this@BasicBusNode.onDetached()
         override fun onReady() = this@BasicBusNode.onReady()
         override fun onBusy() = this@BasicBusNode.onBusy()
+        override fun <V : View> lookupView(session: Session, type: KClass<V>): V? = this@BasicBusNode.lookupView(session, type)
+        override fun <V : View> getView(session: Session, type: KClass<V>): V = lookupView(session, type)
+            ?: throw ViewNotFoundException(this@BasicBusNode::class, type)
     }
 }

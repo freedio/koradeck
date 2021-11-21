@@ -8,6 +8,8 @@ import com.coradec.coradeck.session.view.View
 import kotlin.reflect.KClass
 
 interface Views {
-    operator fun <ViewType: View> get(owner: Any, type: KClass<ViewType>): ViewType?
-    operator fun <ViewType: View> set(owner: Any, type: KClass<ViewType>, value: ViewType)
+    /** Looks up the view of the specified type of the specified owner. */
+    operator fun <ViewType : View> get(owner: Any, type: KClass<ViewType>): ViewType?
+    /** Sets the view of the specified type in the specified owner. */
+    operator fun <ViewType : View> set(owner: Any, type: KClass<ViewType>, view: ViewType)
 }

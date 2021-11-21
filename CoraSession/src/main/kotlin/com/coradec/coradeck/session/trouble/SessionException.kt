@@ -6,6 +6,6 @@ package com.coradec.coradeck.session.trouble
 
 import com.coradec.coradeck.core.trouble.BasicException
 
-open class SessionException(message: String?, problem: Throwable?) : BasicException(message, problem) {
+open class SessionException(message: String? = null, problem: Throwable? = null) : BasicException(message, problem) {
     constructor(message: String) : this(message, null)
 }

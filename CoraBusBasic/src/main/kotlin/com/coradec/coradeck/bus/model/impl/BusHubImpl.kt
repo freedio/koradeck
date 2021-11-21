@@ -286,7 +286,7 @@ open class BusHubImpl(
         accept(UnlinkMemberRequest(here, name))
     }
 
-    private class LookupMemberVoucher(origin: Origin, val name: String) : BasicVoucher<MemberView>(origin)
+    internal class LookupMemberVoucher(origin: Origin, val name: String) : BasicVoucher<MemberView>(origin)
     private class ContainsMemberVoucher(origin: Origin, val name: String) : BasicVoucher<Boolean>(origin)
     private class MemberVoucher(origin: Origin) : BasicVoucher<Map<String, MemberView>>(origin)
     internal class AddMemberRequest(origin: Origin, val name: String, val node: MemberView) : BasicRequest(origin)

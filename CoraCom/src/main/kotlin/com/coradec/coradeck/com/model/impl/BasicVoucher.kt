@@ -57,9 +57,9 @@ open class BasicVoucher<V>(
     }
 
     private fun lookup(): V = when (state) {
-        SUCCESSFUL -> current as V
         FAILED -> throw reason ?: RequestFailedException()
         CANCELLED -> throw RequestCancelledException()
+        SUCCESSFUL -> current as V
         else -> valueSemaphore.await().let {
             when (state) {
                 SUCCESSFUL -> current as V
@@ -75,9 +75,21 @@ open class BasicVoucher<V>(
         throw TimeoutException()
     }
 
-    override fun forwardTo(voucher: Voucher<V>) {
+    override fun forwardTo(voucher: Voucher<Any?>) {
         whenFinished {
             if (valueSet) voucher.value = current as V
+            when (state) {
+                SUCCESSFUL -> voucher.succeed()
+                FAILED -> voucher.fail(reason)
+                CANCELLED -> voucher.cancel(reason)
+                else -> relax()
+            }
+        }
+    }
+
+    override fun <X> forwardAs(voucher: Voucher<X>, transform: (V, Session) -> X) {
+        whenFinished {
+            if (valueSet) voucher.value = transform.invoke(value, voucher.session)
             when (state) {
                 SUCCESSFUL -> voucher.succeed()
                 FAILED -> voucher.fail(reason)

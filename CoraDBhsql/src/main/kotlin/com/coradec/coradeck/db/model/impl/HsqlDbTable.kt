@@ -6,37 +6,41 @@ package com.coradec.coradeck.db.model.impl
 
 import com.coradec.coradeck.com.model.impl.BasicVoucher
 import com.coradec.coradeck.core.model.Origin
-import com.coradec.coradeck.core.util.classname
+import com.coradec.coradeck.core.util.contains
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.swallow
 import com.coradec.coradeck.db.ctrl.Selection
-import com.coradec.coradeck.db.ctrl.impl.SqlSelection
 import com.coradec.coradeck.db.model.Database
 import com.coradec.coradeck.db.model.RecordTable
 import com.coradec.coradeck.db.util.toSqlObjectName
 import com.coradec.coradeck.db.util.toSqlValueRepr
+import com.coradec.coradeck.session.model.Session
+import com.coradec.coradeck.session.view.View
 import com.coradec.coradeck.text.model.LocalText
 import kotlin.reflect.KClass
 
-class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCollection<Record>(db, model), RecordTable<Record> {
-    override val selector = SqlSelection.ALL
-    override val recordName: String = model.classname
+class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCollection<Record>(db, model) {
+    private fun plusAssign(element: Record) = insert(element).swallow()
+    private fun plusAssign(elements: Iterable<Record>) = insert(elements).swallow()
+    private fun plusAssign(elements: Sequence<Record>) = insert(elements).swallow()
+    private fun minusAssign(selector: Selection) = delete(selector).swallow()
 
-    override fun plusAssign(element: Record) = insert(element).swallow()
-    override fun plusAssign(elements: Iterable<Record>) = insert(elements).swallow()
-    override fun plusAssign(elements: Sequence<Record>) = insert(elements).swallow()
-    override fun minusAssign(selector: Selection) = delete(selector).swallow()
-
-    override fun insert(element: Record): Int = accept(InsertRecordVoucher(here, element)).content.value
-    override fun insert(elements: Iterable<Record>): Int = accept(InsertRecordsVoucher(here, elements.asSequence())).content.value
-    override fun insert(elements: Sequence<Record>): Int = accept(InsertRecordsVoucher(here, elements)).content.value
-    override fun update(selector: Selection, vararg fields: Pair<String, Any?>): Int =
+    private fun insert(element: Record): Int = accept(InsertRecordVoucher(here, element)).content.value
+    private fun insert(elements: Iterable<Record>): Int = accept(InsertRecordsVoucher(here, elements.asSequence())).content.value
+    private fun insert(elements: Sequence<Record>): Int = accept(InsertRecordsVoucher(here, elements)).content.value
+    private fun update(selector: Selection, vararg fields: Pair<String, Any?>): Int =
         accept(UpdateRecordVoucher(here, selector, fields.asSequence())).content.value
-    override fun delete(selector: Selection): Int = accept(DeleteRecordsVoucher(here, selector)).content.value
+    private fun delete(selector: Selection): Int = accept(DeleteRecordsVoucher(here, selector)).content.value
 
     override fun close() {
         commit()
         super.close()
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <V : View> lookupView(session: Session, type: KClass<V>): V? = when(type) {
+        in RecordTable::class -> InternalRecordTableView(session) as V
+        else -> super.lookupView(session, type)
     }
 
     override fun onInitializing() {
@@ -160,13 +164,26 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
         }
     }
 
-    override fun iterator(): Iterator<Record> = select(selector).iterator()
-
     class InsertRecordVoucher(origin: Origin, val element: Any): BasicVoucher<Int>(origin)
     class InsertRecordsVoucher(origin: Origin, val elements: Sequence<Any>): BasicVoucher<Int>(origin)
     class UpdateRecordVoucher(origin: Origin, val selector: Selection, val fields: Sequence<Pair<String, Any?>>):
         BasicVoucher<Int>(origin)
     class DeleteRecordsVoucher(origin: Origin, val selector: Selection): BasicVoucher<Int>(origin)
+
+    private inner class InternalRecordTableView(session: Session) : InternalRecordCollectionView(session), RecordTable<Record> {
+        override fun close() = this@HsqlDbTable.close()
+        override fun insert(element: Record): Int = this@HsqlDbTable.insert(element)
+        override fun insert(elements: Iterable<Record>): Int = this@HsqlDbTable.insert(elements)
+        override fun insert(elements: Sequence<Record>): Int = this@HsqlDbTable.insert(elements)
+        override fun update(selector: Selection, vararg fields: Pair<String, Any?>): Int = this@HsqlDbTable.update(selector, *fields)
+        override fun delete(selector: Selection): Int = this@HsqlDbTable.delete(selector)
+        override fun plusAssign(element: Record) = this@HsqlDbTable.plusAssign(element)
+        override fun plusAssign(elements: Iterable<Record>) = this@HsqlDbTable.plusAssign(elements)
+        override fun plusAssign(elements: Sequence<Record>) = this@HsqlDbTable.plusAssign(elements)
+        override fun minusAssign(selector: Selection) = this@HsqlDbTable.minusAssign(selector)
+        override fun commit() = this@HsqlDbTable.commit()
+        override fun rollback() = this@HsqlDbTable.rollback()
+    }
 
     companion object {
         val TEXT_TABLE_CREATION_FAILED = LocalText("TableCreationFailed1")

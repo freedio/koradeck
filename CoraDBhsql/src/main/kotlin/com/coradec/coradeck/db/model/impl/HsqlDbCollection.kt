@@ -5,12 +5,18 @@
 package com.coradec.coradeck.db.model.impl
 
 import com.coradec.coradeck.bus.model.impl.BasicBusNode
+import com.coradec.coradeck.core.util.classname
+import com.coradec.coradeck.core.util.contains
 import com.coradec.coradeck.db.annot.Generated
 import com.coradec.coradeck.db.ctrl.Selection
+import com.coradec.coradeck.db.ctrl.impl.SqlSelection
 import com.coradec.coradeck.db.model.ColumnDefinition
 import com.coradec.coradeck.db.model.Database
 import com.coradec.coradeck.db.model.RecordCollection
 import com.coradec.coradeck.db.util.*
+import com.coradec.coradeck.session.model.Session
+import com.coradec.coradeck.session.view.View
+import com.coradec.coradeck.session.view.impl.BasicView
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation
@@ -19,27 +25,28 @@ import kotlin.reflect.full.memberProperties
 abstract class HsqlDbCollection<Record : Any>(
     protected val db: Database,
     private val model: KClass<out Record>
-) : BasicBusNode(), RecordCollection<Record> {
-    protected abstract val selector: Selection
+) : BasicBusNode() {
+    private val recordName: String = model.classname
+    private val selector: Selection get() = SqlSelection.ALL
     private val connection = db.connection
     protected val statement = db.statement
-    override val fieldNames: Sequence<String> get() = model.memberProperties.map { it.name }.asSequence()
-    override val insertFieldNames: Sequence<String> get() =
+    protected val fieldNames: Sequence<String> get() = model.memberProperties.map { it.name }.asSequence()
+    protected val insertFieldNames: Sequence<String> get() =
         model.memberProperties
             .filter { p -> model.members.single { it.name == p.name }.returnType.findAnnotation<Generated>() == null }
             .map { it.name }.asSequence()
-    override val tableName: String = model.simpleName?.toSqlObjectName()
+    protected val tableName: String = model.simpleName?.toSqlObjectName()
         ?: throw IllegalArgumentException("Unsupported model: $model")
-    override val columnNames: Sequence<String>
+    private val columnNames: Sequence<String>
         get() = connection.metaData.getColumns(null, null, tableName, null)
             .seqOf(ColumnMetadata::class).map { it.columnName }.ifEmpty { fieldNames.map { it.toSqlObjectName() } }
     private val tableNames: Sequence<String>
         get() = connection.metaData
             .getTables(null, null, tableName, listOf("TABLE").toTypedArray())
             .seqOf(TableMetadata::class).map { it.tableName }
-    override val fields: Map<String, KType>
+    private val fields: Map<String, KType>
         get() = model.members.filter { it.name in fieldNames }.associate { Pair(it.name, it.returnType) }
-    override val columnDefinitions: Map<String, ColumnDefinition>
+    protected val columnDefinitions: Map<String, ColumnDefinition>
         get() = connection.metaData.getColumns(null, null, tableName, null)
             .listOf(ColumnMetadata::class)
             .map { Pair(it.columnName, BasicColumnDefinition(it.typeName.withSize(it.columnSize),it.nullable == 1)) }
@@ -58,17 +65,40 @@ abstract class HsqlDbCollection<Record : Any>(
 
     fun Pair<KClass<*>, List<Annotation>>.toSqlType(): String = first.toSqlType(second)
 
-    override val size: Int get() = count(selector)
-    override val all: Sequence<Record> get() = select(selector)
-    override fun close() = db.close()
+    private val size: Int get() = count(selector)
+    private val all: Sequence<Record> get() = select(selector)
+    protected open fun close() = db.close()
     fun commit() = connection.commit()
     fun rollback() = connection.rollback()
-    override fun select(selector: Selection): Sequence<Record> {
+    private fun select(selector: Selection): Sequence<Record> {
         val stmt = "select * from $tableName${selector.select}"
         debug("Executing query «$stmt»")
         @Suppress("UNCHECKED_CAST")
         return statement.executeQuery(stmt).asSequence(model)
     }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <V : View> lookupView(session: Session, type: KClass<V>): V? = when(type) {
+        in RecordCollection::class -> InternalRecordCollectionView(session) as V
+        else -> super.lookupView(session, type)
+    }
+
+    protected open inner class InternalRecordCollectionView(session: Session): BasicView(session), RecordCollection<Record> {
+        override val recordName: String get() = this@HsqlDbCollection.recordName
+        override val fieldNames: Sequence<String> get() = this@HsqlDbCollection.fieldNames
+        override val insertFieldNames: Sequence<String> = this@HsqlDbCollection.insertFieldNames
+        override val tableName: String get() = this@HsqlDbCollection.tableName
+        override val columnNames: Sequence<String> get() = this@HsqlDbCollection.columnNames
+        override val fields: Map<String, KType> get() = this@HsqlDbCollection.fields
+        override val columnDefinitions: Map<String, ColumnDefinition> get() = this@HsqlDbCollection.columnDefinitions
+        override val size: Int get() = this@HsqlDbCollection.size
+        override val all: Sequence<Record> get() = this@HsqlDbCollection.all
+
+        override fun select(selector: Selection): Sequence<Record> = this@HsqlDbCollection.select(selector)
+        override fun close() = this@HsqlDbCollection.close()
+        override fun iterator(): Iterator<Record> = select(selector).iterator()
+    }
+
 }
 
 data class TableMetadata(

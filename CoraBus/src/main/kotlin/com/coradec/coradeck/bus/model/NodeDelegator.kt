@@ -6,6 +6,10 @@ package com.coradec.coradeck.bus.model
 
 import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.bus.view.MemberView
+import com.coradec.coradeck.session.model.Session
+import com.coradec.coradeck.session.trouble.ViewNotFoundException
+import com.coradec.coradeck.session.view.View
+import kotlin.reflect.KClass
 
 interface NodeDelegator {
     /** The node to which all actions are delegated. */
@@ -31,4 +35,9 @@ interface NodeDelegator {
     fun onReady()
     /** Invoked after the node lost state READ. */
     fun onBusy()
+    /** Looks up the view of the specified type in the context of the specified session. */
+    fun <V: View> lookupView(session: Session, type: KClass<V>): V?
+    /** Returns the view of the specified type in the context of the specified session, or fails with ViewNotFoundException. */
+    @Throws(ViewNotFoundException::class)
+    fun <V: View> getView(session: Session, type: KClass<V>): V
 }

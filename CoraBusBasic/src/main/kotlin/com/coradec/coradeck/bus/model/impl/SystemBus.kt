@@ -16,6 +16,8 @@ import com.coradec.coradeck.ctrl.module.CoraControl
 import com.coradec.coradeck.dir.model.Path
 import com.coradec.coradeck.dir.module.CoraDir
 import com.coradec.coradeck.session.model.Session
+import com.coradec.coradeck.session.trouble.ViewNotFoundException
+import com.coradec.coradeck.session.view.View
 import com.coradec.coradeck.session.view.impl.BasicView
 import com.coradec.coradeck.text.model.LocalText
 import kotlin.reflect.KClass
@@ -85,9 +87,12 @@ object SystemBus : BasicBusHub(CoraDir.rootNamespace) {
         override fun attach(context: BusContext): Request = throw InvalidRequestException("SystemBus cannot be attached!")
         override fun standby() = SystemBus.standby()
         override fun detach(): Request = throw InvalidRequestException("SystemBus cannot be detached!")
+        override fun <V : View> lookupView(session: Session, type: KClass<V>): V? = null
+        override fun <V : View> getView(session: Session, type: KClass<V>): V = lookupView(session, type)
+            ?: throw ViewNotFoundException(SystemBus::class, type)
     }
 
-    class DummyHub : BusHubView {
+    private class DummyHub : BusHubView {
         override fun pathOf(name: String): Path = name
         override fun get(type: Class<*>): MemberView? = null
         override fun get(type: KClass<*>): MemberView? = null

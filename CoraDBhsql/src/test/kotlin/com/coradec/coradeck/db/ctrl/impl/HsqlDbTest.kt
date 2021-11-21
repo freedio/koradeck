@@ -50,6 +50,7 @@ internal class HsqlDbTest {
         lateinit var database1: Database
         lateinit var database2: Database
 
+        @Suppress("unused")
         @BeforeAll
         @JvmStatic
         fun setup() {
@@ -76,7 +77,9 @@ internal class HsqlDbTest {
             log.debug("@4")
             database1.accept(OpenTableVoucher(here,TestClass::class)).standby()
             log.debug("@5")
-            database1.accept(OpenTableVoucher(here, TestClass2::class)).content.value.let { table ->
+            val tbl = database1.accept(OpenTableVoucher(here, TestClass2::class)).content
+            relax()
+            tbl.value.let { table ->
                 log.debug("@5.0")
                 Thread.sleep(500)
                 table += TestClass2("Jane", "Doe", LocalDate.of(2000, 1, 1), 2)

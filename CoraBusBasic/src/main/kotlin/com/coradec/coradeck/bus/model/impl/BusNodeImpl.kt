@@ -28,6 +28,8 @@ import com.coradec.coradeck.core.util.*
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
 import com.coradec.coradeck.dir.model.Path
 import com.coradec.coradeck.session.model.Session
+import com.coradec.coradeck.session.trouble.ViewNotFoundException
+import com.coradec.coradeck.session.view.View
 import com.coradec.coradeck.text.model.LocalText
 import java.util.*
 import java.util.concurrent.CopyOnWriteArraySet
@@ -246,6 +248,12 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
 
     fun get(type: Class<*>): MemberView? = context?.get(type)
     fun get(type: KClass<*>): MemberView? = context?.get(type)
+    @Suppress("UNCHECKED_CAST")
+    private fun <V : View> lookupView(session: Session, type: KClass<V>): V? = when(type) {
+        in MemberView::class -> InternalMemberView(session) as V
+        // insert more internal types here
+        else -> delegator?.getView(session, type)
+    }
 
     override fun toString(): String = if (attached) "%s «$name»".format(this.classname) else super.toString()
 
@@ -264,6 +272,9 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
         override fun attach(context: BusContext): Request = this@BusNodeImpl.attach(context)
         override fun standby() = this@BusNodeImpl.standby()
         override fun detach(): Request = this@BusNodeImpl.detach()
+        override fun <V : View> lookupView(session: Session, type: KClass<V>): V? = this@BusNodeImpl.lookupView(session, type)
+        override fun <V : View> getView(session: Session, type: KClass<V>): V = lookupView(session, type)
+            ?: throw ViewNotFoundException(this@BusNodeImpl::class, type)
     }
 
     companion object {
