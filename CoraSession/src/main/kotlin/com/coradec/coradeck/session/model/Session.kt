@@ -27,14 +27,15 @@ interface Session {
         val currentUser = System.getProperty("user.name")!!
         private val sessions = ConcurrentHashMap<Thread, Session>()
         val current: Session get() = sessions.computeIfAbsent(Thread.currentThread()) { thread ->
-            new.also {
-                thread.whenTerminated { sessions.remove(it) }
-            }
+            new.also { thread.whenTerminated { sessions.remove(it) } }
         }
         val new: Session get() = BasicSession(currentUser, Thread.currentThread())
         val secure: Session get() = SecureSession(currentUser, Thread.currentThread())
 
         fun new(user: String) = BasicSession(user, Thread.currentThread())
         fun secure(user: String) = SecureSession(user, Thread.currentThread())
+        fun override(session: Session) {
+            sessions[Thread.currentThread()] = session
+        }
     }
 }

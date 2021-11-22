@@ -21,6 +21,7 @@ import com.coradec.coradeck.bus.view.MemberView
 import com.coradec.coradeck.com.ctrl.Observer
 import com.coradec.coradeck.com.model.Event
 import com.coradec.coradeck.com.model.Request
+import com.coradec.coradeck.com.model.RequestState.*
 import com.coradec.coradeck.com.model.impl.BasicCommand
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Timespan
@@ -50,6 +51,7 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
     private val contextPresent = CountDownLatch(1)
     override val ready: Boolean = READY in myStates
     override var context: BusContext? = null
+    override val attached: Boolean get() = context != null
     override val path: Path? get() = context?.path
     override val name: String? get() = context?.name
     override val memberView: MemberView get() = memberView(Session.current)
@@ -188,7 +190,7 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
             myStates += UNATTACHED
         }
         val context = request.context
-        debug("Attach: upstates = ${upstates.filter { it !in states }}")
+        trace("Attach: upstates = %s.", upstates.filter { it !in states })
         accept(Trajectory(this, upstates.filter { it !in states }, context)).content.propagateTo(request)
     }
 
@@ -197,7 +199,7 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
             myStates -= READY
             myStates += BUSY
         }
-        debug("Detach: downstates = ${downstates.filter { it !in states }}")
+        trace("Detach: downstates = %s.", downstates.filter { it !in states })
         accept(Trajectory(this, downstates.filter { it !in states })).content.propagateTo(request)
     }
 
@@ -206,8 +208,14 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
         if (iterator.hasNext()) {
             val next = iterator.next()
             trace("%s.%d: next = %s", trigger.shortClassname, trigger.identityHashCode, next)
-            accept(BasicNodeStateTransition(this, state, next, trigger.memberView, trigger.context)).content andThen
-                    { accept(trigger) }
+            accept(BasicNodeStateTransition(this, state, next, trigger.memberView, trigger.context)).content.whenFinished {
+                when (state) {
+                    SUCCESSFUL -> accept(trigger)
+                    FAILED -> trigger.trigger.fail(reason)
+                    CANCELLED -> trigger.trigger.cancel(reason)
+                    else -> relax()
+                }
+            }
         } else trigger.trigger.succeed()
     }
 
@@ -225,7 +233,6 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
 
     override fun standby(state: BusNodeState) = standby(Timespan(0, SECONDS), state)
     override fun standby(delay: Timespan) = standby(delay, READY)
-    override fun standby() = standby(READY)
     override fun standby(delay: Timespan, state: BusNodeState) {
         val latch = CountDownLatch(1)
         synchronized(myStates) {
@@ -270,7 +277,6 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
 
     private inner class InternalMemberView(session: Session) : AbstractMemberView(session) {
         override fun attach(context: BusContext): Request = this@BusNodeImpl.attach(context)
-        override fun standby() = this@BusNodeImpl.standby()
         override fun detach(): Request = this@BusNodeImpl.detach()
         override fun <V : View> lookupView(session: Session, type: KClass<V>): V? = this@BusNodeImpl.lookupView(session, type)
         override fun <V : View> getView(session: Session, type: KClass<V>): V = lookupView(session, type)

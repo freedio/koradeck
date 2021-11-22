@@ -15,6 +15,7 @@ import com.coradec.coradeck.ctrl.module.CoraControlImpl
 import com.coradec.coradeck.dir.model.Path
 import com.coradec.coradeck.dir.module.CoraDirImpl
 import com.coradec.coradeck.module.model.CoraModules
+import com.coradec.coradeck.session.view.View
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import org.assertj.core.api.Assertions
@@ -98,6 +99,8 @@ class BusNodeImplTest {
         val states = mutableListOf<String>()
         override fun get(type: Class<*>): MemberView? = null
         override fun get(type: KClass<*>): MemberView? = null
+        override fun <V : View> get(type: Class<*>, viewType: KClass<V>): V? = null
+        override fun <V : View> get(type: KClass<*>, viewType: KClass<V>): V? = null
         override val member: MemberView? = null
         override val path: Path = "/test/heinzel"
 

@@ -20,6 +20,7 @@ import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.ctrl.ctrl.IMMEX
 import com.coradec.coradeck.ctrl.model.Task
 import com.coradec.coradeck.ctrl.trouble.NotificationAlreadyEnqueuedException
+import com.coradec.coradeck.session.model.Session
 import com.coradec.coradeck.text.model.LocalText
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -61,6 +62,7 @@ object CIMMEX : Logger(), IMMEX {
     private val inqueue = PriorityBlockingQueue<Prioritized>(PROP_INQUEUE_SIZE.value)
     private val taskqueue = PriorityBlockingQueue<Task>(PROP_TASKQUEUE_SIZE.value)
     private val delayQueue = DeferringQueue()
+    private val workerGroup = WorkerThreadGroup()
     private val executors = ConcurrentHashMap<Int, Executor>()
     private val workers = ConcurrentHashMap<Int, Worker>()
     private val defaultAgent = DefaultAgent()
@@ -266,17 +268,17 @@ object CIMMEX : Logger(), IMMEX {
 
     private fun dispatch(message: Message<*>) = dispatch(message, message.recipient)
     private fun dispatch(notification: Notification<*>, recipient: Recipient) {
-        trace("Dispatching «%s» to ‹%s›", notification, recipient)
         var action: () -> Unit = { }
         synchronized(dispatcher) {
-            var added = false
             val queue = dispatchTable.computeIfAbsent(recipient) {
-                added = true
                 PriorityBlockingQueue()
             }
-            if (queue.offer(notification)) action = { notification.dispatch() }
+            val e = queue.isEmpty()
+            if (queue.offer(notification)) {
+                action = { notification.dispatch() }
+                if (e) dispatchOrder.put(recipient)
+            }
             else if (!inqueue.offer(notification)) action = { cantDispatch(notification) }
-            if (added) dispatchOrder.put(recipient)
         }
         action.invoke()
     }
@@ -322,7 +324,7 @@ object CIMMEX : Logger(), IMMEX {
         }
     }
 
-    private class Worker(val id: Int) : Thread("Work-%03d".format(id)) {
+    private class Worker(val id: Int) : Thread(workerGroup, "Work-%03d".format(id)) {
         override fun run() {
             workers[id] = this
             val patience = PROP_PATIENCE.value
@@ -338,24 +340,32 @@ object CIMMEX : Logger(), IMMEX {
         }
 
         private fun process(recipient: Recipient) {
-            val item: Notification<*>? = synchronized(dispatcher) {
-                dispatchTable[recipient]?.poll().also { if (it == null) dispatchTable -= recipient }
+            val item: Notification<*>? = try {
+                synchronized(dispatcher) {
+                    dispatchTable[recipient]?.poll().also { if (it == null) dispatchTable -= recipient }
+                }
+            } catch (e: Exception) {
+                error(e)
+                null
             }
             if (item != null) {
                 try {
+                    Session.override(item.session)
                     item.deliver()
                     recipient.receive(item)
                     item.process()
+                    dispatchOrder.add(recipient)
                 } catch (e: NotificationRejectedException) {
                     item.reject(e)
                 } catch (e: Exception) {
                     error(e, TEXT_EXECUTION_ABORTED, item)
                     if (item is Request) item.fail(e) else item.crash(e)
                 }
-                dispatchOrder.put(recipient)
             }
         }
     }
+
+    private class WorkerThreadGroup: ThreadGroup("CIMMEX-Workers")
 
     private class Synchronization(val sync: Semaphore) : BasicCommand(here) {
         override fun execute() {
@@ -364,7 +374,7 @@ object CIMMEX : Logger(), IMMEX {
         }
     }
 
-    class RecipientComparator : Comparator<Recipient> {
+    private class RecipientComparator : Comparator<Recipient> {
         override fun compare(o1: Recipient?, o2: Recipient?): Int =
             when {
                 o1 == null && o2 == null -> 0
@@ -384,7 +394,7 @@ object CIMMEX : Logger(), IMMEX {
             }
     }
 
-    class DeferringQueue : PriorityBlockingQueue<Deferred>(PROP_DEFERRINGQUEUE_SIZE.value) {
+    private class DeferringQueue : PriorityBlockingQueue<Deferred>(PROP_DEFERRINGQUEUE_SIZE.value) {
         override fun put(e: Deferred) {
             super.put(e)
             timer.interrupt()

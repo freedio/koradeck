@@ -18,6 +18,7 @@ import com.coradec.coradeck.ctrl.module.CoraControlImpl
 import com.coradec.coradeck.dir.model.Path
 import com.coradec.coradeck.dir.module.CoraDirImpl
 import com.coradec.coradeck.module.model.CoraModules
+import com.coradec.coradeck.session.view.View
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import org.assertj.core.api.Assertions.assertThat
@@ -47,8 +48,6 @@ class BusHubImplTest {
         testee.add("e1", node1.memberView)
         testee.add("e2", node2.memberView)
         testee.attach(TestBusContext(TestBusHubView(), "container")).standby()
-        node1.standby()
-        node2.standby()
         // then:
         var softly = SoftAssertions()
         softly.assertThat(testee.state).isEqualTo(READY)
@@ -67,8 +66,6 @@ class BusHubImplTest {
         testee.add("egain1", node1.memberView)
         testee.add("egain2", node2.memberView)
         testee.attach(TestBusContext(TestBusHubView(), "recontainer")).standby()
-        node1.standby()
-        node2.standby()
         // then:
         CoraCom.log.debug("-------------------------------------------------------------------")
         softly = SoftAssertions()
@@ -107,8 +104,6 @@ class BusHubImplTest {
         testee.attach(TestBusContext(TestBusHubView(), "recontainer")).standby()
         testee.add("egain1", node1.memberView).standby()
         testee.add("egain2", node2.memberView).standby()
-        node1.standby()
-        node2.standby()
         // then:
         CoraCom.log.debug("-------------------------------------------------------------------")
         softly = SoftAssertions()
@@ -229,6 +224,8 @@ class BusHubImplTest {
         private val states = mutableListOf<String>()
         override fun get(type: Class<*>): MemberView? = null
         override fun get(type: KClass<*>): MemberView? = null
+        override fun <V : View> get(type: Class<*>, viewType: KClass<V>): V? = null
+        override fun <V : View> get(type: KClass<*>, viewType: KClass<V>): V? = null
         override val member: MemberView? = null
         override val path: Path = "/test/heinzel"
 

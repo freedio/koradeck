@@ -12,6 +12,7 @@ import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.util.here
+import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.core.util.swallow
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
 import com.coradec.coradeck.ctrl.module.CoraControl
@@ -22,6 +23,7 @@ import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.util.concurrent.atomic.AtomicInteger
 
 internal class BasicItemListTest {
 
@@ -41,11 +43,10 @@ internal class BasicItemListTest {
         // when
         agent.accept(testee).standby()
         // then
-        Thread.sleep(100)
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
-        assertThat(agent.sum).isEqualTo(0)
+        assertThat(agent.sum.get()).isEqualTo(0)
     }
 
     @Test
@@ -63,8 +64,7 @@ internal class BasicItemListTest {
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
-        Thread.sleep(10)
-        assertThat(agent.sum).isEqualTo(1111)
+        assertThat(agent.sum.get()).isEqualTo(1111)
         assertThat(item1.observerCount).isEqualTo(0)
         assertThat(item3.observerCount).isEqualTo(0)
         assertThat(item4.observerCount).isEqualTo(0)
@@ -85,11 +85,10 @@ internal class BasicItemListTest {
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
-        assertThat(agent.sum).isEqualTo(1111)
+        assertThat(agent.sum.get()).isEqualTo(1111)
         Thread.sleep(10)
         assertThat(item1.observerCount).isEqualTo(0)
         assertThat(item3.observerCount).isEqualTo(0)
-        Thread.sleep(10)
         assertThat(item4.observerCount).isEqualTo(0)
     }
 
@@ -114,9 +113,9 @@ internal class BasicItemListTest {
         assertThat(testee.failed).isTrue()
         assertThat(testee.failed).isTrue()
         assertThat(testee.cancelled).isFalse()
-        assertThat(agent.sum).isEqualTo(1000)
+        assertThat(agent.sum.get()).isEqualTo(1000)
         assertThat(trouble).isNotNull()
-        Thread.sleep(100)
+        Thread.sleep(10)
         assertThat(item1.observerCount).isEqualTo(0)
         assertThat(item2.observerCount).isEqualTo(0)
         assertThat(item4.observerCount).isEqualTo(0)
@@ -142,9 +141,9 @@ internal class BasicItemListTest {
         assertThat(testee.successful).isFalse()
         assertThat(testee.failed).isTrue()
         assertThat(testee.cancelled).isFalse()
-        assertThat(agent.sum).isEqualTo(1100)
+        assertThat(agent.sum.get()).isEqualTo(1100)
         assertThat(trouble).isNotNull()
-        Thread.sleep(100)
+        Thread.sleep(10)
         assertThat(item1.observerCount).isEqualTo(0)
         assertThat(item2.observerCount).isEqualTo(0)
         assertThat(item4.observerCount).isEqualTo(0)
@@ -163,8 +162,7 @@ internal class BasicItemListTest {
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
-        assertThat(agent.sum).isEqualTo(100)
-        Thread.sleep(100)
+        assertThat(agent.sum.get()).isEqualTo(100)
         assertThat(message.state).isEqualTo(NotificationState.PROCESSED)
     }
 
@@ -187,9 +185,9 @@ internal class BasicItemListTest {
         assertThat(testee.successful).isFalse()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isTrue()
-        assertThat(agent.sum).isEqualTo(100)
+        assertThat(agent.sum.get()).isEqualTo(100)
         assertThat(trouble).isNotNull()
-        Thread.sleep(100)
+        Thread.sleep(10)
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)
@@ -233,18 +231,20 @@ internal class BasicItemListTest {
     class TestInformation(val value: Int) : BasicInformation(here)
     class LostInformation(val value: Int) : BasicInformation(here)
     class TestNotification(val value: Int) : BasicNotification<Information>(TestInformation(value))
-    class TestMessage(val value: Int, recipient: Recipient) :
-        BasicMessage<Request>(TestRequest(value), recipient)
+    class TestMessage(val value: Int, recipient: Recipient) : BasicMessage<Request>(TestRequest(value), recipient)
 
     class FailingRequest(val value: Int) : BasicRequest(here)
     class CancellingRequest(val value: Int) : BasicRequest(here)
 
     class TestAgent : BasicAgent() {
-        var sum = 0
+        val sum = AtomicInteger(0)
 
+        @Suppress("UNCHECKED_CAST")
         override fun receive(notification: Notification<*>) = when (val message = notification.content) {
-            is TestRequest -> sum += message.value.also { message.succeed() }
-            is TestInformation -> sum += message.value
+            is TestRequest -> sum.addAndGet(message.value).also { message.succeed() }.swallow()
+            is TestMessage -> sum.addAndGet((message as Message<TestRequest>).content.value).swallow()
+            is TestInformation -> sum.addAndGet(message.value).swallow()
+            is TestNotification -> sum.addAndGet((message as Notification<TestInformation>).content.value).swallow()
             is CancellingRequest -> message.cancel()
             is FailingRequest -> message.fail(RuntimeException("This was to be expected!"))
             else -> super.receive(notification)
@@ -252,14 +252,23 @@ internal class BasicItemListTest {
     }
 
     class TestAgent2 : BasicAgent() {
-        private var collector = StringBuilder()
+        private var collector = StringBuffer()
         val value get() = collector.toString()
 
         override fun receive(notification: Notification<*>) = when (val message = notification.content) {
-            is TestRequest -> collector.append(message.value.toChar()).let { message.succeed() }
-            is TestInformation -> collector.append(message.value.toChar()).swallow()
-            is CancellingRequest -> message.cancel()
-            is FailingRequest -> message.fail(RuntimeException("This was to be expected!"))
+            is TestRequest -> {
+                if (!message.cancelled) {
+                    synchronized(collector) { collector.append(message.value.toChar()) }
+                    message.succeed()
+                }
+                relax()
+            }
+            is CancellingRequest -> {
+                message.cancel()
+            }
+            is FailingRequest -> {
+                message.fail(RuntimeException("This was to be expected!"))
+            }
             else -> super.receive(notification)
         }
     }

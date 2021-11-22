@@ -4,14 +4,16 @@
 
 package com.coradec.coradeck.db.model
 
-import com.coradec.coradeck.bus.model.BusHub
+import com.coradec.coradeck.bus.view.MemberView
+import com.coradec.coradeck.session.view.View
 import java.sql.Connection
 import java.sql.Statement
 import kotlin.reflect.KClass
 
-interface Database: BusHub {
+interface Database: View {
     val connection: Connection
     val statement: Statement
+    val memberView: MemberView
 
     /** Retrieves the existing table with the specified record model. */
     fun <Record: Any> getTable(model: KClass<out Record>): RecordTable<Record>

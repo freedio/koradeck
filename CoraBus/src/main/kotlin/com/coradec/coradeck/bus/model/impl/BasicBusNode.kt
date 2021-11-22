@@ -26,7 +26,7 @@ open class BasicBusNode : BasicAgent(), DelegatedBusNode {
     override val ready: Boolean get() = delegate.ready
     override val state: BusNodeState get() = delegate.state
     override val states: List<BusNodeState> get() = delegate.states
-    override val attached: Boolean get() = /*delegate != null &&*/ delegate.attached // TODO bizarrely, it IS sometimes null
+    override val attached: Boolean get() = delegate.attached
     override val context: BusContext? get() = delegate.context
     override val path: Path? get() = context?.path
     override val name: String? get() = context?.name
@@ -41,7 +41,6 @@ open class BasicBusNode : BasicAgent(), DelegatedBusNode {
     override fun standby(delay: Timespan, state: BusNodeState) = delegate.standby(delay, state)
     override fun standby(state: BusNodeState) = delegate.standby(state)
     override fun standby(delay: Timespan) = delegate.standby(delay)
-    override fun standby() = delegate.standby()
 
     protected open fun onAttaching(context: BusContext) {}
     protected open fun onAttached(context: BusContext) {}

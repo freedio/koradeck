@@ -4,7 +4,6 @@
 
 package com.coradec.coradeck.bus.model.impl
 
-import com.coradec.coradeck.bus.model.BusHub
 import com.coradec.coradeck.bus.model.BusNodeState
 import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.bus.view.BusHubView
@@ -16,6 +15,7 @@ import com.coradec.coradeck.ctrl.module.CoraControlImpl
 import com.coradec.coradeck.dir.model.Path
 import com.coradec.coradeck.dir.module.CoraDirImpl
 import com.coradec.coradeck.module.model.CoraModules
+import com.coradec.coradeck.session.view.View
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import org.assertj.core.api.Assertions
@@ -43,8 +43,6 @@ class BusMachineImplTest {
         testee.add("node", node1.memberView)
         testee.add("engine", node2.memberView)
         testee.attach(TestBusContext(TestBusHubView(), "machine")).standby()
-        node1.standby()
-        node2.standby()
         // then:
         Assertions.assertThat(testee.state).isEqualTo(BusNodeState.READY)
         Assertions.assertThat(node1.state).isEqualTo(BusNodeState.READY)
@@ -79,8 +77,6 @@ class BusMachineImplTest {
         testee.attach(TestBusContext(TestBusHubView(), "machine")).standby()
         testee.add("node", member1).standby()
         testee.add("engine", member2).standby()
-        node1.standby()
-        node2.standby()
         // then:
         Assertions.assertThat(testee.state).isEqualTo(BusNodeState.READY)
         Assertions.assertThat(node1.state).isEqualTo(BusNodeState.READY)
@@ -96,8 +92,6 @@ class BusMachineImplTest {
         testee.attach(TestBusContext(TestBusHubView(), "remachine")).standby()
         testee.add("nodagain1", member1).standby()
         testee.add("enginagain2", member2).standby()
-        node1.standby()
-        node2.standby()
         // then:
         Assertions.assertThat(testee.state).isEqualTo(BusNodeState.READY)
         Assertions.assertThat(node1.state).isEqualTo(BusNodeState.READY)
@@ -151,6 +145,8 @@ class BusMachineImplTest {
         val states = mutableListOf<String>()
         override fun get(type: Class<*>): MemberView? = null
         override fun get(type: KClass<*>): MemberView? = null
+        override fun <V : View> get(type: Class<*>, viewType: KClass<V>): V? = null
+        override fun <V : View> get(type: KClass<*>, viewType: KClass<V>): V? = null
         override val member: MemberView? = null
         override val path: Path = "/test/heinzel"
 
@@ -187,6 +183,4 @@ class BusMachineImplTest {
         }
 
     }
-
-    class TestBusHub : BusHubImpl(), BusHub
 }

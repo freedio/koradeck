@@ -71,10 +71,14 @@ abstract class HsqlDbCollection<Record : Any>(
     fun commit() = connection.commit()
     fun rollback() = connection.rollback()
     private fun select(selector: Selection): Sequence<Record> {
-        val stmt = "select * from $tableName${selector.select}"
-        debug("Executing query «$stmt»")
-        @Suppress("UNCHECKED_CAST")
-        return statement.executeQuery(stmt).asSequence(model)
+        try {
+            val stmt = "select * from $tableName${selector.select}"
+            debug("Executing query «$stmt»")
+            return statement.executeQuery(stmt).asSequence(model)
+        } catch (e: Exception) {
+            error(e)
+            throw e
+        }
     }
 
     @Suppress("UNCHECKED_CAST")

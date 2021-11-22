@@ -17,6 +17,7 @@ import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.util.concurrent.atomic.AtomicInteger
 
 internal class BasicRequestListTest {
 
@@ -34,20 +35,19 @@ internal class BasicRequestListTest {
         // when
         agent.accept(testee).standby()
         // then
-        Thread.sleep(100)
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
-        assertThat(agent.sum).isEqualTo(0)
+        assertThat(agent.sum.get()).isEqualTo(0)
     }
 
     @Test
     fun testSuccessfulList() {
         // given:
-        val agent = BasicItemListTest.TestAgent()
-        val req1 = BasicItemListTest.TestRequest(100)
-        val req2 = BasicItemListTest.TestRequest(10)
-        val req3 = BasicItemListTest.TestRequest(1)
+        val agent = TestAgent()
+        val req1 = TestRequest(100)
+        val req2 = TestRequest(10)
+        val req3 = TestRequest(1)
         val testee = BasicItemList(here, sequenceOf(req1, req2, req3), processor = agent)
         // when:
         agent.accept(testee).standby()
@@ -55,8 +55,7 @@ internal class BasicRequestListTest {
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
-        assertThat(agent.sum).isEqualTo(111)
-        Thread.sleep(10)
+        assertThat(agent.sum.get()).isEqualTo(111)
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)
@@ -81,9 +80,8 @@ internal class BasicRequestListTest {
         assertThat(testee.successful).isFalse()
         assertThat(testee.failed).isTrue()
         assertThat(testee.cancelled).isFalse()
-        assertThat(agent.sum).isEqualTo(100)
+        assertThat(agent.sum.get()).isEqualTo(100)
         assertThat(trouble).isNotNull()
-        Thread.sleep(100)
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)
@@ -101,7 +99,7 @@ internal class BasicRequestListTest {
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
-        assertThat(agent.sum).isEqualTo(100)
+        assertThat(agent.sum.get()).isEqualTo(100)
         Thread.sleep(100)
         assertThat(req1.observerCount).isEqualTo(0)
     }
@@ -125,7 +123,7 @@ internal class BasicRequestListTest {
         assertThat(testee.successful).isFalse()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isTrue()
-        assertThat(agent.sum).isEqualTo(100)
+        assertThat(agent.sum.get()).isEqualTo(100)
         assertThat(trouble).isNotNull()
         Thread.sleep(100)
         assertThat(req1.observerCount).isEqualTo(0)
@@ -172,11 +170,11 @@ internal class BasicRequestListTest {
     class CancellingRequest(val value: Int): BasicRequest(here)
 
     class TestAgent : BasicAgent() {
-        var sum = 0
+        var sum = AtomicInteger(0)
 
         override fun receive(notification: Notification<*>) = when (val message = notification.content) {
             is TestRequest -> {
-                sum += message.value
+                sum.addAndGet(message.value)
                 message.succeed()
             }
             is CancellingRequest -> {
@@ -195,7 +193,7 @@ internal class BasicRequestListTest {
 
         override fun receive(notification: Notification<*>) = when (val message = notification.content) {
             is TestRequest -> {
-                collector.append(message.value.toChar())
+                synchronized(collector) { collector.append(message.value.toChar()) }
                 message.succeed()
             }
             is CancellingRequest -> {

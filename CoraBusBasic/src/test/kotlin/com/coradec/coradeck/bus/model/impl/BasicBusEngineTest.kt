@@ -62,8 +62,7 @@ internal class BasicBusEngineTest {
         assertThat(testee.state).isEqualTo(UNATTACHED)
         assertThat(testee.running.get()).isFalse()
         // when
-        container.add("Testee", testee.memberView)
-        testee.standby()
+        container.add("Testee", testee.memberView).standby()
         // then
         assertThat(testee.attached)
         assertThat(testee.state).isEqualTo(READY)

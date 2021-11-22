@@ -12,6 +12,7 @@ import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.model.Priority.*
 import com.coradec.coradeck.core.util.here
+import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
 import com.coradec.coradeck.ctrl.module.CoraControl
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
@@ -160,11 +161,12 @@ internal class BasicInformationTest {
         createdAt: ZonedDateTime = now(),
         validFrom: ZonedDateTime = createdAt,
         validUpTo: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
-    ) : BasicInformation(origin, priority, createdAt, Session.new, validFrom, validUpTo)
+    ) : BasicInformation(origin, priority, createdAt, Session.current, validFrom, validUpTo)
 
     class TestAgent: BasicAgent() {
         override fun receive(notification: Notification<*>) = when (val message = notification.content) {
             is Request -> message.succeed()
+            is TestInformation -> relax()
             else -> super.receive(notification)
         }
     }

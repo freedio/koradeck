@@ -52,6 +52,4 @@ interface BusNode : Origin, Recipient {
     @Throws(StateUnreachableException::class) fun standby(state: BusNodeState)
     /** Waits for at most [delay] until the node is ready.  Fails if the node is shutting down already. */
     @Throws(StateUnreachableException::class, TimeoutException::class) fun standby(delay: Timespan)
-    /** Waits until the node is ready.  Fails if the node is shutting down already. */
-    @Throws(StateUnreachableException::class) fun standby()
 }

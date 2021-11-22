@@ -56,14 +56,14 @@ class BasicItemSet(
         complete -> false
         event is RequestStateChangedEvent -> {
             val element: Request = event.message
-            trace("Request state changed: %s %s→%s", element, event.previous, event.current)
+            debug("Request state changed: %s %s→%s", element, event.previous, event.current)
             val newState = event.current
             process(element, newState)
             newState in FINISHED
         }
         event is StateChangedEvent -> {
             val element: Notification<*> = event.message
-            trace("Notification state changed: %s %s→%s", element, event.previous, event.current)
+            debug("Notification state changed: %s %s→%s", element, event.previous, event.current)
             val newState = event.current
             process(element, newState)
             newState == NotificationState.PROCESSED
@@ -72,7 +72,7 @@ class BasicItemSet(
     }
 
     private fun process(item: Notification<out Information>, state: NotificationState) {
-        when (val element: Information = item.content) {
+        when (val element = item.content) {
             is Request -> process(element, element.state)
             is Notification<*> -> process(element, element.state)
             else -> process(item, element, state)
@@ -86,7 +86,7 @@ class BasicItemSet(
                 SUCCESSFUL -> succeed()
                 FAILED -> fail(endProblem)
                 CANCELLED -> cancel()
-                else -> relax()
+                else -> throw IllegalStateException("Illegal end state: $endState")
             } else relax()
         }
         NotificationState.REJECTED, NotificationState.CRASHED -> fail(notification.problem)

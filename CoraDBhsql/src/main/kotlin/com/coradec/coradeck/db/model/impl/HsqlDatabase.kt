@@ -5,6 +5,7 @@
 package com.coradec.coradeck.db.model.impl
 
 import com.coradec.coradeck.bus.model.impl.BasicBusHub
+import com.coradec.coradeck.bus.view.MemberView
 import com.coradec.coradeck.com.model.RequestState.*
 import com.coradec.coradeck.com.model.Voucher
 import com.coradec.coradeck.core.util.classname
@@ -18,6 +19,8 @@ import com.coradec.coradeck.db.model.Database
 import com.coradec.coradeck.db.model.RecordTable
 import com.coradec.coradeck.db.util.seqOf
 import com.coradec.coradeck.db.util.toSqlTableName
+import com.coradec.coradeck.session.model.Session
+import com.coradec.coradeck.session.view.impl.BasicView
 import com.coradec.coradeck.text.model.LocalText
 import com.coradec.coradeck.type.model.Password
 import java.net.URI
@@ -31,11 +34,12 @@ class HsqlDatabase(
     private val uri: URI,
     private val username: String,
     private val password: Password,
-    val autocommit: Boolean = false
-) : BasicBusHub(), Database {
-    var myConnection: Connection? = null
-    override val connection: Connection get() = myConnection ?: throw IllegalStateException("Database «%s» not attached!")
-    override val statement: Statement get() = connection.createStatement()
+    private val autocommit: Boolean = false
+) : BasicBusHub() {
+    val databaseView: Database = InternalDatabaseView(Session.current)
+    private var myConnection: Connection? = null
+    private val connection: Connection get() = myConnection ?: throw IllegalStateException("Database «%s» not attached!")
+    private val statement: Statement get() = connection.createStatement()
     private var failed: Boolean = false
 
     override fun onInitializing() {
@@ -48,7 +52,7 @@ class HsqlDatabase(
 
     override fun onInitialized() {
         super.onInitialized()
-        debug("Database ‹%s› initialized.")
+        debug("Database ‹%s› initialized.", uri)
         statement.executeUpdate("set autocommit $autocommit")
     }
 
@@ -59,21 +63,25 @@ class HsqlDatabase(
         connection.close()
     }
 
-    override fun close() {
+    private fun close() {
         leave()
     }
 
-    override fun failed() {
+    private fun failed() {
         failed = true
     }
 
-    override fun <Record : Any> getTable(model: KClass<out Record>): RecordTable<Record> =
-        accept(GetTableVoucher(here, model)).content.value
+    private fun <Record : Any> getTable(model: KClass<out Record>): RecordTable<Record> {
+        debug("Running GetTable order for record ‹%s›.", model.classname)
+        return accept(GetTableVoucher(here, model)).content.value
+    }
 
-    override fun <Record : Any> openTable(model: KClass<out Record>): RecordTable<Record> =
-        accept(OpenTableVoucher(here, model)).content.value
+    private fun <Record : Any> openTable(model: KClass<out Record>): RecordTable<Record> {
+        debug("Running OpenTable order for record ‹%s›.", model.classname)
+        return accept(OpenTableVoucher(here, model)).content.value
+    }
 
-    override fun reset() {
+    private fun reset() {
         val tableTypes = listOf("TABLE", "VIEW")
         names.value.forEach { member -> remove(member) }
         connection.metaData.getTables(null, null, null, null)
@@ -95,10 +103,15 @@ class HsqlDatabase(
         val model = voucher.model
         debug("Opening table ‹%s›...", model.classname)
         lookup(model.toSqlTableName()).whenVoucherFinished {
+            debug("OpenTable ‹%s›: lookup finished with state ‹%s›.", model.classname, state)
             when (state) {
-                FAILED -> CreateTableVoucher(here, model).also { accept(it) }.forwardTo(voucher as Voucher<Any?>)
-                else -> forwardAs(voucher as Voucher<RecordTable<*>>) { member, session ->
-                    member.getView(session, RecordTable::class)
+                FAILED -> accept(CreateTableVoucher(here, model)).content.forwardTo(voucher as Voucher<Any?>).also {
+                    debug("Creating table.")
+                }
+                else -> {
+                    debug("Table found.")
+                    (voucher as Voucher<Any?>).value = value.getView(voucher.session, RecordTable::class)
+                    voucher.succeed()
                 }
             }
         }
@@ -106,7 +119,7 @@ class HsqlDatabase(
 
     private fun createTable(voucher: CreateTableVoucher<*>) {
         val name = voucher.model.toSqlTableName()
-        val node = HsqlDbTable(this, voucher.model)
+        val node = HsqlDbTable(InternalDatabaseView(Session.current), voucher.model)
         val memberView = node.memberView
         debug("Creating table ‹%s›", name)
         add(name, memberView).whenFinished {
@@ -121,6 +134,17 @@ class HsqlDatabase(
                 else -> relax()
             }
         }
+    }
+
+    private inner class InternalDatabaseView(session: Session) : BasicView(session), Database {
+        override val connection: Connection get() = this@HsqlDatabase.connection
+        override val statement: Statement get() = this@HsqlDatabase.statement
+        override val memberView: MemberView = this@HsqlDatabase.memberView
+        override fun <Record : Any> getTable(model: KClass<out Record>): RecordTable<Record> = this@HsqlDatabase.getTable(model)
+        override fun <Record : Any> openTable(model: KClass<out Record>): RecordTable<Record> = this@HsqlDatabase.openTable(model)
+        override fun reset() = this@HsqlDatabase.reset()
+        override fun close() = this@HsqlDatabase.close()
+        override fun failed() = this@HsqlDatabase.failed()
     }
 
     companion object {

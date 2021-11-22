@@ -5,6 +5,8 @@
 package com.coradec.coradeck.bus.view
 
 import com.coradec.coradeck.dir.model.Path
+import com.coradec.coradeck.session.trouble.ViewNotFoundException
+import com.coradec.coradeck.session.view.View
 import kotlin.reflect.KClass
 
 interface BusContext {
@@ -21,6 +23,10 @@ interface BusContext {
     operator fun get(type: Class<*>): MemberView?
     /** Looks up a superior of the specified type in the bus hierarchy. Returns null if none was found. */
     operator fun get(type: KClass<*>): MemberView?
+    /** Looks up a particular view of the superior of the specified type in the bus hierarchy. Returns null if none was found. */
+    @Throws(ViewNotFoundException::class) operator fun <V: View> get(type: Class<*>, viewType: KClass<V>): V?
+    /** Looks up a particular view of the superior of the specified type in the bus hierarchy. Returns null if none was found. */
+    @Throws(ViewNotFoundException::class) operator fun <V: View> get(type: KClass<*>, viewType: KClass<V>): V?
     /** Indicates that the node is about to leave the context. */
     fun leaving()
     /** Indicates that the node has left the context. */

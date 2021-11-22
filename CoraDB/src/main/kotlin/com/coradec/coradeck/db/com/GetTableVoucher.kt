@@ -6,7 +6,7 @@ package com.coradec.coradeck.db.com
 
 import com.coradec.coradeck.com.model.impl.BasicVoucher
 import com.coradec.coradeck.core.model.Origin
-import com.coradec.coradeck.db.view.RecordTableView
+import com.coradec.coradeck.db.model.RecordTable
 import kotlin.reflect.KClass
 
-class GetTableVoucher<Record : Any>(origin: Origin, val model: KClass<out Record>): BasicVoucher<RecordTableView<Record>>(origin)
+class GetTableVoucher<Record : Any>(origin: Origin, val model: KClass<out Record>): BasicVoucher<RecordTable<Record>>(origin)

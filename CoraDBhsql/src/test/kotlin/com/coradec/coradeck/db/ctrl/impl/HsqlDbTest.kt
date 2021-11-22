@@ -20,12 +20,11 @@ import com.coradec.coradeck.db.annot.Generated
 import com.coradec.coradeck.db.annot.Indexed
 import com.coradec.coradeck.db.annot.Primary
 import com.coradec.coradeck.db.annot.Size
-import com.coradec.coradeck.db.com.GetTableVoucher
 import com.coradec.coradeck.db.com.OpenTableVoucher
 import com.coradec.coradeck.db.ctrl.impl.SqlSelection.Companion.where
 import com.coradec.coradeck.db.model.Database
 import com.coradec.coradeck.db.model.impl.BasicColumnDefinition
-import com.coradec.coradeck.db.module.CoraDB
+import com.coradec.coradeck.db.model.impl.HsqlDatabase
 import com.coradec.coradeck.db.module.CoraDbHsql
 import com.coradec.coradeck.db.util.generate
 import com.coradec.coradeck.dir.module.CoraDirImpl
@@ -47,8 +46,10 @@ import kotlin.reflect.full.findAnnotation
 internal class HsqlDbTest {
 
     companion object {
-        lateinit var database1: Database
-        lateinit var database2: Database
+        lateinit var db1: Database
+        lateinit var db2: Database
+        lateinit var database1: HsqlDatabase
+        lateinit var database2: HsqlDatabase
 
         @Suppress("unused")
         @BeforeAll
@@ -69,17 +70,14 @@ internal class HsqlDbTest {
             Files.deleteTree("/tmp/dbtest".toPath())
             Files.deleteTree("/tmp/dbtest2".toPath())
             log.debug("@1")
-            database1 = CoraDB.database(URI("jdbc:hsqldb:file:/tmp/dbtest/db"), "sa", Password(""))
+            database1 = HsqlDatabase(URI("jdbc:hsqldb:file:/tmp/dbtest/db"), "sa", Password(""))
             log.debug("@2")
-            CoraBus.applicationBus.add("hsqlDB1", database1.memberView)
+            CoraBus.applicationBus.add("hsqlDB1", database1.memberView).standby()
             log.debug("@3")
-            database1.standby()
             log.debug("@4")
             database1.accept(OpenTableVoucher(here,TestClass::class)).standby()
             log.debug("@5")
-            val tbl = database1.accept(OpenTableVoucher(here, TestClass2::class)).content
-            relax()
-            tbl.value.let { table ->
+            database1.accept(OpenTableVoucher(here, TestClass2::class)).content.value.let { table ->
                 log.debug("@5.0")
                 Thread.sleep(500)
                 table += TestClass2("Jane", "Doe", LocalDate.of(2000, 1, 1), 2)
@@ -93,15 +91,16 @@ internal class HsqlDbTest {
             log.debug("Test suite initialized.")
             log.debug("@8")
             relax()
-            database2 = CoraDB.database(URI("jdbc:hsqldb:file:/tmp/dbtest2/db"), "sa", Password(""))
-            CoraBus.applicationBus.add("hsqlDB2", database2.memberView)
-            database2.standby()
+            database2 = HsqlDatabase(URI("jdbc:hsqldb:file:/tmp/dbtest2/db"), "sa", Password(""))
+            CoraBus.applicationBus.add("hsqlDB2", database2.memberView).standby()
             database2.accept(OpenTableVoucher(here, TestClass::class)).standby()
             database2.accept(OpenTableVoucher(here, TestClass2::class)).content.value.let { table ->
                 Thread.sleep(500)
                 table += TestClass2("Jane", "Doe", LocalDate.of(2000, 1, 1), 2)
                 table += TestClass2("Jack", "Daniels", LocalDate.of(1864, 4, 24), 1)
             }
+            db1 = database1.databaseView
+            db2 = database2.databaseView
         }
 
         @AfterAll
@@ -109,6 +108,7 @@ internal class HsqlDbTest {
             val log = CoraCom.log
             log.debug("Tear down.")
             database1.detach().standby()
+            database2.detach().standby()
             Thread.sleep(1000)
             log.debug("Torn down.")
         }
@@ -117,7 +117,7 @@ internal class HsqlDbTest {
     @Test
     fun testName() {
         // given:
-        database1.accept(GetTableVoucher(here, TestClass::class)).content.value.let { testee ->
+        db1.getTable(TestClass::class).let { testee ->
             // when:
             val result = testee.recordName
             // then:
@@ -128,7 +128,7 @@ internal class HsqlDbTest {
     @Test
     fun testName2() {
         // given:
-        database1.getTable(TestClass2::class).let { testee ->
+        db1.getTable(TestClass2::class).let { testee ->
             // when:
             val result = testee.recordName
             // then:
@@ -139,7 +139,7 @@ internal class HsqlDbTest {
     @Test
     fun testTableName() {
         // given:
-        database1.getTable(TestClass::class).let { testee ->
+        db1.getTable(TestClass::class).let { testee ->
             // when:
             val result = testee.tableName
             // then:
@@ -150,7 +150,7 @@ internal class HsqlDbTest {
     @Test
     fun testTableName2() {
         // given:
-        database1.getTable(TestClass2::class).let { testee ->
+        db1.getTable(TestClass2::class).let { testee ->
             // when:
             val result = testee.tableName
             // then:
@@ -161,7 +161,7 @@ internal class HsqlDbTest {
     @Test
     fun testFieldNames() {
         // given:
-        database1.getTable(TestClass::class).let { testee ->
+        db1.getTable(TestClass::class).let { testee ->
             // when:
             val result = testee.fieldNames.toList()
             // then:
@@ -172,7 +172,7 @@ internal class HsqlDbTest {
     @Test
     fun testFieldNames2() {
         // given:
-        database1.getTable(TestClass2::class).let { testee ->
+        db1.getTable(TestClass2::class).let { testee ->
             // when:
             val result = testee.fieldNames.toList()
             // then:
@@ -183,7 +183,7 @@ internal class HsqlDbTest {
     @Test
     fun testFields() {
         // given:
-        database1.getTable(TestClass::class).let { testee ->
+        db1.getTable(TestClass::class).let { testee ->
             // when:
             val result = testee.fields.mapValues {
                 Pair(it.value.classifier as KClass<*>, it.value.findAnnotation<Size>()?.value)
@@ -203,7 +203,7 @@ internal class HsqlDbTest {
     @Test
     fun testFields2() {
         // given:
-        database1.getTable(TestClass2::class).let { testee ->
+        db1.getTable(TestClass2::class).let { testee ->
             // when:
             val result = testee.fields.mapValues {
                     Pair(it.value.classifier as KClass<*>, it.value.findAnnotation<Size>()?.value)
@@ -224,7 +224,7 @@ internal class HsqlDbTest {
     @Test
     fun testColumnNames() {
         // given:
-        database1.getTable(TestClass::class).let { testee ->
+        db1.getTable(TestClass::class).let { testee ->
             // when:
             val result = testee.columnNames.toList()
             // then:
@@ -235,7 +235,7 @@ internal class HsqlDbTest {
     @Test
     fun testColumnNames2() {
         // given:
-        database1.getTable(TestClass2::class).let { testee ->
+        db1.getTable(TestClass2::class).let { testee ->
             // when:
             val result = testee.columnNames.toList()
             // then:
@@ -246,7 +246,7 @@ internal class HsqlDbTest {
     @Test
     fun testColumnDefinitions() {
         // given:
-        database1.getTable(TestClass::class).let { testee ->
+        db1.getTable(TestClass::class).let { testee ->
             // when:
             val result = testee.columnDefinitions.toMap()
             // then:
@@ -264,7 +264,7 @@ internal class HsqlDbTest {
     @Test
     fun testColumnDefinitions2() {
         // given:
-        database1.getTable(TestClass2::class).let { testee ->
+        db1.getTable(TestClass2::class).let { testee ->
             // when:
             val result = testee.columnDefinitions.toMap()
             // then:
@@ -284,7 +284,7 @@ internal class HsqlDbTest {
     fun testInsertRecord3() {
         // given:
         try {
-            database1.getTable(TestClass3::class).let { testee ->
+            db1.getTable(TestClass3::class).let { testee ->
                 // when:
                     testee += TestClass3("John", "Buck", LocalDate.of(1970, 1, 1), 1)
             }
@@ -300,7 +300,7 @@ internal class HsqlDbTest {
     @Test
     fun testInsertRecord2() {
         // given:
-        database1.getTable(TestClass2::class).let { testee ->
+        db1.getTable(TestClass2::class).let { testee ->
             // when:
             val result = testee.insert(TestClass2("John", "Buck", LocalDate.of(1970, 1, 1), 1))
             // then:
@@ -313,7 +313,7 @@ internal class HsqlDbTest {
         // given:
         // when:
         try {
-            database1.getTable(TestClass3::class).let { testee ->
+            db1.getTable(TestClass3::class).let { testee ->
                 testee -= where("[familienName = 'Doe']")
             }
             // then: fails
@@ -328,7 +328,7 @@ internal class HsqlDbTest {
     @Test
     fun testDeleteRecord2() {
         // given:
-        database1.accept(GetTableVoucher(here, TestClass2::class)).content.value.let { testee ->
+        db1.getTable(TestClass2::class).let { testee ->
             // when:
             val result = testee.delete(where("[familienName = 'Doe']"))
             // then:
@@ -339,7 +339,7 @@ internal class HsqlDbTest {
     @Test fun testCurrency() {
         // given:
         val francs = Currency.getInstance("CHF")
-        val table = database1.getTable(TestClassWithCurrency::class)
+        val table = db1.getTable(TestClassWithCurrency::class)
         table += TestClassWithCurrency(3.1415926, francs)
         // when:
         val record = table.all.single()
@@ -351,10 +351,10 @@ internal class HsqlDbTest {
     @Test fun testReset() {
         // given:
         // when:
-        database2.reset()
+        db2.reset()
         // then:
         try {
-            database2.getTable(TestClass::class).let { testee ->
+            db2.getTable(TestClass::class).let { testee ->
                 // when:
                 testee += TestClass("John", "Buck", LocalDate.of(1970, 1, 1), 1)
             }

@@ -18,6 +18,7 @@ import com.coradec.coradeck.com.model.Voucher
 import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.com.model.impl.BasicVoucher
 import com.coradec.coradeck.core.model.Origin
+import com.coradec.coradeck.core.model.Priority.B1
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.core.util.swallow
@@ -113,24 +114,29 @@ open class BusHubImpl(
     private fun acceptMember(request: AcceptMemberRequest) {
         val name = request.name
         val node = request.node
-        debug("Waiting for member ‹%s› to become ready", name)
-        node.standby()
         debug("Accepting member ‹%s› as «%s»", node, name)
         myMembers[name] = node
         request.succeed()
     }
 
     private fun addMember(request: AddMemberRequest) {
+        val name = request.name
+        val node = request.node
+        debug("Received request to add member ‹%s› as «%s».", node, name)
         try {
-            val name = request.name
-            val node = request.node
-            if (attached) node.attach(InternalBusContext(request.session, name, InternalBusHubView())).propagateTo(request)
+            if (attached) {
+                debug("Hub already attached -> attaching member «%s» directly.", name)
+                node.attach(InternalBusContext(request.session, name, InternalBusHubView())).propagateTo(request) andThen {
+                    debug("Attached member ‹%s› as «%s».", node, name)
+                }
+            }
             else {
+                debug("Hub not (yet) attached -> adding node «%s» as candidate.", name)
                 candidates[request] = node
-                request.succeed()
             }
             trace("Candidates: %s, Members: %s.", candidates.entries, myMembers.entries)
         } catch (e: Exception) {
+            error(e)
             request.fail(e)
         }
     }
@@ -147,7 +153,7 @@ open class BusHubImpl(
         val name = request.name
         debug("Unlinking member ‹%s›", name)
         if (myMembers.remove(name) != null) warn(TEXT_MEMBER_ALREADY_GONE, name)
-            request.succeed()
+        request.succeed()
     }
 
     private fun replaceMember(voucher: ReplaceMemberVoucher) {
@@ -192,19 +198,6 @@ open class BusHubImpl(
                     debug("Loading %s ‹%s›.", mytype, name)
                     state = LOADING
                     delegator?.onLoading()
-//                    accept(
-//                        createItemSet(this, candidates.map { (addMemReq, node) ->
-//                            val key = addMemReq.name
-//                            node.attach(InternalBusContext(key, InternalBusHubView())) andThen {
-//                                accept(
-//                                    AcceptCandidateRequest(
-//                                        here,
-//                                        key
-//                                    )
-//                                )
-//                            }
-//                        }, this).propagateTo(transition)
-//                    )
                     accept(
                         createRequestSet(this, candidates.keys.map {
                             AddCandidateRequest(here, it.name)
@@ -261,13 +254,13 @@ open class BusHubImpl(
 
     inner class InternalBusContext(session: Session, name: String, hubView: BusHubView) : BasicBusContext(session, name, hubView)
 
-    override fun lookup(name: String): Voucher<MemberView> = LookupMemberVoucher(this, name).apply { accept(this) }
-    override fun contains(name: String) = ContainsMemberVoucher(this, name).apply { accept(this) } as Voucher<Boolean>
-    override fun add(name: String, node: MemberView): Request = AddMemberRequest(this, name, node).apply { accept(this) }
-    override fun remove(name: String): Voucher<MemberView> = RemoveMemberVoucher(this, name).apply { accept(this) }
-    override fun rename(name: String, newName: String): Request = RenameMemberRequest(this, name, newName).apply { accept(this) }
+    override fun lookup(name: String): Voucher<MemberView> = accept(LookupMemberVoucher(this, name)).content
+    override fun contains(name: String) = accept(ContainsMemberVoucher(this, name)).content as Voucher<Boolean>
+    override fun add(name: String, node: MemberView): Request = accept(AddMemberRequest(this, name, node)).content
+    override fun remove(name: String): Voucher<MemberView> = accept(RemoveMemberVoucher(this, name)).content
+    override fun rename(name: String, newName: String): Request = accept(RenameMemberRequest(this, name, newName)).content
     override fun replace(name: String, substitute: MemberView): Voucher<MemberView> =
-        ReplaceMemberVoucher(this, name, substitute).apply { accept(this) }
+        accept(ReplaceMemberVoucher(this, name, substitute)).content
 
     protected open fun onJoining(node: MemberView) {}
     protected open fun onJoined(node: MemberView) {}
@@ -289,10 +282,10 @@ open class BusHubImpl(
     internal class LookupMemberVoucher(origin: Origin, val name: String) : BasicVoucher<MemberView>(origin)
     private class ContainsMemberVoucher(origin: Origin, val name: String) : BasicVoucher<Boolean>(origin)
     private class MemberVoucher(origin: Origin) : BasicVoucher<Map<String, MemberView>>(origin)
-    internal class AddMemberRequest(origin: Origin, val name: String, val node: MemberView) : BasicRequest(origin)
-    private class AddCandidateRequest(origin: Origin, val name: String) : BasicRequest(origin)
-    private class AcceptCandidateRequest(origin: Origin, val name: String, val node: MemberView) : BasicRequest(origin)
-    internal class AcceptMemberRequest(origin: Origin, val name: String, val node: MemberView) : BasicRequest(origin)
+    internal class AddMemberRequest(origin: Origin, val name: String, val node: MemberView) : BasicRequest(origin, priority = B1)
+    private class AddCandidateRequest(origin: Origin, val name: String) : BasicRequest(origin, priority = B1)
+    private class AcceptCandidateRequest(origin: Origin, val name: String, val node: MemberView) : BasicRequest(origin, priority = B1)
+    internal class AcceptMemberRequest(origin: Origin, val name: String, val node: MemberView) : BasicRequest(origin, priority = B1)
     private class RemoveMemberVoucher(origin: Origin, val name: String) : BasicVoucher<MemberView>(origin)
     private class RenameMemberRequest(origin: Origin, val name: String, val newName: String) : BasicRequest(origin)
     private class ReplaceMemberVoucher(origin: Origin, val name: String, val substitute: MemberView) : BasicVoucher<MemberView>(origin)

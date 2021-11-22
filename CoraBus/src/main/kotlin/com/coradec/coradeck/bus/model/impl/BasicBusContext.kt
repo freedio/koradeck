@@ -8,6 +8,7 @@ import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.bus.view.BusHubView
 import com.coradec.coradeck.bus.view.MemberView
 import com.coradec.coradeck.session.model.Session
+import com.coradec.coradeck.session.view.View
 import kotlin.reflect.KClass
 
 @Suppress("UNCHECKED_CAST")
@@ -17,6 +18,9 @@ open class BasicBusContext(val session: Session, override var name: String, over
 
     override fun get(type: Class<*>): MemberView? = hub[type]
     override fun get(type: KClass<*>): MemberView? = hub[type]
+    override fun <V : View> get(type: Class<*>, viewType: KClass<V>): V? = get(type)?.getView(session, viewType)
+    override fun <V : View> get(type: KClass<*>, viewType: KClass<V>): V? = get(type)?.getView(session, viewType)
+
     override fun leaving() = hub.onLeaving(member ?: throw IllegalStateException("There is no member that could leave!"))
     override fun left() {
         hub.unlink(name)

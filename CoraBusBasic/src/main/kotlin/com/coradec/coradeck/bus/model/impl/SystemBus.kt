@@ -36,6 +36,7 @@ object SystemBus : BasicBusHub(CoraDir.rootNamespace) {
     init {
         attach(selfContext) andThen { CIMMEX.preventShutdown() }
         addShutdownHook("Blackout") {
+            debug("Shutdown of SystemBus initiated.")
             if (attached) detach() andThen { CIMMEX.allowShutdown() }
         }
     }
@@ -85,7 +86,6 @@ object SystemBus : BasicBusHub(CoraDir.rootNamespace) {
 
     private class SystemBusView(session: Session) : BasicView(session), MemberView {
         override fun attach(context: BusContext): Request = throw InvalidRequestException("SystemBus cannot be attached!")
-        override fun standby() = SystemBus.standby()
         override fun detach(): Request = throw InvalidRequestException("SystemBus cannot be detached!")
         override fun <V : View> lookupView(session: Session, type: KClass<V>): V? = null
         override fun <V : View> getView(session: Session, type: KClass<V>): V = lookupView(session, type)
