@@ -26,7 +26,6 @@ open class BasicBusNode : BasicAgent(), DelegatedBusNode {
     override val ready: Boolean get() = delegate.ready
     override val state: BusNodeState get() = delegate.state
     override val states: List<BusNodeState> get() = delegate.states
-    override val attached: Boolean get() = delegate.attached
     override val context: BusContext? get() = delegate.context
     override val path: Path? get() = context?.path
     override val name: String? get() = context?.name

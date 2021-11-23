@@ -4,6 +4,7 @@
 
 package com.coradec.coradeck.bus.model
 
+import com.coradec.coradeck.bus.model.BusNodeState.INITIALIZED
 import com.coradec.coradeck.bus.trouble.NodeNotAttachedException
 import com.coradec.coradeck.bus.trouble.StateUnreachableException
 import com.coradec.coradeck.bus.view.BusContext
@@ -28,6 +29,8 @@ interface BusNode : Origin, Recipient {
     val context: BusContext?
     /** If this node is attached to a bus context. */
     val attached: Boolean get() = context != null
+    /** If this node is initialized. */
+    val initialized: Boolean get() = INITIALIZED in states
     /** The directory path of this node.  Absent if unattached. */
     val path: Path?
     /** The name of this node in its context.  Absent if unattached. */

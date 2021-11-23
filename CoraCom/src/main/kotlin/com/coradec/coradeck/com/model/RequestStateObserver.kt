@@ -12,6 +12,7 @@ interface RequestStateObserver: Observer {
     val action: () -> Unit
 
     companion object {
-        operator fun invoke(state: RequestState, action: () -> Unit): RequestStateObserver = BasicRequestStateObserver(state, action)
+        operator fun invoke(state: RequestState, action: () -> Unit): RequestStateObserver =
+            BasicRequestStateObserver(state, action)
     }
 }

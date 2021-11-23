@@ -36,8 +36,7 @@ object SystemBus : BasicBusHub(CoraDir.rootNamespace) {
     init {
         attach(selfContext) andThen { CIMMEX.preventShutdown() }
         addShutdownHook("Blackout") {
-            debug("Shutdown of SystemBus initiated.")
-            if (attached) detach() andThen { CIMMEX.allowShutdown() }
+            if (attached) detach() andThen { CIMMEX.allowShutdown() } else CIMMEX.allowShutdown()
         }
     }
 

@@ -64,7 +64,7 @@ class HsqlDatabase(
     }
 
     private fun close() {
-        leave()
+        detach()
     }
 
     private fun failed() {
@@ -72,13 +72,15 @@ class HsqlDatabase(
     }
 
     private fun <Record : Any> getTable(model: KClass<out Record>): RecordTable<Record> {
-        debug("Running GetTable order for record ‹%s›.", model.classname)
-        return accept(GetTableVoucher(here, model)).content.value
+        val modelClass = model.classname
+        debug("GetTable order for record ‹%s›.", modelClass)
+        return accept(GetTableVoucher(here, model)).content.value.also { debug("GetTable ‹%s› order filled", modelClass) }
     }
 
     private fun <Record : Any> openTable(model: KClass<out Record>): RecordTable<Record> {
-        debug("Running OpenTable order for record ‹%s›.", model.classname)
-        return accept(OpenTableVoucher(here, model)).content.value
+        val modelClass = model.classname
+        debug("OpenTable order for record ‹%s›.", modelClass)
+        return accept(OpenTableVoucher(here, model)).content.value.also { debug("OpenTable ‹%s› order filled", modelClass) }
     }
 
     private fun reset() {
@@ -96,7 +98,8 @@ class HsqlDatabase(
 
     private fun getTable(voucher: GetTableVoucher<*>) {
         lookup(voucher.model.toSqlTableName()).forwardAs(voucher as Voucher<RecordTable<*>>) { member, session ->
-            member.getView(session, RecordTable::class) }
+            member.getView(session, RecordTable::class)
+        }
     }
 
     private fun openTable(voucher: OpenTableVoucher<*>) {
@@ -105,11 +108,10 @@ class HsqlDatabase(
         lookup(model.toSqlTableName()).whenVoucherFinished {
             debug("OpenTable ‹%s›: lookup finished with state ‹%s›.", model.classname, state)
             when (state) {
-                FAILED -> accept(CreateTableVoucher(here, model)).content.forwardTo(voucher as Voucher<Any?>).also {
-                    debug("Creating table.")
+                FAILED -> accept(CreateTableVoucher(here, model)).content.apply {
+                    forwardTo(voucher as Voucher<Any?>)
                 }
                 else -> {
-                    debug("Table found.")
                     (voucher as Voucher<Any?>).value = value.getView(voucher.session, RecordTable::class)
                     voucher.succeed()
                 }

@@ -92,7 +92,10 @@ open class BusHubImpl(
         val candidate = candEntry.value
         candidate.attach(InternalBusContext(request.session, name, InternalBusHubView())).whenFinished {
             when (this.state) {
-                SUCCESSFUL -> accept(AcceptCandidateRequest(this@BusHubImpl, name, candidate).propagateTo(request))
+                SUCCESSFUL -> {
+                    debug("Candidate «%s» attached.", name)
+                    accept(AcceptCandidateRequest(this@BusHubImpl, name, candidate).propagateTo(request))
+                }
                 FAILED -> request.fail(reason)
                 CANCELLED -> request.cancel(reason)
                 else -> relax()
@@ -124,7 +127,7 @@ open class BusHubImpl(
         val node = request.node
         debug("Received request to add member ‹%s› as «%s».", node, name)
         try {
-            if (attached) {
+            if (initialized) {
                 debug("Hub already attached -> attaching member «%s» directly.", name)
                 node.attach(InternalBusContext(request.session, name, InternalBusHubView())).propagateTo(request) andThen {
                     debug("Attached member ‹%s› as «%s».", node, name)
@@ -152,7 +155,7 @@ open class BusHubImpl(
     private fun unlinkMember(request: UnlinkMemberRequest) {
         val name = request.name
         debug("Unlinking member ‹%s›", name)
-        if (myMembers.remove(name) != null) warn(TEXT_MEMBER_ALREADY_GONE, name)
+        if (myMembers.remove(name) == null) warn(TEXT_MEMBER_ALREADY_GONE, name)
         request.succeed()
     }
 
@@ -186,7 +189,7 @@ open class BusHubImpl(
     override fun stateChanged(transition: BusNodeStateTransition) {
         try {
             val context = transition.context
-            val name = name ?: context?.name ?: throw IllegalStateException("Name must be present here!")
+            val name = name ?: context?.name ?: throw IllegalStateException("Name must be present here! Transition: $transition")
             when (transition.unto) {
                 INITIALIZED -> {
                     debug("Initialized %s ‹%s›.", mytype, name)
@@ -241,7 +244,7 @@ open class BusHubImpl(
     }
 
     protected fun unloadMembers(transition: BusNodeStateTransition) {
-        debug("Unloading %d member(s): %s", myMembers.size, myMembers.values)
+        trace("Unloading %d member(s): %s", myMembers.size, myMembers.values)
         if (myMembers.isEmpty()) transition.succeed()
         else accept(
             createRequestSet(

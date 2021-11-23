@@ -203,7 +203,13 @@ object CIMMEX : Logger(), IMMEX {
             out.println("         Enabled: ${enabled.get()} (should be ‹false›)")
             out.println("         Inqueue: $inqueue")
             out.println("       TaskQueue: $taskqueue")
-            out.println("Dispatcher Table: $dispatchTable")
+            out.println("      Recipients: ${dispatchOrder.joinToString(" ❖ ")}")
+            out.println("Dispatcher Table: ${
+                dispatchTable.entries
+                    .joinToString("\n\n", "{\n", "\n}") { (recipient, entries) ->
+                        "$recipient <= ${entries.joinToString("\n", "• ")}"
+                    }
+            }")
         }
         return collector.toString()
     }

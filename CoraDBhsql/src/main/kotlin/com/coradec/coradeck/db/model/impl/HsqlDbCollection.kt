@@ -67,7 +67,7 @@ abstract class HsqlDbCollection<Record : Any>(
 
     private val size: Int get() = count(selector)
     private val all: Sequence<Record> get() = select(selector)
-    protected open fun close() = db.close()
+    protected open fun close() {}
     fun commit() = connection.commit()
     fun rollback() = connection.rollback()
     private fun select(selector: Selection): Sequence<Record> {

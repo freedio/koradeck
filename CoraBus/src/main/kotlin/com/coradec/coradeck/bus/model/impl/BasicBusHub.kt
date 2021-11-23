@@ -28,8 +28,6 @@ open class BasicBusHub(protected val namespace: DirectoryNamespace = CoraDir.def
     override fun contains(name: String): Voucher<Boolean> = delegate.contains(name)
     override val memberView: MemberView get() = memberView(Session.current)
 
-    protected fun leave() = delegate.detach()
-
     protected open fun onLoading() {}
     protected open fun onLoaded() {}
     protected open fun onUnloading() {}

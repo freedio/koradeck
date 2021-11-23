@@ -52,6 +52,11 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
         route(DeleteRecordsVoucher::class, ::deleteRecord)
     }
 
+    override fun onFinalizing() {
+        super.onFinalizing()
+        close()
+    }
+
     private fun assertTable() {
         val create = "create table if not exists $tableName (${columnDefinitions.entries.joinToString { "${it.key} ${it.value}" }})"
         try {
