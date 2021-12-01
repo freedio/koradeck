@@ -35,6 +35,10 @@ interface IMMEX {
     fun plugin(klass: KClass<out Information>, vararg listener: Recipient)
     /** Unregisters a number of listeners from broadcast reception. */
     fun unplug(vararg listener: Recipient)
+    /** Blocks the specified recipient so that it can't receive any more dispatched messaged. */
+    fun block(recipient: Recipient)
+    /** Unblocks the specified recipient. */
+    fun release(recipient: Recipient)
     /** Wait until there are no more pending messages in CIMMEX. */
     fun standby()
     /** Wait for at most delay until there are no more pending messages in CIMMEX. */

@@ -68,6 +68,7 @@ object CIMMEX : Logger(), IMMEX {
     private val defaultAgent = DefaultAgent()
     private val dispatchTable = ConcurrentHashMap<Recipient, PriorityBlockingQueue<Notification<*>>>()
     private val dispatchOrder = PriorityBlockingQueue(PROP_MAX_RECIPIENTS.value, RecipientComparator())
+    private val dispatchBlock = CopyOnWriteArraySet<Recipient>()
     private val undeliveredCount get() = dispatchTable.values.sumOf { it.size }
     private val registry = ConcurrentHashMap<KClass<*>, MutableSet<Recipient>>()
     private val finishTriggers = HashSet<Observer>()
@@ -197,6 +198,14 @@ object CIMMEX : Logger(), IMMEX {
         registry.forEach { it.value.removeAll(listener) }
     }
 
+    override fun block(recipient: Recipient): Unit = synchronized(dispatcher) {
+        dispatchBlock.add(recipient) && dispatchOrder.remove(recipient)
+    }
+
+    override fun release(recipient: Recipient): Unit = synchronized(dispatcher) {
+        if (dispatchBlock.remove(recipient) && recipient in dispatchTable.keys) dispatchOrder.put(recipient)
+    }
+
     private fun showRemaining(): String {
         val collector = StringWriter()
         PrintWriter(collector).use { out ->
@@ -282,7 +291,7 @@ object CIMMEX : Logger(), IMMEX {
             val e = queue.isEmpty()
             if (queue.offer(notification)) {
                 action = { notification.dispatch() }
-                if (e) dispatchOrder.put(recipient)
+                if (e && recipient !in dispatchBlock) dispatchOrder.put(recipient)
             }
             else if (!inqueue.offer(notification)) action = { cantDispatch(notification) }
         }
@@ -360,7 +369,9 @@ object CIMMEX : Logger(), IMMEX {
                     item.deliver()
                     recipient.receive(item)
                     item.process()
-                    dispatchOrder.add(recipient)
+                    synchronized(dispatcher) {
+                        if (recipient !in dispatchBlock) dispatchOrder.put(recipient)
+                    }
                 } catch (e: NotificationRejectedException) {
                     item.reject(e)
                 } catch (e: Exception) {
