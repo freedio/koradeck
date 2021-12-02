@@ -13,6 +13,7 @@ import com.coradec.coradeck.com.model.impl.StateChangedEvent
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.util.relax
+import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.model.ItemList
 import com.coradec.coradeck.ctrl.module.CoraControl.IMMEX
 import com.coradec.coradeck.ctrl.trouble.LostInformationException
@@ -30,7 +31,7 @@ class BasicItemList(
     session: Session = Session.current,
     validFrom: ZonedDateTime = createdAt,
     validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC),
-    private val processor: Recipient? = null
+    private val processor: Agent? = null
 ) : BasicRequest(origin, priority, createdAt, session, validFrom, validUpto), ItemList {
     constructor(
         origin: Origin,
@@ -40,7 +41,7 @@ class BasicItemList(
         session: Session = Session.current,
         validFrom: ZonedDateTime = createdAt,
         validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC),
-        processor: Recipient? = null
+        processor: Agent? = null
     ) : this(origin, items.iterator(), priority, createdAt, session, validFrom, validUpto, processor)
 
     private val actionItems = Sequence { items }.map {

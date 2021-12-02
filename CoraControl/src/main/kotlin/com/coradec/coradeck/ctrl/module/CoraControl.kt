@@ -26,7 +26,7 @@ object CoraControl : CoraModule<CoraControlAPI>() {
      * only if all requests were successful.  If at least one request failed, the set fails; if at least one request was cancelled,
      * the set is cancelled, with the effect of cancelling all other requests which are not yet finished.
      */
-    fun createRequestSet(origin: Origin, vararg requests: Request, processor: Recipient? = null) =
+    fun createRequestSet(origin: Origin, vararg requests: Request, processor: Agent? = null) =
         impl.createRequestSet(origin, requests.asSequence(), processor = processor)
 
     /**
@@ -34,7 +34,7 @@ object CoraControl : CoraModule<CoraControlAPI>() {
      * only if all requests were successful.  If at least one request failed, the set fails; if at least one request was cancelled,
      * the set is cancelled, with the effect of cancelling all other requests which are not yet finished.
      */
-    fun createRequestSet(origin: Origin, requests: Sequence<Request>, processor: Recipient? = null) =
+    fun createRequestSet(origin: Origin, requests: Sequence<Request>, processor: Agent? = null) =
         impl.createRequestSet(origin, requests, processor)
 
     /**
@@ -42,7 +42,7 @@ object CoraControl : CoraModule<CoraControlAPI>() {
      * only if all requests were successful.  If at least one request failed, the set fails; if at least one request was cancelled,
      * the set is cancelled, with the effect of cancelling all other requests which are not yet finished.
      */
-    fun createRequestSet(origin: Origin, requests: Iterable<Request>, processor: Recipient? = null) =
+    fun createRequestSet(origin: Origin, requests: Iterable<Request>, processor: Agent? = null) =
         impl.createRequestSet(origin, Sequence { requests.iterator() }, processor)
 
     /**
@@ -50,7 +50,7 @@ object CoraControl : CoraModule<CoraControlAPI>() {
      * next until the first has terminated.  If all requests were successful, the list is successful; if any request fails, the
      * rest is skipped and the list fails; if any request is cancelled, the rest is skipped and the list is cancelled.
      */
-    fun createRequestList(origin: Origin, requests: Sequence<Request>, processor: Recipient? = null) =
+    fun createRequestList(origin: Origin, requests: Sequence<Request>, processor: Agent? = null) =
         impl.createRequestList(origin, requests, processor = processor)
 
     /**
@@ -58,7 +58,7 @@ object CoraControl : CoraModule<CoraControlAPI>() {
      * next until the first has terminated.  If all requests were successful, the list is successful; if any request fails, the
      * rest is skipped and the list fails; if any request is cancelled, the rest is skipped and the list is cancelled.
      */
-    fun createRequestList(origin: Origin, vararg requests: Request, processor: Recipient? = null) =
+    fun createRequestList(origin: Origin, vararg requests: Request, processor: Agent? = null) =
         impl.createRequestList(origin, requests.asSequence(), processor = processor)
 
     /**
@@ -66,7 +66,7 @@ object CoraControl : CoraModule<CoraControlAPI>() {
      * next until the first has terminated.  If all requests were successful, the list is successful; if any request fails, the
      * rest is skipped and the list fails; if any request is cancelled, the rest is skipped and the list is cancelled.
      */
-    fun createRequestList(origin: Origin, requests: List<Request>, processor: Recipient? = null) =
+    fun createRequestList(origin: Origin, requests: Iterable<Request>, processor: Agent? = null) =
         impl.createRequestList(origin, requests.asSequence(), processor = processor)
 
     /**
@@ -74,7 +74,7 @@ object CoraControl : CoraModule<CoraControlAPI>() {
      * only if all infos were successful.  If at least one information failed, the set fails; if at least one information was
      * cancelled, the set is cancelled, with the effect of cancelling all other (cancellable) infos which are not yet finished.
      */
-    fun createItemSet(origin: Origin, vararg items: Information, processor: Recipient? = null) =
+    fun createItemSet(origin: Origin, vararg items: Information, processor: Agent? = null) =
         impl.createItemSet(origin, items.asSequence(), processor = processor)
 
     /**
@@ -82,7 +82,7 @@ object CoraControl : CoraModule<CoraControlAPI>() {
      * only if all infos were successful.  If at least one information failed, the set fails; if at least one information was
      * cancelled, the set is cancelled, with the effect of cancelling all other (cancellable) infos which are not yet finished.
      */
-    fun createItemSet(origin: Origin, items: Sequence<Information>, processor: Recipient? = null) =
+    fun createItemSet(origin: Origin, items: Sequence<Information>, processor: Agent? = null) =
         impl.createItemSet(origin, items, processor)
 
     /**
@@ -90,7 +90,7 @@ object CoraControl : CoraModule<CoraControlAPI>() {
      * only if all infos were successful.  If at least one information failed, the set fails; if at least one information was
      * cancelled, the set is cancelled, with the effect of cancelling all other (cancellable) infos which are not yet finished.
      */
-    fun createItemSet(origin: Origin, items: Collection<Information>, processor: Recipient? = null) =
+    fun createItemSet(origin: Origin, items: Iterable<Information>, processor: Agent? = null) =
         impl.createItemSet(origin, items.asSequence(), processor)
 
     /**
@@ -98,7 +98,7 @@ object CoraControl : CoraModule<CoraControlAPI>() {
      * next until the first has terminated.  If all infos were successful, the list is successful; if any information fails, the
      * rest is skipped and the list fails; if any request is cancelled, the rest is skipped and the list is cancelled.
      */
-    fun createItemList(origin: Origin, vararg items: Information, processor: Recipient? = null) =
+    fun createItemList(origin: Origin, vararg items: Information, processor: Agent? = null) =
         impl.createItemList(origin, items.asSequence(), processor = processor)
 
     /**

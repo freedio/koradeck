@@ -14,6 +14,7 @@ import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
 import com.coradec.coradeck.core.util.relax
+import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.model.ItemSet
 import com.coradec.coradeck.ctrl.module.CoraControl.IMMEX
 import com.coradec.coradeck.ctrl.trouble.LostInformationException
@@ -32,7 +33,7 @@ class BasicItemSet(
     session: Session = Session.current,
     validFrom: ZonedDateTime = createdAt,
     validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC),
-    private val processor: Recipient? = null
+    private val processor: Agent? = null
 ) : BasicRequest(origin, priority, createdAt, session, validFrom, validUpto), ItemSet {
     private val actionItems = items.map { if (it is Notification<*>) it else Notification(it) }
     private var outstanding = AtomicInteger(0)

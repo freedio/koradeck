@@ -5,7 +5,6 @@
 package com.coradec.coradeck.ctrl.model.impl
 
 import com.coradec.coradeck.com.model.Event
-import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.com.model.Request
 import com.coradec.coradeck.com.model.RequestState
 import com.coradec.coradeck.com.model.RequestState.*
@@ -15,6 +14,7 @@ import com.coradec.coradeck.com.model.impl.RequestStateChangedEvent
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.util.relax
+import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.model.RequestList
 import com.coradec.coradeck.ctrl.module.CoraControl.IMMEX
 import com.coradec.coradeck.session.model.Session
@@ -31,7 +31,7 @@ class BasicRequestList(
     session: Session = Session.current,
     validFrom: ZonedDateTime = createdAt,
     validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC),
-    private val processor: Recipient? = null
+    private val processor: Agent? = null
 ) : BasicRequest(origin, priority, createdAt, session, validFrom, validUpto), RequestList {
     constructor(
         origin: Origin,
@@ -41,7 +41,7 @@ class BasicRequestList(
         session: Session = Session.current,
         validFrom: ZonedDateTime = createdAt,
         validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC),
-        processor: Recipient? = null
+        processor: Agent? = null
     ) : this(origin, requests.iterator(), priority, createdAt, session, validFrom, validUpto, processor)
 
     override fun execute(): Unit = when {
