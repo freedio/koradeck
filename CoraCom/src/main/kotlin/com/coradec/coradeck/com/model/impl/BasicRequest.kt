@@ -193,12 +193,17 @@ open class BasicRequest(
     }
 
     private fun runPostActions() {
-        if (successful) successActions.forEach { it.invoke(this) }
-        if (failed) failureActions.forEach { it.invoke(this) }
-        if (cancelled) cancellationActions.forEach { it.invoke(this) }
-        successActions.clear()
-        failureActions.clear()
-        cancellationActions.clear()
+        postActionSemaphore.release()
+        try {
+            if (successful) successActions.forEach { it.invoke(this) }
+            if (failed) failureActions.forEach { it.invoke(this) }
+            if (cancelled) cancellationActions.forEach { it.invoke(this) }
+            successActions.clear()
+            failureActions.clear()
+            cancellationActions.clear()
+        } finally {
+            postActionSemaphore.acquire()
+        }
     }
 
     override fun enregister(observer: Observer) = !complete && stateRegistry.add(observer)
