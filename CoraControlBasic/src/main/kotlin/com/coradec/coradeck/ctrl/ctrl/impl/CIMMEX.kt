@@ -376,7 +376,7 @@ object CIMMEX : Logger(), IMMEX {
                     item.reject(e)
                 } catch (e: Exception) {
                     error(e, TEXT_EXECUTION_ABORTED, item)
-                    if (item is Request) item.fail(e) else item.crash(e)
+                    item.crash(e)
                 }
             }
         }
