@@ -51,7 +51,11 @@ object TypeConverters {
             converterClass = Class.forName(converterName) as Class<TypeConverter<*>>
             if (!TypeConverter::class.java.isAssignableFrom(converterClass))
                 throw ClassCastException("${converterClass.name} is not a type converter!")
-            converterClass.getConstructor().newInstance()
+            try {
+                converterClass.getConstructor(KType::class.java).newInstance(type)
+            } catch (e: NoSuchMethodException) {
+                converterClass.getConstructor().newInstance()
+            }
         } catch (e: ClassNotFoundException) {
             throw TypeConverterNotFoundException(type.name, converterName)
         } catch (e: NoSuchMethodException) {

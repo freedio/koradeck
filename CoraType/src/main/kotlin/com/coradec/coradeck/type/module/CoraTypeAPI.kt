@@ -14,9 +14,9 @@ interface CoraTypeAPI : CoraModuleAPI {
     /** Creates a type from the specified class with the help of the specified type parameters, if necessary. */
     fun <T : Any> typeOf(klass: KClass<out T>, parameters: Map<String, KClass<*>>): KType
     /** Casts the specified value to the specified type, if possible, preserving `null` values. */
-    fun <T : Any> castTo(value: Any?, type: KType): T?
+    fun <T : Any?> castTo(value: Any?, type: KType): T
     /** Casts the specified value to the specified type, if possible, preserving `null` values. */
-    fun <T : Any> castTo(value: Any?, type: KClass<T>): T?
+    fun <T : Any?> castTo(value: Any?, type: KClass<*>): T
     /** Creates a password with the specified cleartext representation. */
     fun password(cleartext: String): Password
     /** Creates a secret from the specified cleartext representation. */

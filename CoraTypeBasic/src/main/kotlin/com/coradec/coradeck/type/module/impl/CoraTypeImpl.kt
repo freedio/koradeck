@@ -17,18 +17,17 @@ import kotlin.reflect.KType
 import kotlin.reflect.full.createType
 
 @Suppress("UNCHECKED_CAST")
-class CoraTypeImpl: CoraTypeAPI {
+class CoraTypeImpl : CoraTypeAPI {
     override fun <T : Any> typeOf(klass: KClass<out T>, parameters: Map<String, KClass<*>>): KType {
-        val typeParameters = klass.typeParameters.map { Pair(it.name, parameters[it.name]) }.toMap()
+        val typeParameters = klass.typeParameters.associate { Pair(it.name, parameters[it.name]) }
         typeParameters.filter { it.value == null }.let { missingArgs ->
             if (missingArgs.isNotEmpty()) throw MissingTypeArgumentsException(missingArgs.keys)
         }
         return klass.createType(/* TODO type arguments! */)
     }
 
-    override fun <T : Any> castTo(value: Any?, type: KType): T? =
-            (TypeConverters[type] as TypeConverter<T>).convert(value)
-    override fun <T : Any> castTo(value: Any?, type: KClass<T>): T? = TypeConverters[type].convert(value)
+    override fun <T : Any?> castTo(value: Any?, type: KType): T = (TypeConverters[type] as TypeConverter<T>).convert(value)
+    override fun <T : Any?> castTo(value: Any?, type: KClass<*>): T = (TypeConverters[type] as TypeConverter<T>).convert(value)
     override fun password(cleartext: String): Password = BasicPassword(cleartext)
     override fun secret(cleartext: String): Secret = BasicSecret(cleartext)
 }

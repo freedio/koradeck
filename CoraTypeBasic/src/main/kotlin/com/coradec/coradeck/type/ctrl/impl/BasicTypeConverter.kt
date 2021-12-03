@@ -17,14 +17,15 @@ import kotlin.reflect.full.isSuperclassOf
 import kotlin.reflect.full.isSupertypeOf
 
 @Suppress("UNCHECKED_CAST")
-abstract class BasicTypeConverter<T : Any>(val type: KType) : TypeConverter<T> {
-    constructor(klass: KClass<T>): this(klass.createType(klass.typeParameters.map { KTypeProjection.STAR }))
+abstract class BasicTypeConverter<T : Any?>(val type: KType) : TypeConverter<T> {
+    constructor(klass: KClass<*>, nullable: Boolean = false):
+            this(klass.createType(klass.typeParameters.map { KTypeProjection.STAR }, nullable))
     private val klass = type.classifier as KClass<*>
     override fun handles(klass: KClass<*>): Boolean = klass.isSuperclassOf(klass)
     override fun handles(type: KType): Boolean = type.isSupertypeOf(type)
 
-    override fun convert(value: Any?): T? = when (value) {
-        null -> null
+    override fun convert(value: Any?): T = when (value) {
+        null -> null as T
         in type -> value as T
         is String -> decode(value)
         else -> convertFrom(value) ?: throw TypeConversionException(
@@ -32,8 +33,8 @@ abstract class BasicTypeConverter<T : Any>(val type: KType) : TypeConverter<T> {
         )
     }
 
-    override fun decode(value: String?): T? = when (value) {
-        null -> null
+    override fun decode(value: String?): T = when (value) {
+        null -> null as T
         else -> decodeFrom(value) ?: throw TypeConversionException("Failed to decode \"%s\" to type %s".format(value, type.name))
     }
 
