@@ -188,6 +188,7 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
         override fun minusAssign(selector: Selection) = this@HsqlDbTable.minusAssign(selector)
         override fun commit() = this@HsqlDbTable.commit()
         override fun rollback() = this@HsqlDbTable.rollback()
+        override fun standby() = this@HsqlDbTable.synchronize()
     }
 
     companion object {
