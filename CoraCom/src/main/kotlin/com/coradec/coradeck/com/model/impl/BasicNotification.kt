@@ -19,6 +19,7 @@ import com.coradec.coradeck.core.util.shortClassname
 import com.coradec.coradeck.session.model.Session
 import java.time.ZonedDateTime
 import java.util.*
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.CountDownLatch
 
@@ -33,7 +34,7 @@ open class BasicNotification<I: Information>(
 ): BasicInformation(origin, priority, createdAt, session, validFrom, validUpTo), Notification<I> {
     private val unfinished = CountDownLatch(1)
     private val stateRegistry = CopyOnWriteArraySet<Observer>()
-    private val myStates = ArrayList<NotificationState>().apply { add(NEW) }
+    private val myStates = CopyOnWriteArrayList<NotificationState>().apply { add(NEW) }
     override val states: EnumSet<NotificationState> get() = EnumSet.copyOf(myStates)
     override val new: Boolean get() = states.singleOrNull() == NEW
     override val enqueued: Boolean get() = ENQUEUED in myStates
