@@ -10,6 +10,6 @@ enum class RequestState {
     NEW, ENQUEUED, DISPATCHED, DELIVERED, REJECTED, PROCESSED, LOST, SUCCESSFUL, FAILED, CANCELLED;
 
     companion object {
-        val FINISHED: EnumSet<RequestState> = EnumSet.of(SUCCESSFUL, FAILED, CANCELLED)
+        val FINISHED: EnumSet<RequestState> = EnumSet.of(SUCCESSFUL, FAILED, CANCELLED, LOST)
     }
 }

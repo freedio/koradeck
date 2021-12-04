@@ -13,6 +13,7 @@ import com.coradec.coradeck.com.model.RequestState.Companion.FINISHED
 import com.coradec.coradeck.com.model.RequestStateObserver
 import com.coradec.coradeck.com.trouble.RequestCancelledException
 import com.coradec.coradeck.com.trouble.RequestFailedException
+import com.coradec.coradeck.com.trouble.RequestNotAcceptedException
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
@@ -92,6 +93,7 @@ open class BasicRequest(
 
     override fun discard() {
         state = LOST
+        unfinished.countDown()
     }
 
     override fun succeed() {
@@ -129,7 +131,8 @@ open class BasicRequest(
 
     private fun report(): BasicRequest {
         if (failed) throw RequestFailedException(reason)
-        if (cancelled) throw RequestCancelledException()
+        if (cancelled) throw RequestCancelledException(reason)
+        if (lost) throw RequestNotAcceptedException()
         Thread.yield()
         return this
     }

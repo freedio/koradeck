@@ -6,5 +6,4 @@ package com.coradec.coradeck.com.trouble
 
 class RequestFailedException(message: String?, problem: Throwable?) : CommunicationException(message, problem) {
     constructor(problem: Throwable? = null) : this(null, problem)
-
 }
