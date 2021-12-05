@@ -26,6 +26,7 @@ import com.coradec.coradeck.session.model.Session
 import com.coradec.coradeck.text.model.LocalText
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.time.ZonedDateTime
 import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.TimeUnit.SECONDS
@@ -63,6 +64,8 @@ object CIMMEX : Logger(), IMMEX {
     private val inqueue = PriorityBlockingQueue<Prioritized>(PROP_INQUEUE_SIZE.value)
     private val taskqueue = PriorityBlockingQueue<Task>(PROP_TASKQUEUE_SIZE.value)
     private val delayQueue = DeferringQueue()
+    private val broadcastQueue =
+        PriorityBlockingQueue<Information>(1024) { o1, o2 -> o1.validUpTo.compareTo(o2.validUpTo) }
     private val workerGroup = WorkerThreadGroup()
     private val executors = ConcurrentHashMap<Int, Executor>()
     private val workers = ConcurrentHashMap<Int, Worker>()
@@ -200,10 +203,16 @@ object CIMMEX : Logger(), IMMEX {
 
     override fun subscribe(vararg listeners: Recipient) {
         synchronized(registry) { registry += listeners.toSet() }
+        cleanBroadcastQueue()
+        broadcastQueue.forEach { information ->
+            listeners.forEach { listener ->
+                if (listener.accepts(information)) listener.receive(information.wrap(here))
+            }
+        }
     }
 
     override fun unsubscribe(vararg listeners: Recipient) {
-        inject(createRequestList(here, listeners.map { listener -> UnsubscribeRequest(here, listener) }, defaultAgent)).standby()
+        defaultAgent.accept(createRequestList(here, listeners.map { listener -> UnsubscribeRequest(here, listener) }, defaultAgent))
     }
 
     private class UnsubscribeRequest(origin: Origin, val listener: Recipient) : BasicCommand(origin) {
@@ -228,18 +237,16 @@ object CIMMEX : Logger(), IMMEX {
     private fun fullStats(): String {
         val collector = StringWriter()
         PrintWriter(collector).use { out ->
-            out.println("         Enabled: ${enabled.get()} (should be ‹false›)")
-//            out.println("         Workers: ${workers.values.joinToString("\n• ", "\n• ") { worker ->
-//                "Worker #${worker.id}: ${worker.state}"
-//            }}")
+            out.println("     Basic Stats: $stats")
+            out.println("         Workers: ${workers.size}")
             out.println("         Inqueue: $inqueue")
             out.println("       TaskQueue: $taskqueue")
-            out.println("      Recipients: ${dispatchOrder.joinToString(" ❖ ", "[", "]")}")
-            out.println("Dispatcher Table: ${
-                dispatchTable.entries
-                    .joinToString("\n\n", "{\n", "\n}") { (recipient, entries) ->
-                        "------ $recipient ------${entries.joinToString("\n• ", "\n• ")}"
-                    }
+            out.println("      Recipients: (#${dispatchOrder.size}) ${dispatchOrder.joinToString("\n• ", "\n• ")}")
+            out.println("Dispatcher Table: (#${dispatchTable.size}) ${dispatchTable.entries
+                .filter { it.value.isNotEmpty() }
+                .joinToString("\n\n", "{\n", "\n}") { (recipient, entries) ->
+                    "------ $recipient ------${entries.joinToString("\n• ", "\n• ")}"
+                }
             }")
         }
         return collector.toString()
@@ -315,23 +322,31 @@ object CIMMEX : Logger(), IMMEX {
             if (queue.offer(notification)) {
                 action = { notification.dispatch() }
                 if (e && recipient !in dispatchBlock) dispatchOrder.put(recipient)
-            }
-            else if (!inqueue.offer(notification)) action = { cantDispatch(notification) }
+            } else if (!inqueue.offer(notification)) action = { cantDispatch(notification) }
         }
         action.invoke()
     }
 
-    private fun broadcast(item: Notification<*>) = registry
-        .filter { observer -> observer.accepts(item) }
-        .ifEmpty {
-            warn(TEXT_NO_RECIPIENTS, item.content.classname, item.content)
-            item.discard()
-            emptyList()
+    private fun broadcast(item: Notification<*>) {
+        cleanBroadcastQueue()
+        broadcastQueue.put(item.content)
+        val recipients = synchronized(registry) { registry.filter { observer -> observer.accepts(item) } }
+        when (recipients.size) {
+            0 -> item.discard().also { warn(TEXT_NO_RECIPIENTS, item.content.classname, item.content) }
+            1 -> dispatch(item, recipients.single())
+            else -> {
+                recipients.forEach { dispatch(item.content, it) }
+                item.discard()
+            }
         }
-        .forEach { recipient -> when {
-            item.dispatched -> dispatch(item.content/*.copyIfNecessary() as Information*/, recipient)
-            else -> dispatch(item, recipient)
-        } }
+    }
+
+    private fun cleanBroadcastQueue() {
+        val now = ZonedDateTime.now()
+        while (broadcastQueue.peek()?.validUpTo?.isBefore(now) == true) {
+            broadcastQueue.poll()
+        }
+    }
 
     private fun cantDispatch(item: Any): Boolean = false.also {
         error(TEXT_CANT_DISPATCH, item)
@@ -410,7 +425,7 @@ object CIMMEX : Logger(), IMMEX {
         }
     }
 
-    private class WorkerThreadGroup: ThreadGroup("CIMMEX-Workers")
+    private class WorkerThreadGroup : ThreadGroup("CIMMEX-Workers")
 
     internal class Synchronization(private val sync: Semaphore) : BasicCommand(here) {
         override fun execute() {

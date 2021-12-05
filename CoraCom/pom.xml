@@ -24,6 +24,10 @@
             <groupId>com.coradec.coradeck</groupId>
             <artifactId>session</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.coradec.coradeck</groupId>
+            <artifactId>conf</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

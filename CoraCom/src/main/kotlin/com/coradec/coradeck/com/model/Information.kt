@@ -26,4 +26,5 @@ interface Information: Formattable, Deferred {
     fun <I: Information> copy(substitute: Map<String, Any?>): I
     /** Creates and returns a fresh copy of this information with the specified properties substituted. */
     fun <I: Information> copy(vararg substitute: Pair<String, Any?>): I
+    fun wrap(origin: Origin): Notification<*>
 }

@@ -8,7 +8,9 @@ import com.coradec.coradeck.com.trouble.NotificationRejectedException
 
 interface Recipient: Target {
     /** Invoked to check if the recipient accepts the specified notification. */
-    fun accepts(notification: Notification<*>): Boolean
+    fun accepts(notification: Notification<*>): Boolean = accepts(notification.content)
+    /** Invoked to check if the recipient accepts the specified information. */
+    fun accepts(information: Information): Boolean
     /** Delivers the specified notification to the recipient. */
     @Throws(NotificationRejectedException::class) fun receive(notification: Notification<*>)
 }

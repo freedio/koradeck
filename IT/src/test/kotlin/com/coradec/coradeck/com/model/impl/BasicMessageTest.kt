@@ -25,9 +25,6 @@ import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.time.ZonedDateTime
 
 internal class BasicMessageTest {
 
@@ -43,7 +40,7 @@ internal class BasicMessageTest {
         assertThat(testee.recipient).isEqualTo(agent)
         assertThat(testee.state).`as`("${testee.states} does not end with ‹PROCESSED›").isEqualTo(PROCESSED)
         assertThat(testee.validFrom).isEqualTo(info.validFrom)
-        assertThat(testee.validUpTo).isEqualTo(ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC))
+        assertThat(testee.validUpTo).isEqualTo(info.validFrom.plus(BasicInformation.PROP_VALIDITY.value))
         assertThat(testee.due).isEqualTo(testee.validFrom)
         assertThat(testee.priority).isEqualTo(A2)
         assertThat(testee.new).isFalse()
@@ -73,7 +70,7 @@ internal class BasicMessageTest {
         assertThat(r2).isInstanceOf(NotificationAlreadyEnqueuedException::class.java)
         assertThat(r1.state).`as`("${r1.states} does not end with ‹PROCESSED›").isEqualTo(PROCESSED)
         assertThat(r1.validFrom).isEqualTo(info.validFrom)
-        assertThat(r1.validUpTo).isEqualTo(ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC))
+        assertThat(r1.validUpTo).isEqualTo(info.validFrom.plus(BasicInformation.PROP_VALIDITY.value))
         assertThat(r1.due).isEqualTo(r1.validFrom)
         assertThat(r1.priority).isEqualTo(A2)
         assertThat(r1.new).isFalse()

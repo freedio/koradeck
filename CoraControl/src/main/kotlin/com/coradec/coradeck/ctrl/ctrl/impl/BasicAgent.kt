@@ -51,11 +51,11 @@ open class BasicAgent() : Logger(), Agent {
     }
 
     protected fun approve(vararg cmd: KClass<out Command>) {
-        approvedCommands.addAll(cmd.toList())
+        approvedCommands.addAll(cmd.toSet())
     }
 
     protected fun disapprove(vararg cmd: KClass<out Command>) {
-        approvedCommands.removeAll(cmd.toList())
+        approvedCommands.removeAll(cmd.toSet())
     }
 
     protected fun atEnd(action: () -> Unit) = synchronized(shutdownActions) {
@@ -67,8 +67,8 @@ open class BasicAgent() : Logger(), Agent {
         shutdownActions += action
     }
 
-    override fun accepts(notification: Notification<*>): Boolean = when (val content = notification.content) {
-        is Command -> approvedCommands.any { it.isInstance(content) }
+    override fun accepts(information: Information): Boolean = when (information) {
+        is Command -> approvedCommands.any { it.isInstance(information) }
         is Synchronization, is DummyRequest, in routes.keys -> true
         else -> false
     }

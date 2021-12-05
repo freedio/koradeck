@@ -6,6 +6,8 @@ package com.coradec.coradeck.com.model.impl
 
 import com.coradec.coradeck.com.ctrl.impl.Logger
 import com.coradec.coradeck.com.model.Information
+import com.coradec.coradeck.com.model.Notification
+import com.coradec.coradeck.conf.model.LocalProperty
 import com.coradec.coradeck.core.model.Deferred
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Prioritized
@@ -14,8 +16,7 @@ import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
 import com.coradec.coradeck.core.util.*
 import com.coradec.coradeck.session.model.Session
 import com.coradec.coradeck.text.model.LocalText
-import java.time.LocalDateTime
-import java.time.ZoneOffset
+import java.time.Duration
 import java.time.ZonedDateTime
 import kotlin.reflect.KClass
 import kotlin.reflect.KVisibility.PRIVATE
@@ -29,7 +30,7 @@ open class BasicInformation(
     override val createdAt: ZonedDateTime = ZonedDateTime.now(),
     override val session: Session = Session.current,
     override val validFrom: ZonedDateTime = createdAt,
-    override val validUpTo: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
+    override val validUpTo: ZonedDateTime = validFrom + PROP_VALIDITY.value
 ) : Logger(), Information {
     override val due: ZonedDateTime get() = validFrom
     override fun <I : Information> copy(vararg substitute: Pair<String, Any?>): I = copy(substitute.toMap())
@@ -75,6 +76,9 @@ open class BasicInformation(
         return primaryConstructor.callBy(args)
     }
 
+    override fun wrap(origin: Origin): Notification<*> =
+        BasicNotification(this, origin, priority, createdAt, session, validFrom, validUpTo)
+
     override fun toString(): String =
         "%s(%s)".format(shortClassname, properties.formatted)
 
@@ -90,5 +94,7 @@ open class BasicInformation(
         private val TEXT_ARGUMENT_NOT_FOUND = LocalText("ArgumentNotFound2")
         private val TEXT_INVALID_ARGUMENT = LocalText("InvalidArgument3")
         private val TEXT_PRIVATE_PROPERTY = LocalText("PrivateProperty2")
+
+        val PROP_VALIDITY = LocalProperty("Validity", Duration.ofSeconds(20))
     }
 }
