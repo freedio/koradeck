@@ -31,7 +31,7 @@ internal class ThreadMonitorTest {
         println("Thread 2 terminated")
         t1.join()
         println("Thread 1 terminated")
-        Thread.sleep(200)
+        Thread.sleep(500)
         // then
         assertThat(r0).isEqualTo("All threads terminated.")
         assertThat(r1).isEqualTo("TT1 terminated.")

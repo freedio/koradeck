@@ -90,6 +90,12 @@ internal class BasicMessageTest {
     class TestInformation(origin: Origin, priority: Priority = B2) : BasicInformation(origin, priority)
 
     class TestAgent : BasicAgent() {
+
+        override fun accepts(notification: Notification<*>) = when (notification.content) {
+            is Request, is TestInformation -> true
+            else -> super.accepts(notification)
+        }
+
         override fun receive(notification: Notification<*>) = when(val message = notification.content) {
             is Request -> message.succeed()
             is TestInformation -> relax()

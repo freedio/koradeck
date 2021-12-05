@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 internal class BasicAgentPoolTest {
-    val IMMEX = CoraControl.IMMEX
+    private val IMMEX = CoraControl.IMMEX
 
     companion object {
         @BeforeAll
@@ -79,6 +79,7 @@ internal class BasicAgentPoolTest {
     }
 
     class TestAgent(private val evaluation: TestEvaluation) : BasicAgent() {
+        override fun accepts(notification: Notification<*>) = notification.content is TestInformation || super.accepts(notification)
         override fun receive(notification: Notification<*>) = when (notification.content) {
             is TestInformation -> {
                 evaluation.add(this)

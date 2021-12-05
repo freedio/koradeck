@@ -67,6 +67,12 @@ open class BasicAgent() : Logger(), Agent {
         shutdownActions += action
     }
 
+    override fun accepts(notification: Notification<*>): Boolean = when (val content = notification.content) {
+        is Command -> approvedCommands.any { it.isInstance(content) }
+        is Synchronization, is DummyRequest, in routes.keys -> true
+        else -> false
+    }
+
     override fun receive(notification: Notification<*>): Unit = when (val content = notification.content) {
         is Command ->
             if (approvedCommands.any { it.isInstance(content) }) try {

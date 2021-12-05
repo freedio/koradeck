@@ -11,7 +11,7 @@ import com.coradec.coradeck.com.model.Voucher
 import com.coradec.coradeck.core.util.classname
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.relax
-import com.coradec.coradeck.ctrl.module.unsubscribe
+import com.coradec.coradeck.ctrl.module.CoraControl
 import com.coradec.coradeck.db.com.CreateTableVoucher
 import com.coradec.coradeck.db.com.GetTableVoucher
 import com.coradec.coradeck.db.com.OpenTableVoucher
@@ -59,7 +59,6 @@ class HsqlDatabase(
     override fun onFinalizing() {
         super.onFinalizing()
         if (failed) connection.rollback() else connection.commit()
-        unsubscribe()
         connection.close()
     }
 
@@ -150,6 +149,7 @@ class HsqlDatabase(
     }
 
     companion object {
+        private val IMMEX = CoraControl.IMMEX
         private val TEXT_DROPPING_TABLE = LocalText("DroppingTable1")
     }
 }

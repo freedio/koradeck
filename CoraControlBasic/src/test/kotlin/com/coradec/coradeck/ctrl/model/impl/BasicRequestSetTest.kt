@@ -82,7 +82,6 @@ internal class BasicRequestSetTest {
         assertThat(testee.successful).isFalse()
         assertThat(testee.failed).isTrue()
         assertThat(testee.cancelled).isFalse()
-        Thread.sleep(100)
         assertThat(agent.sum.get()).isEqualTo(101)
         assertThat(trouble).isNotNull()
         assertThat(req1.observerCount).isEqualTo(0)
@@ -112,7 +111,6 @@ internal class BasicRequestSetTest {
         assertThat(testee.cancelled).isTrue()
         assertThat(agent.sum.get()).isIn(100, 101)
         assertThat(trouble).isNotNull()
-        Thread.yield()
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)
@@ -139,12 +137,10 @@ internal class BasicRequestSetTest {
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
-        Thread.sleep(100)
         assertThat(agent.value.toList()).containsExactlyInAnyOrder(*"abcdefghi".toList().toTypedArray())
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)
-        Thread.yield()
         assertThat(req4.observerCount).isEqualTo(0)
         assertThat(req5.observerCount).isEqualTo(0)
         assertThat(req6.observerCount).isEqualTo(0)
@@ -159,6 +155,11 @@ internal class BasicRequestSetTest {
 
     class TestAgent : BasicAgent() {
         var sum = AtomicInteger(0)
+
+        override fun accepts(notification: Notification<*>) = when (notification.content) {
+            is TestRequest, is CancellingRequest, is FailingRequest -> true
+            else -> super.accepts(notification)
+        }
 
         override fun receive(notification: Notification<*>) = when (val message = notification.content) {
             is TestRequest -> {
@@ -181,6 +182,11 @@ internal class BasicRequestSetTest {
     class TestAgent2 : BasicAgent() {
         private var collector = StringBuilder()
         val value get() = collector.toString()
+
+        override fun accepts(notification: Notification<*>) = when (notification.content) {
+            is TestRequest, is CancellingRequest, is FailingRequest -> true
+            else -> super.accepts(notification)
+        }
 
         override fun receive(notification: Notification<*>) = when (val message = notification.content) {
             is TestRequest -> {

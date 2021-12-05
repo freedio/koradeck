@@ -41,7 +41,6 @@ open class BasicInformation(
             .associateBy { para -> para.name }
             .removeNullKeys()
             .filterKeys { it !in dynamic }
-
         val args = klass.memberProperties
             .filter { prop ->
                 (prop.visibility != PRIVATE).also { if (!it) warn(TEXT_PRIVATE_PROPERTY, prop.name, classname) }

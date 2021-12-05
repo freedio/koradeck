@@ -85,7 +85,7 @@ internal class BasicItemSetTest {
         assertThat(agent.sum.get()).isEqualTo(1111)
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)
-        Thread.sleep(10)
+        Thread.sleep(100)
         assertThat(req4.observerCount).isEqualTo(0)
     }
 
@@ -158,7 +158,7 @@ internal class BasicItemSetTest {
         assertThat(testee.cancelled).isTrue()
         assertThat(agent.sum.get()).isIn(100, 101)
         assertThat(trouble).isNotNull()
-        Thread.sleep(10)
+        Thread.sleep(100)
         assertThat(req2.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)
     }
@@ -184,7 +184,6 @@ internal class BasicItemSetTest {
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
-        Thread.sleep(100)
         assertThat(agent.value.toList()).containsExactlyInAnyOrder(*"abcdefghi".toList().toTypedArray())
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
@@ -207,6 +206,11 @@ internal class BasicItemSetTest {
     class TestAgent : BasicAgent() {
         val sum = AtomicInteger(0)
 
+        override fun accepts(notification: Notification<*>) = when (notification.content) {
+            is TestRequest, is TestMessage, is TestInformation, is TestNotification, is CancellingRequest, is FailingRequest -> true
+            else -> super.accepts(notification)
+        }
+
         @Suppress("UNCHECKED_CAST")
         override fun receive(notification: Notification<*>) = when (val message = notification.content) {
             is TestRequest -> sum.addAndGet(message.value).also { message.succeed() }.swallow()
@@ -222,6 +226,11 @@ internal class BasicItemSetTest {
     class TestAgent2 : BasicAgent() {
         private var collector = StringBuffer()
         val value get() = collector.toString()
+
+        override fun accepts(notification: Notification<*>) = when (notification.content) {
+            is TestRequest, is CancellingRequest, is FailingRequest -> true
+            else -> super.accepts(notification)
+        }
 
         override fun receive(notification: Notification<*>) = when (val message = notification.content) {
             is TestRequest -> {

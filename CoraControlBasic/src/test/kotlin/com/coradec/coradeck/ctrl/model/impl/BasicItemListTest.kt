@@ -59,7 +59,7 @@ internal class BasicItemListTest {
         val item4 = TestMessage(1, agent)
         val testee = BasicItemList(here, sequenceOf(item1, item2, item3, item4), processor = agent)
         // when:
-        agent.accept(testee).content.standby()
+        agent.accept(testee).standby()
         // then:
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
@@ -86,7 +86,6 @@ internal class BasicItemListTest {
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
         assertThat(agent.sum.get()).isEqualTo(1111)
-        Thread.sleep(10)
         assertThat(item1.observerCount).isEqualTo(0)
         assertThat(item3.observerCount).isEqualTo(0)
         assertThat(item4.observerCount).isEqualTo(0)
@@ -115,7 +114,6 @@ internal class BasicItemListTest {
         assertThat(testee.cancelled).isFalse()
         assertThat(agent.sum.get()).isEqualTo(1000)
         assertThat(trouble).isNotNull()
-        Thread.sleep(10)
         assertThat(item1.observerCount).isEqualTo(0)
         assertThat(item2.observerCount).isEqualTo(0)
         assertThat(item4.observerCount).isEqualTo(0)
@@ -143,7 +141,6 @@ internal class BasicItemListTest {
         assertThat(testee.cancelled).isFalse()
         assertThat(agent.sum.get()).isEqualTo(1100)
         assertThat(trouble).isNotNull()
-        Thread.sleep(10)
         assertThat(item1.observerCount).isEqualTo(0)
         assertThat(item2.observerCount).isEqualTo(0)
         assertThat(item4.observerCount).isEqualTo(0)
@@ -187,7 +184,6 @@ internal class BasicItemListTest {
         assertThat(testee.cancelled).isTrue()
         assertThat(agent.sum.get()).isEqualTo(100)
         assertThat(trouble).isNotNull()
-        Thread.sleep(10)
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
         assertThat(req3.observerCount).isEqualTo(0)
@@ -211,7 +207,6 @@ internal class BasicItemListTest {
         // when:
         agent.accept(testee).standby()
         // then:
-        Thread.yield()
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
@@ -239,6 +234,11 @@ internal class BasicItemListTest {
     class TestAgent : BasicAgent() {
         val sum = AtomicInteger(0)
 
+        override fun accepts(notification: Notification<*>) = when (notification.content) {
+            is TestRequest, is TestMessage, is TestInformation, is TestNotification, is CancellingRequest, is FailingRequest -> true
+            else -> super.accepts(notification)
+        }
+
         @Suppress("UNCHECKED_CAST")
         override fun receive(notification: Notification<*>) = when (val message = notification.content) {
             is TestRequest -> sum.addAndGet(message.value).also { message.succeed() }.swallow()
@@ -254,6 +254,11 @@ internal class BasicItemListTest {
     class TestAgent2 : BasicAgent() {
         private var collector = StringBuffer()
         val value get() = collector.toString()
+
+        override fun accepts(notification: Notification<*>) = when (notification.content) {
+            is TestRequest, is CancellingRequest, is FailingRequest -> true
+            else -> super.accepts(notification)
+        }
 
         override fun receive(notification: Notification<*>) = when (val message = notification.content) {
             is TestRequest -> {

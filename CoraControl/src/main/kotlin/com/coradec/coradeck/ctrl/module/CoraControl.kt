@@ -15,7 +15,6 @@ import com.coradec.coradeck.ctrl.model.AgentPool
 import com.coradec.coradeck.ctrl.model.MarketSpace
 import com.coradec.coradeck.ctrl.model.Task
 import com.coradec.coradeck.module.model.CoraModule
-import kotlin.reflect.KClass
 
 object CoraControl : CoraModule<CoraControlAPI>() {
     val Market: MarketSpace = impl.Market
@@ -112,7 +111,7 @@ object CoraControl : CoraModule<CoraControlAPI>() {
 }
 
 /** Subscribes to the specified type of information from the CIMMEX. */
-fun Recipient.subscribe(vararg types: KClass<out Information>) = types.forEach { CoraControl.IMMEX.plugin(it, this) }
+fun Recipient.subscribe() = CoraControl.IMMEX.subscribe(this)
 
 /** Ignore further information from the CIMMEX. */
-fun Recipient.unsubscribe() = CoraControl.IMMEX.unplug(this)
+fun Recipient.unsubscribe() = CoraControl.IMMEX.unsubscribe(this)

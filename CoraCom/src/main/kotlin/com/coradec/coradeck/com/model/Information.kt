@@ -22,8 +22,8 @@ interface Information: Formattable, Deferred {
     /** How long the information is valid, if at all. */
     val validUpTo: ZonedDateTime
 
-    /** A fresh copy of this information with the specified properties substituted. */
+    /** Creates and returns a fresh copy of this information with the specified properties substituted. */
     fun <I: Information> copy(substitute: Map<String, Any?>): I
-    /** A fresh copy of this information with the specified properties substituted. */
+    /** Creates and returns a fresh copy of this information with the specified properties substituted. */
     fun <I: Information> copy(vararg substitute: Pair<String, Any?>): I
 }

@@ -7,14 +7,12 @@ package com.coradec.coradeck.ctrl.impl
 import com.coradec.coradeck.com.model.impl.BasicCommand
 import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.com.module.CoraComImpl
-import com.coradec.coradeck.com.trouble.NotificationRejectedException
-import com.coradec.coradeck.com.trouble.RequestFailedException
+import com.coradec.coradeck.com.trouble.RequestNotAcceptedException
 import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
-import com.coradec.coradeck.ctrl.trouble.CommandNotApprovedException
 import com.coradec.coradeck.module.model.CoraModules
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
@@ -55,9 +53,9 @@ internal class BasicAgentTest {
         try {
             testee.accept(TestRouteRequest(here)).standby()
             // then:
-            fail("Expected RequestFailedException!")
-        } catch (e: RequestFailedException) {
-            assertThat(e.cause).isInstanceOf(NotificationRejectedException::class.java)
+            fail("Expected RequestNotAcceptedException!")
+        } catch (e: RequestNotAcceptedException) {
+            // expected that
         }
     }
 
@@ -100,9 +98,9 @@ internal class BasicAgentTest {
         try {
             testee.accept(TestRouteCommand(here)).standby()
             // then:
-            fail("Expected RequestFailedException!")
-        } catch (e: RequestFailedException) {
-            assertThat(e.cause).isInstanceOf(CommandNotApprovedException::class.java)
+            fail("Expected RequestNotAcceptedException!")
+        } catch (e: RequestNotAcceptedException) {
+            // expected that
         }
     }
 

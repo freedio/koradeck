@@ -7,9 +7,7 @@ package com.coradec.coradeck.ctrl.ctrl.impl
 import com.coradec.coradeck.com.model.Notification
 import com.coradec.coradeck.com.model.Notification.Companion.LOST_ITEMS
 import com.coradec.coradeck.com.model.NotificationState.LOST
-import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.com.model.impl.BasicInformation
-import com.coradec.coradeck.com.model.impl.BasicMessage
 import com.coradec.coradeck.com.model.impl.BasicNotification
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
@@ -41,16 +39,17 @@ internal class CIMMEXUT {
         // given
         val agent = TestAgent1()
         val message = TestNotification1(here)
-        CIMMEX.plugin(TestInformation1::class, agent)
+        CIMMEX.subscribe(agent)
         // when
         CIMMEX.inject(message)
         CIMMEX.synchronize()
         agent.synchronize()
         // then
+        Thread.sleep(100)
         assertThat(agent.gotMessage).isTrue()
         assertThat(LOST_ITEMS).doesNotContain(message)
         // cleanup
-        CIMMEX.unplug(agent)
+        CIMMEX.unsubscribe(agent)
     }
 
     @Test
@@ -58,7 +57,7 @@ internal class CIMMEXUT {
         // given
         val agent = TestAgent1()
         val message = TestInformation1(here)
-        CIMMEX.plugin(TestInformation1::class, agent)
+        CIMMEX.subscribe(agent)
         // when
         CIMMEX.inject(message)
         CIMMEX.synchronize()
@@ -67,7 +66,8 @@ internal class CIMMEXUT {
         assertThat(agent.gotMessage).isTrue()
         assertThat(LOST_ITEMS.map { it.content }).doesNotContain(message)
         // cleanup
-        CIMMEX.unplug(agent)
+        CIMMEX.unsubscribe(agent)
+        CIMMEX.synchronize()
     }
 
     @Test
@@ -105,7 +105,7 @@ internal class CIMMEXUT {
         val then = System.currentTimeMillis()
         val delay = Duration.ofSeconds(2)
         val agent = TestAgent2()
-        CIMMEX.plugin(TestInformation1::class, agent)
+        CIMMEX.subscribe(agent)
         val message = TestNotification2(here, delay)
         // when
         CIMMEX.inject(message)
@@ -116,7 +116,7 @@ internal class CIMMEXUT {
         assertThat(agent.gotMessage).isTrue()
         assertThat(System.currentTimeMillis()).isGreaterThanOrEqualTo(then + delay.toMillis())
         // cleanup
-        CIMMEX.unplug(agent)
+        CIMMEX.unsubscribe(agent)
     }
 
     @Test
@@ -125,7 +125,7 @@ internal class CIMMEXUT {
         val then = System.currentTimeMillis()
         val delay = Duration.ofSeconds(2)
         val agent = TestAgent2()
-        CIMMEX.plugin(TestInformation2::class, agent)
+        CIMMEX.subscribe(agent)
         val message = TestInformation2(here, delay)
         // when
         CIMMEX.inject(message)
@@ -136,7 +136,7 @@ internal class CIMMEXUT {
         assertThat(agent.gotMessage).isTrue()
         assertThat(System.currentTimeMillis()).isGreaterThan(then + delay.toMillis())
         // cleanup
-        CIMMEX.unplug(agent)
+        CIMMEX.unsubscribe(agent)
     }
 
     class TestInformation1(origin: Origin) : BasicInformation(origin)
@@ -169,23 +169,12 @@ internal class CIMMEXUT {
         }
     }
 
-    class TestMessage2(
-        origin: Origin,
-        recipient: Recipient,
-        delay: Duration
-    ) : BasicMessage<TestInformation1>(TestInformation1(origin), recipient, validFrom = ZonedDateTime.now().plus(delay)) {
-        private val semaphore = Semaphore(0)
-        fun standBy() {
-            semaphore.acquire()
-        }
-
-        fun done() {
-            semaphore.release()
-        }
-    }
-
     class TestAgent1 : BasicAgent() {
         var gotMessage: Boolean = false
+
+        override fun accepts(notification: Notification<*>) =
+            notification.content is TestInformation1 || super.accepts(notification)
+
         override fun receive(notification: Notification<*>) = when (notification.content) {
             is TestInformation1 -> gotMessage = true
             else -> super.receive(notification)
@@ -194,12 +183,18 @@ internal class CIMMEXUT {
 
     class TestAgent2 : BasicAgent() {
         var gotMessage: Boolean = false
+
+        override fun accepts(notification: Notification<*>) =
+            notification is TestNotification2 || notification.content is TestInformation2 || super.accepts(notification)
+
         override fun receive(notification: Notification<*>) = when {
             notification is TestNotification2 -> {
+                debug("TestNotification2 received.")
                 gotMessage = true
                 notification.done()
             }
             notification.content is TestInformation2 -> {
+                debug("TestNotification2 received.")
                 gotMessage = true
                 (notification.content as TestInformation2).done()
             }

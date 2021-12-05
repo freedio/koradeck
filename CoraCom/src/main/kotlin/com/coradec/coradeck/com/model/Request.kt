@@ -36,6 +36,9 @@ interface Request: Event {
     val complete: Boolean
     /** The problem that made the request fail, if it failed.  A request can fail without giving a reasin though. */
     val reason: Throwable?
+    /** The number of observers on the request. */
+    val observerCount: Int
+
     /** Marks the notification as enqueued. */
     fun enqueue()
     /** Marks the notification as dispatched. */
@@ -74,7 +77,4 @@ interface Request: Event {
     fun deregister(observer: Observer): Boolean
     /** Executes the specified action if the request was successful (see standby). */
     infix fun andThen(action: () -> Unit): Request
-
-    /** The number of observers on the request. */
-    val observerCount: Int
 }

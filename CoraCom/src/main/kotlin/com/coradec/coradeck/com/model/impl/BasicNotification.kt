@@ -59,9 +59,9 @@ open class BasicNotification<I: Information>(
         }
 
     override fun enregister(observer: Observer) =
-        /*if (content is Request) (content as Request).enregister(observer) else*/ stateRegistry.add(observer)
+        stateRegistry.add(observer)
     override fun deregister(observer: Observer) =
-        /*if (content is Request) (content as Request).deregister(observer) else*/ stateRegistry.remove(observer)
+        stateRegistry.remove(observer)
     override fun enqueue() {
         state = ENQUEUED
         if (content is Request) (content as Request).enqueue()
@@ -106,6 +106,7 @@ open class BasicNotification<I: Information>(
     override fun standby(): Notification<*> = also {
         when(content) {
             is Request -> (content as Request).standby()
+            is Notification<*> -> (content as Notification<*>).standby()
             else -> unfinished.await()
         }
     }
@@ -113,6 +114,7 @@ open class BasicNotification<I: Information>(
     override fun standby(delay: Timespan): Notification<*> = also {
         when(content) {
             is Request -> (content as Request).standby(delay)
+            is Notification<*> -> (content as Notification<*>).standby(delay)
             else -> unfinished.await(delay.amount, delay.unit)
         }
     }
