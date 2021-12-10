@@ -22,6 +22,7 @@ val KClass<*>.classname: String
         .removePrefix("java.lang.")
         .removePrefix("java.util.")
         .removePrefix("collections.")
+        .removePrefix("sequences.")
         .removePrefix("reflect.")
 val KClass<*>.shortClassname: String get() = (simpleName ?: throw IllegalStateException("Class $this has no simple name!"))
 val Any.classname: String get() = this::class.classname
