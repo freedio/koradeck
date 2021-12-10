@@ -15,8 +15,8 @@ val KType.name: String
 
 operator fun KType.contains(other: KType) = isSubtypeOf(other)
 operator fun KType.contains(instance: Any) = jvmErasure.isInstance(instance) && arguments.isEmpty() || when (jvmErasure) {
-    in Collection::class -> checkCollectionMember(this, instance as Collection<*>)
-    in Map::class -> checkMapMember(this, instance as Map<*, *>)
+    in Collection::class -> try { checkCollectionMember(this, instance as Collection<*>) } catch (e: ClassCastException) { false }
+    in Map::class -> try { checkMapMember(this, instance as Map<*, *>) } catch (e: ClassCastException) { false }
     else -> false // we assume that other types of generics don't match just like that
 }
 
