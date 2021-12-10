@@ -304,7 +304,7 @@ internal class HsqlDbTest {
             // when:
             val result = testee.insert(TestClass2("John", "Buck", LocalDate.of(1970, 1, 1), 1))
             // then:
-            assertThat(result).isEqualTo(1)
+            assertThat(result.value).isEqualTo(1)
         }
     }
 
@@ -332,7 +332,7 @@ internal class HsqlDbTest {
             // when:
             val result = testee.delete(where("[familienName = 'Doe']"))
             // then:
-            assertThat(result).isEqualTo(1)
+            assertThat(result.value).isEqualTo(1)
         }
     }
 

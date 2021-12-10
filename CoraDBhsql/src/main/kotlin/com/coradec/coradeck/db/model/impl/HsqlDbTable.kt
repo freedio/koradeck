@@ -4,8 +4,10 @@
 
 package com.coradec.coradeck.db.model.impl
 
+import com.coradec.coradeck.com.model.Voucher
 import com.coradec.coradeck.com.model.impl.BasicVoucher
 import com.coradec.coradeck.core.model.Origin
+import com.coradec.coradeck.core.model.Timespan
 import com.coradec.coradeck.core.util.contains
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.swallow
@@ -17,20 +19,21 @@ import com.coradec.coradeck.db.util.toSqlValueRepr
 import com.coradec.coradeck.session.model.Session
 import com.coradec.coradeck.session.view.View
 import com.coradec.coradeck.text.model.LocalText
+import java.util.concurrent.TimeUnit.SECONDS
 import kotlin.reflect.KClass
 
 class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCollection<Record>(db, model) {
-    private fun plusAssign(element: Record) = insert(element).swallow()
-    private fun plusAssign(elements: Iterable<Record>) = insert(elements).swallow()
-    private fun plusAssign(elements: Sequence<Record>) = insert(elements).swallow()
-    private fun minusAssign(selector: Selection) = delete(selector).swallow()
+    private fun plusAssign(element: Record) = insert(element).value(Timespan(2, SECONDS)).swallow()
+    private fun plusAssign(elements: Iterable<Record>) = insert(elements).value(Timespan(2, SECONDS)).swallow()
+    private fun plusAssign(elements: Sequence<Record>) = insert(elements).value(Timespan(2, SECONDS)).swallow()
+    private fun minusAssign(selector: Selection) = delete(selector).value(Timespan(2, SECONDS)).swallow()
 
-    private fun insert(element: Record): Int = accept(InsertRecordVoucher(here, element)).content.value
-    private fun insert(elements: Iterable<Record>): Int = accept(InsertRecordsVoucher(here, elements.asSequence())).content.value
-    private fun insert(elements: Sequence<Record>): Int = accept(InsertRecordsVoucher(here, elements)).content.value
-    private fun update(selector: Selection, vararg fields: Pair<String, Any?>): Int =
-        accept(UpdateRecordVoucher(here, selector, fields.asSequence())).content.value
-    private fun delete(selector: Selection): Int = accept(DeleteRecordsVoucher(here, selector)).content.value
+    private fun insert(element: Record): Voucher<Int> = accept(InsertRecordVoucher(here, element)).content
+    private fun insert(elements: Iterable<Record>): Voucher<Int> = accept(InsertRecordsVoucher(here, elements.asSequence())).content
+    private fun insert(elements: Sequence<Record>): Voucher<Int> = accept(InsertRecordsVoucher(here, elements)).content
+    private fun update(selector: Selection, vararg fields: Pair<String, Any?>): Voucher<Int> =
+        accept(UpdateRecordVoucher(here, selector, fields.asSequence())).content
+    private fun delete(selector: Selection): Voucher<Int> = accept(DeleteRecordsVoucher(here, selector)).content
 
     override fun close() {
         commit()
@@ -100,9 +103,10 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
                 record.keys.joinToString { it.toSqlObjectName() },
                 record.values.joinToString { it.toSqlValueRepr() }
             )
-            debug("Executing «$stmt»")
+            debug("Executing «$stmt»...")
             voucher.value = statement.executeUpdate(stmt)
             voucher.succeed()
+            debug("Executed «$stmt».")
         } catch (e: Exception) {
             error(e, TEXT_INSERT_FAILED, tableName)
             db.failed()
@@ -122,8 +126,9 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
                     record.keys.joinToString { it.toSqlObjectName() },
                     record.values.joinToString { it.toSqlValueRepr() }
                 )
-                debug("Executing «$stmt»")
+                debug("#Executing «$stmt» ...")
                 elementCount += statement.executeUpdate(stmt)
+                debug("#Executed «$stmt».")
             }
             voucher.value = elementCount
             voucher.succeed()
@@ -177,11 +182,12 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
 
     private inner class InternalRecordTableView(session: Session) : InternalRecordCollectionView(session), RecordTable<Record> {
         override fun close() = this@HsqlDbTable.close()
-        override fun insert(element: Record): Int = this@HsqlDbTable.insert(element)
-        override fun insert(elements: Iterable<Record>): Int = this@HsqlDbTable.insert(elements)
-        override fun insert(elements: Sequence<Record>): Int = this@HsqlDbTable.insert(elements)
-        override fun update(selector: Selection, vararg fields: Pair<String, Any?>): Int = this@HsqlDbTable.update(selector, *fields)
-        override fun delete(selector: Selection): Int = this@HsqlDbTable.delete(selector)
+        override fun insert(element: Record): Voucher<Int> = this@HsqlDbTable.insert(element)
+        override fun insert(elements: Iterable<Record>): Voucher<Int> = this@HsqlDbTable.insert(elements)
+        override fun insert(elements: Sequence<Record>): Voucher<Int> = this@HsqlDbTable.insert(elements)
+        override fun update(selector: Selection, vararg fields: Pair<String, Any?>): Voucher<Int> =
+            this@HsqlDbTable.update(selector, *fields)
+        override fun delete(selector: Selection): Voucher<Int> = this@HsqlDbTable.delete(selector)
         override fun plusAssign(element: Record) = this@HsqlDbTable.plusAssign(element)
         override fun plusAssign(elements: Iterable<Record>) = this@HsqlDbTable.plusAssign(elements)
         override fun plusAssign(elements: Sequence<Record>) = this@HsqlDbTable.plusAssign(elements)
