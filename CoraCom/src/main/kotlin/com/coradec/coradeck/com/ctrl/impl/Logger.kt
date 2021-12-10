@@ -29,9 +29,15 @@ open class Logger {
     protected fun abort(template: Text, vararg args: Any) = log(TextLogEntry(caller2, FATAL, template, *args))
     protected fun error(problem: Throwable) = log(ProblemLogEntry(caller2, ERROR, problem))
     protected fun error(template: Text, vararg args: Any) = log(TextLogEntry(caller2, ERROR, template, *args))
-    protected fun error(problem: Throwable, template: Text, vararg args: Any) = log(ProblemLogEntry(caller2, ERROR, problem, template, *args))
+    protected fun error(problem: Throwable?, template: Text, vararg args: Any) = log(
+        if (problem == null) TextLogEntry(caller2, ERROR, template, *args)
+        else ProblemLogEntry(caller2, ERROR, problem, template, *args)
+    )
     protected fun warn(template: Text, vararg args: Any)  = log(TextLogEntry(caller2, WARNING, template, *args))
-    protected fun warn(problem: Throwable, template: Text, vararg args: Any) = log(ProblemLogEntry(caller2, WARNING, problem, template, *args))
+    protected fun warn(problem: Throwable?, template: Text, vararg args: Any) = log(
+        if (problem == null) TextLogEntry(caller2, WARNING, template, *args)
+        else ProblemLogEntry(caller2, WARNING, problem, template, *args)
+    )
     protected fun alert(template: Text, vararg args: Any) = log(TextLogEntry(caller2, ALERT, template, *args))
     protected fun info(template: Text, vararg args: Any) = log(TextLogEntry(caller2, INFORMATION, template, *args))
     protected fun detail(template: Text, vararg args: Any) = log(TextLogEntry(caller2, DETAIL, template, *args))

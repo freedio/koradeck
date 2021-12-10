@@ -12,7 +12,7 @@ import com.coradec.coradeck.com.model.impl.DummyRequest
 import com.coradec.coradeck.com.trouble.NotificationRejectedException
 import com.coradec.coradeck.core.util.caller
 import com.coradec.coradeck.core.util.classname
-import com.coradec.coradeck.core.util.contains
+import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.module.CoraControl.IMMEX
 import com.coradec.coradeck.ctrl.trouble.CommandNotApprovedException
@@ -69,8 +69,8 @@ open class BasicAgent() : Logger(), Agent {
 
     override fun accepts(information: Information): Boolean = when (information) {
         is Command -> approvedCommands.any { it.isInstance(information) }
-        is Synchronization, is DummyRequest, in routes.keys -> true
-        else -> false
+        is Synchronization, is DummyRequest -> true
+        else -> routes.keys.any { it.isInstance(information) }
     }
 
     override fun receive(notification: Notification<*>): Unit = when (val content = notification.content) {
@@ -85,18 +85,19 @@ open class BasicAgent() : Logger(), Agent {
                 error(TEXT_MESSAGE_NOT_APPROVED, content.classname, content)
             }
         is Synchronization -> content.succeed().also { debug("Synchronization point «%s» reached", content) }
-        in routes.keys -> with(routes.filterKeys { it.isInstance(content) }.iterator().next().value) {
-            try {
-                invoke(content)
-            } catch (e: Throwable) {
-                error(e, TEXT_MESSAGE_FAILED, content.classname, e.toString())
-                notification.crash(e)
-            }
-        }
         is DummyRequest -> content.succeed().also { debug("DummyRequest processed.") }
         else -> {
-            error(TEXT_MESSAGE_NOT_UNDERSTOOD, content.classname, content, this@BasicAgent.classname)
-            throw NotificationRejectedException(notification)
+            routes.filterKeys { it.isInstance(content) }.values.firstOrNull()?.apply {
+                try {
+                    invoke(content)
+                } catch (e: Throwable) {
+                    error(e, TEXT_MESSAGE_FAILED, content.classname, e.toString())
+                    notification.crash(e)
+                }
+            } ?: throw NotificationRejectedException(notification).also {
+                error(TEXT_MESSAGE_NOT_UNDERSTOOD, content.classname, content, this@BasicAgent.classname)
+            }
+            relax()
         }
     }
 
