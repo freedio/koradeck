@@ -13,3 +13,5 @@ CimmexDisabled1: CIMMEX is disabled! → Message ‹%s› dropped.
 RemainingItems1: Remaining items in CIMMEX: %s.
 WaitingForShutdownClearance: Acquiring license to kill ...
 ShutdownClearanceAcquired: Termination clearance acquired.
+ShutdownClearanceDenied1: ☠☠☠ FATAL ERROR: TERMINATION CLEARANCE WAS DENIED AFTER %s!!!\n\
+              SYSTEM HAD TO BE STABBED TO DEATH FROM BEHIND WITHOUT A LICENCE.  CHECK YOUR CODE FOR PROBLEMS!!! ☠☠☠

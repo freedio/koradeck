@@ -17,8 +17,8 @@ import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
 import com.coradec.coradeck.core.trouble.StandbyTimeoutException
 import com.coradec.coradeck.core.util.classname
 import com.coradec.coradeck.core.util.here
-import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.ctrl.ctrl.IMMEX
+import com.coradec.coradeck.ctrl.model.PrioQueue
 import com.coradec.coradeck.ctrl.model.Task
 import com.coradec.coradeck.ctrl.module.CoraControl.createRequestList
 import com.coradec.coradeck.ctrl.trouble.NotificationAlreadyEnqueuedException
@@ -48,9 +48,11 @@ object CIMMEX : Logger(), IMMEX {
     private val TEXT_REMAINING_ITEMS = LocalText("RemainingItems1")
     private val TEXT_WAITING_FOR_SHUTDOWN_CLEARANCE = LocalText("WaitingForShutdownClearance")
     private val TEXT_SHUTDOWN_CLEARANCE_ACQUIRED = LocalText("ShutdownClearanceAcquired")
+    private val TEXT_SHUTDOWN_CLEARANCE_DENIED = LocalText("ShutdownClearanceDenied1")
     private val PROP_INQUEUE_SIZE = LocalProperty("InQueueSize", 4000)
     private val PROP_TASKQUEUE_SIZE = LocalProperty("TaskQueueSize", 1000)
     private val PROP_DEFERRINGQUEUE_SIZE = LocalProperty("DeferringQueueSize", 1000)
+    private val PROP_BROADCAST_QUEUE_SIZE = LocalProperty("BroadcastQueueSize", 40000)
     private val PROP_MAX_RECIPIENTS = LocalProperty("MaxRecipients", 1000)
     private val PROP_MIN_WORKERS = LocalProperty("MinWorkers", 3)
     private val PROP_MAX_WORKERS = LocalProperty("MaxWorkers", 12)
@@ -61,17 +63,16 @@ object CIMMEX : Logger(), IMMEX {
 
     private val dispatcher = Dispatcher()
     private val timer = Timer()
-    private val inqueue = PriorityBlockingQueue<Prioritized>(PROP_INQUEUE_SIZE.value)
-    private val taskqueue = PriorityBlockingQueue<Task>(PROP_TASKQUEUE_SIZE.value)
+    private val inqueue = PrioQueue<Prioritized>(PROP_INQUEUE_SIZE.value)
+    private val taskqueue = PrioQueue<Task>(PROP_TASKQUEUE_SIZE.value)
     private val delayQueue = DeferringQueue()
-    private val broadcastQueue =
-        PriorityBlockingQueue<Information>(1024) { o1, o2 -> o1.validUpTo.compareTo(o2.validUpTo) }
+    private val broadcastQueue = PrioQueue<Information>(PROP_BROADCAST_QUEUE_SIZE.value)
     private val workerGroup = WorkerThreadGroup()
     private val executors = ConcurrentHashMap<Int, Executor>()
     private val workers = ConcurrentHashMap<Int, Worker>()
     private val defaultAgent = DefaultAgent()
-    private val dispatchTable = ConcurrentHashMap<Recipient, PriorityBlockingQueue<Notification<*>>>()
-    private val dispatchOrder = PriorityBlockingQueue(PROP_MAX_RECIPIENTS.value, RecipientComparator())
+    private val dispatchTable = ConcurrentHashMap<Recipient, PrioQueue<Notification<*>>>()
+    private val dispatchOrder = PrioQueue<Recipient>(PROP_MAX_RECIPIENTS.value)
     private val dispatchBlock = CopyOnWriteArraySet<Recipient>()
     private val undeliveredCount get() = dispatchTable.values.sumOf { it.size }
     private val registry = LinkedList<Recipient>()
@@ -98,12 +99,13 @@ object CIMMEX : Logger(), IMMEX {
     }
 
     private fun shutdown() {
-        info(TEXT_WAITING_FOR_SHUTDOWN_CLEARANCE)
-        shutdownSemaphore.acquire(shutdownClearance.get())
-        info(TEXT_SHUTDOWN_CLEARANCE_ACQUIRED)
-        info(TEXT_SHUTTING_DOWN)
         val shutdownAllowance: Timespan = PROP_SHUTDOWN_ALLOWANCE.value
         val end = System.nanoTime() + shutdownAllowance.let { it.unit.toNanos(it.amount) }
+        info(TEXT_WAITING_FOR_SHUTDOWN_CLEARANCE)
+        if (!shutdownSemaphore.tryAcquire(shutdownClearance.get(), shutdownAllowance.amount, shutdownAllowance.unit))
+            error(TEXT_SHUTDOWN_CLEARANCE_DENIED, shutdownAllowance)
+        else info(TEXT_SHUTDOWN_CLEARANCE_ACQUIRED)
+        info(TEXT_SHUTTING_DOWN)
         enabled.set(false)
         timer.interrupt()
         dispatcher.interrupt()
@@ -131,7 +133,7 @@ object CIMMEX : Logger(), IMMEX {
     }
 
     private fun addWorker() {
-        if (enabled.get() && inqueue.size > workers.size && workers.size < PROP_MAX_WORKERS.value) startWorker()
+        if (enabled.get() && undeliveredCount >= workers.size && workers.size < PROP_MAX_WORKERS.value) startWorker()
     }
 
     private fun startExecutor() {
@@ -140,7 +142,7 @@ object CIMMEX : Logger(), IMMEX {
     }
 
     private fun addExecutor() {
-        if (enabled.get() && taskqueue.size > executors.size && executors.size < PROP_MAX_EXECUTORS.value) startExecutor()
+        if (enabled.get() && taskqueue.size >= executors.size && executors.size < PROP_MAX_EXECUTORS.value) startExecutor()
     }
 
     override fun execute(executable: Runnable) = execute(executable, defaultPriority)
@@ -289,11 +291,10 @@ object CIMMEX : Logger(), IMMEX {
         }
     }
 
-    private fun <T : Any> dispatch(q: BlockingQueue<T>) {
+    private fun <T : Any> dispatch(q: PrioQueue<T>) {
         val item = q.take()
         try {
             when (item) {
-                null -> relax()
                 is Task -> taskqueue.offer(item) || inqueue.offer(item) || cantDispatch(item)
                 is MultiRequest -> try {
                     item.execute()
@@ -316,12 +317,12 @@ object CIMMEX : Logger(), IMMEX {
         var action: () -> Unit = { }
         synchronized(dispatcher) {
             val queue = dispatchTable.computeIfAbsent(recipient) {
-                PriorityBlockingQueue()
+                PrioQueue(1024)
             }
             val e = queue.isEmpty()
             if (queue.offer(notification)) {
                 action = { notification.dispatch() }
-                if (e && recipient !in dispatchBlock) dispatchOrder.put(recipient)
+                if (e && recipient !in dispatchBlock) dispatchOrder.put(notification.priority, recipient)
             } else if (!inqueue.offer(notification)) action = { cantDispatch(notification) }
         }
         action.invoke()
@@ -343,9 +344,7 @@ object CIMMEX : Logger(), IMMEX {
 
     private fun cleanBroadcastQueue() {
         val now = ZonedDateTime.now()
-        while (broadcastQueue.peek()?.validUpTo?.isBefore(now) == true) {
-            broadcastQueue.poll()
-        }
+        broadcastQueue.removeIf { it.validUpTo.isBefore(now) }
     }
 
     private fun cantDispatch(item: Any): Boolean = false.also {
@@ -402,18 +401,23 @@ object CIMMEX : Logger(), IMMEX {
                 null
             }
             if (item != null) {
+                trace(">>> Processing item ‹%s› of recipient ‹%s›.", item.classname, recipient)
                 try {
                     Session.override(item.session)
                     if (recipient.accepts(item)) {
+                        trace("++> Item accepted.")
                         item.deliver()
                         recipient.receive(item)
                         item.process()
                     } else {
+                        trace("−−> Item rejected.")
                         item.discard()
                     }
                     synchronized(dispatcher) {
-                        if (recipient !in dispatchBlock && (dispatchTable[recipient]?.isNotEmpty() == true))
-                            dispatchOrder.put(recipient)
+                        if (recipient !in dispatchBlock) {
+                            val next = dispatchTable[recipient]
+                            if (next != null && next.isNotEmpty()) dispatchOrder.put(next.first().priority, recipient)
+                        }
                     }
                 } catch (e: NotificationRejectedException) {
                     item.reject(e)
@@ -448,15 +452,15 @@ object CIMMEX : Logger(), IMMEX {
                         i1 == null -> 1
                         i2 == null -> -1
                         i1.priority == i2.priority -> i1.due.compareTo(i2.due)
-                        else -> i1.priority.ordinal - i2.priority.ordinal
+                        else -> i1.priority.compareTo(i2.priority)
                     }
                 }
             }
     }
 
-    private class DeferringQueue : PriorityBlockingQueue<Deferred>(PROP_DEFERRINGQUEUE_SIZE.value) {
-        override fun put(e: Deferred) {
-            super.put(e)
+    private class DeferringQueue : PrioQueue<Deferred>(PROP_DEFERRINGQUEUE_SIZE.value) {
+        override fun put(element: Deferred) {
+            super.put(element)
             timer.interrupt()
         }
 
