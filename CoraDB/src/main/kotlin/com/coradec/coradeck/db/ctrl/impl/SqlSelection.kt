@@ -30,7 +30,7 @@ class SqlSelection(private val expr: String) : Selection {
         resultList.toList()
     }
     private val orderList: List<String> by lazy {
-        fun orderExpr(fieldName: String, ordering: String): String = "$fieldName ${ordering.lowercase()}"
+        fun orderExpr(fieldName: String, ordering: String): String = "${fieldName.toSqlObjectName()} ${ordering.lowercase()}"
         val resultList = ArrayList<String>()
         ORDER.findAll(expr).forEach { result -> result.groupValues.let { if (it.size>2) resultList += orderExpr(it[1], it[2])} }
         resultList.toList()
