@@ -21,14 +21,14 @@ operator fun KType.contains(instance: Any) = jvmErasure.isInstance(instance) && 
 }
 
 private fun checkCollectionMember(type: KType, instance: Collection<*>): Boolean =
-    type.arguments.map { type.jvmErasure }.let { elementTypes ->
+    type.arguments.mapNotNull { it.type?.jvmErasure }.let { elementTypes ->
         if (elementTypes.size != 1) throw IllegalStateException("Expected one type argument, but got ${elementTypes.size}!")
         val elementType = elementTypes[0]
         instance.isEmpty() || elementType.isInstance(instance.iterator().next())
     }
 
 private fun checkMapMember(type: KType, instance: Map<*, *>): Boolean =
-    type.arguments.map { type.jvmErasure }.let { elementTypes ->
+    type.arguments.mapNotNull { it.type?.jvmErasure }.let { elementTypes ->
         if (elementTypes.size != 2) throw IllegalStateException("Expected two type arguments, but got ${elementTypes.size}!")
         val keyType = elementTypes[0]
         val valueType = elementTypes[1]
