@@ -102,8 +102,14 @@ open class PrioQueue<T>(private val capacity: Int): Logger() {
     fun iterator(): Iterator<T> = QueueIterator()
     fun forEach(function: (T) -> Unit): Unit = synchronized(internalQueues) { internalQueues.values.flatten().forEach(function) }
     override fun toString(): String = joinToString(", ", "[", "]")
-    fun joinToString(separator: String = ",", prefix: String = "", suffix: String = ""): String = synchronized(internalQueues) {
-        internalQueues.values.flatten().joinToString(separator, prefix, suffix)
+    fun joinToString(
+        separator: String = ",",
+        prefix: String = "",
+        suffix: String = "",
+        limit: Int = Int.MAX_VALUE,
+        truncation: String = "..."
+    ): String = synchronized(internalQueues) {
+        internalQueues.values.flatten().joinToString(separator, prefix, suffix, limit, truncation)
     }
 
     fun remove(element: T): Boolean = synchronized(internalQueues) {

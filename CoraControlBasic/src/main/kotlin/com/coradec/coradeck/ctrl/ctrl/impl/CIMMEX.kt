@@ -32,6 +32,7 @@ import java.util.concurrent.*
 import java.util.concurrent.TimeUnit.SECONDS
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.system.exitProcess
 
 /** Central information, market, messaging, event-handling and execution service. */
 object CIMMEX : Logger(), IMMEX {
@@ -43,6 +44,12 @@ object CIMMEX : Logger(), IMMEX {
     private val TEXT_NO_RECIPIENTS = LocalText("NoRecipients2")
     private val TEXT_SHUTTING_DOWN = LocalText("ShuttingDown")
     private val TEXT_SHUT_DOWN = LocalText("ShutDown")
+    private val TEXT_TIMER_STARTED = LocalText("TimerStarted")
+    private val TEXT_TIMER_STOPPED = LocalText("TimerStopped")
+    private val TEXT_TIMER_CRASHED = LocalText("TimerCrashed")
+    private val TEXT_DISPATCHER_STARTED = LocalText("DispatcherStarted")
+    private val TEXT_DISPATCHER_STOPPED = LocalText("DispatcherStopped")
+    private val TEXT_DISPATCHER_CRASHED = LocalText("DispatcherCrashed")
     private val TEXT_DISPATCHER_INTERRUPTED = LocalText("DispatcherInterrupted")
     private val TEXT_CIMMEX_DISABLED = LocalText("CimmexDisabled1")
     private val TEXT_REMAINING_ITEMS = LocalText("RemainingItems1")
@@ -241,13 +248,14 @@ object CIMMEX : Logger(), IMMEX {
         PrintWriter(collector).use { out ->
             out.println("     Basic Stats: $stats")
             out.println("         Workers: ${workers.size}")
-            out.println("         Inqueue: $inqueue")
+            out.println("         Inqueue: (#${inqueue.size}) ${inqueue.joinToString("\n• ", "\n• ")}")
             out.println("       TaskQueue: $taskqueue")
-            out.println("      Recipients: (#${dispatchOrder.size}) ${dispatchOrder.joinToString("\n• ", "\n• ")}")
+            out.println("      Recipients: (#${dispatchOrder.size}) ${dispatchOrder.joinToString("\n• ", "\n• ", limit = 50)}")
+            out.println(" Broadcast Queue: (#${broadcastQueue.size}) ${broadcastQueue.joinToString("\n• ", "\n• ", limit = 50)}")
             out.println("Dispatcher Table: (#${dispatchTable.size}) ${dispatchTable.entries
                 .filter { it.value.isNotEmpty() }
-                .joinToString("\n\n", "{\n", "\n}") { (recipient, entries) ->
-                    "------ $recipient ------${entries.joinToString("\n• ", "\n• ")}"
+                .joinToString("\n\n", "{\n", "\n}", limit = 48) { (recipient, entries) ->
+                    "------ $recipient ------${entries.joinToString("\n• ", "\n• ", limit = 64)}"
                 }
             }")
         }
@@ -261,33 +269,43 @@ object CIMMEX : Logger(), IMMEX {
 
     private class Timer : Thread("Timer") {
         override fun run() {
-            debug("Timer started.")
-            while (enabled.get()) {
-                val sleep = delayQueue.peek()?.delayMs ?: Long.MAX_VALUE
-                trace("Timer sleeping for $sleep ms.")
-                try {
-                    sleep(sleep)
-                    trace("Timer awoke.")
-                    dispatch(delayQueue)
-                } catch (e: InterruptedException) {
-                    trace("Timer rescheduled.")
+            try {
+                info(TEXT_TIMER_STARTED)
+                while (enabled.get()) {
+                    val sleep = delayQueue.peek()?.delayMs ?: Long.MAX_VALUE
+                    trace("Timer sleeping for $sleep ms.")
+                    try {
+                        sleep(sleep)
+                        trace("Timer awoke.")
+                        dispatch(delayQueue)
+                    } catch (e: InterruptedException) {
+                        trace("Timer rescheduled.")
+                    }
                 }
+                info(TEXT_TIMER_STOPPED)
+            } catch (e: Throwable) {
+                error(e, TEXT_TIMER_CRASHED)
+                throw e
             }
-            debug("Timer stopped.")
         }
     }
 
     private class Dispatcher : Thread("Dispatch") {
         override fun run() {
-            debug("Dispatcher started.")
-            while (!interrupted()) {
-                try {
-                    dispatch(inqueue)
-                } catch (e: InterruptedException) {
-                    if (enabled.get()) warn(TEXT_DISPATCHER_INTERRUPTED)
+            try {
+                info(TEXT_DISPATCHER_STARTED)
+                while (!interrupted()) {
+                    try {
+                        dispatch(inqueue)
+                    } catch (e: InterruptedException) {
+                        if (enabled.get()) warn(TEXT_DISPATCHER_INTERRUPTED)
+                    }
                 }
+                info(TEXT_DISPATCHER_STOPPED)
+            } catch (e: Throwable) {
+                abort(e, TEXT_DISPATCHER_CRASHED)
+                exitProcess(250)
             }
-            debug("Dispatcher stopped.")
         }
     }
 
@@ -307,7 +325,8 @@ object CIMMEX : Logger(), IMMEX {
                 else -> error(TEXT_INVALID_OBJECT_TYPE, item::class.java, item)
             }
         } catch (e: Exception) {
-            error(e, TEXT_DISPATCH_FAILED, item)
+            abort(e, TEXT_DISPATCH_FAILED, item)
+            exitProcess(250)
         }
     }
 
