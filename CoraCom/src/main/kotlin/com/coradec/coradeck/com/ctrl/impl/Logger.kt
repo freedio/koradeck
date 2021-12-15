@@ -27,6 +27,10 @@ open class Logger {
     protected fun log(entry: LogEntry) = log.log(entry)
     protected fun abort(problem: Throwable) = log(ProblemLogEntry(caller2, FATAL, problem))
     protected fun abort(template: Text, vararg args: Any) = log(TextLogEntry(caller2, FATAL, template, *args))
+    protected fun abort(problem: Throwable?, template: Text, vararg args: Any) = log(
+        if (problem == null) TextLogEntry(caller2, FATAL, template, *args)
+        else ProblemLogEntry(caller2, FATAL, problem, template, *args)
+    )
     protected fun error(problem: Throwable) = log(ProblemLogEntry(caller2, ERROR, problem))
     protected fun error(template: Text, vararg args: Any) = log(TextLogEntry(caller2, ERROR, template, *args))
     protected fun error(problem: Throwable?, template: Text, vararg args: Any) = log(
