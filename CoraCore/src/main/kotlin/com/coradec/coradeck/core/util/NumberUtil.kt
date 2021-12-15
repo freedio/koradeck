@@ -19,7 +19,7 @@ val Int.octal: Int get() {
     return if (negative) -result else result
 }
 
-fun max(arg1: Int, vararg args: Int): Int = max(arg1, args.maxOrNull() ?: arg1)
-fun min(arg1: Int, vararg args: Int): Int = min(arg1, args.minOrNull() ?: arg1)
-fun max(arg1: Double, vararg args: Double): Int = max(arg1, args.maxOrNull() ?: arg1)
-fun min(arg1: Double, vararg args: Double): Int = min(arg1, args.minOrNull() ?: arg1)
+fun max(arg1: Int, vararg args: Int): Int = kotlin.math.max(arg1, args.maxOrNull() ?: arg1)
+fun min(arg1: Int, vararg args: Int): Int = kotlin.math.min(arg1, args.minOrNull() ?: arg1)
+fun max(arg1: Double, vararg args: Double): Double = kotlin.math.max(arg1, args.maxOrNull() ?: arg1)
+fun min(arg1: Double, vararg args: Double): Double = kotlin.math.min(arg1, args.minOrNull() ?: arg1)
