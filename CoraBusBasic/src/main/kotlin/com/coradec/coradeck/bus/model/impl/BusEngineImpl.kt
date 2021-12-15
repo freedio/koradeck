@@ -80,10 +80,12 @@ open class BusEngineImpl(
                 try {
                     run()
                 } catch (e: InterruptedException) {
-                    warn(TEXT_ENGINE_INTERRUPTED, this)
+                    alert(TEXT_ENGINE_INTERRUPTED, this)
                 } catch (e: Exception) {
                     error(e, TEXT_ENGINE_CRASHED, this)
                     crash()
+                } finally {
+                    this@BusEngineImpl.detach()
                 }
             }
             Thread(::execute, "Bus-%04d".format(BusEngine.ID_ENGINE.incrementAndGet())).apply {

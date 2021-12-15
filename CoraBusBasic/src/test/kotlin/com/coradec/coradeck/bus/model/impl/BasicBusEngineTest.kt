@@ -78,6 +78,10 @@ internal class BasicBusEngineTest {
         var running = AtomicBoolean(false)
         override fun run() {
             running.set(true)
+            while (!Thread.interrupted()) {
+                debug("Waiting for interruption.")
+                Thread.sleep(1000)
+            }
         }
     }
 
