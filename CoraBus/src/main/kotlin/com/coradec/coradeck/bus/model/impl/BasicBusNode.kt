@@ -12,6 +12,7 @@ import com.coradec.coradeck.bus.module.CoraBus
 import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.bus.view.MemberView
 import com.coradec.coradeck.com.model.Request
+import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Timespan
 import com.coradec.coradeck.ctrl.ctrl.impl.BasicAgent
 import com.coradec.coradeck.dir.model.Path
@@ -33,8 +34,8 @@ open class BasicBusNode : BasicAgent(), DelegatedBusNode {
 
     override fun memberView(session: Session): MemberView = delegate.memberView(session)
 
-    override fun attach(context: BusContext): Request = delegate.attach(context)
-    override fun detach(): Request = delegate.detach()
+    override fun attach(origin: Origin, context: BusContext): Request = delegate.attach(origin, context)
+    override fun detach(origin: Origin): Request = delegate.detach(origin)
     override fun renameTo(name: String) = delegate.renameTo(name)
     override fun context(timeout: Long, timeoutUnit: TimeUnit): BusContext = delegate.context(timeout, timeoutUnit)
     override fun standby(delay: Timespan, state: BusNodeState) = delegate.standby(delay, state)

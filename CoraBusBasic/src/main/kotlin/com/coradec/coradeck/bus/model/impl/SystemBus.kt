@@ -34,7 +34,7 @@ object SystemBus : BasicBusHub(CoraDir.rootNamespace) {
     private val TEXT_SHUTDOWN = LocalText("Shutdown")
 
     init {
-        attach(selfContext) andThen { CIMMEX.preventShutdown() }
+        attach(context = selfContext) andThen { CIMMEX.preventShutdown() }
         addShutdownHook("Blackout") {
             if (attached) detach() andThen { CIMMEX.allowShutdown() } else CIMMEX.allowShutdown()
         }

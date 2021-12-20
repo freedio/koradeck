@@ -13,6 +13,7 @@ import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.com.model.Request
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Timespan
+import com.coradec.coradeck.core.util.caller
 import com.coradec.coradeck.dir.model.Path
 import com.coradec.coradeck.session.model.Session
 import java.util.concurrent.TimeUnit
@@ -42,9 +43,9 @@ interface BusNode : Origin, Recipient {
     fun memberView(session: Session): MemberView
 
     /** Attaches this node to the specified bus context and initializaes it. */
-    fun attach(context: BusContext): Request
+    fun attach(origin: Origin = caller, context: BusContext): Request
     /** Terminates this node and detaches it from the specified bus context. */
-    fun detach(): Request
+    fun detach(origin: Origin = caller): Request
     /** Changes the name of node to the specified name. */
     @Throws(NodeNotAttachedException::class) fun renameTo(name: String)
     /** The bus context.  Will wait up to [timeout] [timeoutUnit]s for the node to be connected, then throw TimeoutException. */

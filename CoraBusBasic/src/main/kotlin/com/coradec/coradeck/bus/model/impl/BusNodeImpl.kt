@@ -13,9 +13,7 @@ import com.coradec.coradeck.bus.model.BusNodeState
 import com.coradec.coradeck.bus.model.BusNodeState.*
 import com.coradec.coradeck.bus.model.BusNodeStateTransition
 import com.coradec.coradeck.bus.model.NodeDelegator
-import com.coradec.coradeck.bus.trouble.NodeNotAttachedException
-import com.coradec.coradeck.bus.trouble.StateUnknownException
-import com.coradec.coradeck.bus.trouble.StateUnreachableException
+import com.coradec.coradeck.bus.trouble.*
 import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.bus.view.MemberView
 import com.coradec.coradeck.com.ctrl.Observer
@@ -195,6 +193,16 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
     }
 
     private fun detach(request: DetachRequest) {
+        if (state == DETACHED) {
+            warn(TEXT_NODE_ALREADY_DETACHED, name ?: "unknown", request.origin)
+            request.cancel(NodeAlreadyDetachedException(name))
+            return
+        }
+        if (BUSY in myStates) {
+            warn(TEXT_NODE_ALREADY_DETACHING, name ?: "unknown", request.origin)
+            request.cancel(NodeAlreadyDetachingException(name))
+            return
+        }
         if (state == READY) {
             myStates -= READY
             myStates += BUSY
@@ -219,8 +227,8 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
         } else trigger.trigger.succeed()
     }
 
-    override fun attach(context: BusContext): AttachRequest = accept(AttachRequest(caller, context)).content
-    override fun detach(): DetachRequest = accept(DetachRequest(caller)).content
+    override fun attach(origin: Origin, context: BusContext): AttachRequest = accept(AttachRequest(caller, context)).content
+    override fun detach(origin: Origin): DetachRequest = accept(DetachRequest(origin)).content
     override fun renameTo(name: String) {
         debug("Renaming member «%s» to «%s».", this.name ?: "unknown", name)
         context?.renameTo(name) ?: throw NodeNotAttachedException()
@@ -276,8 +284,8 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
     }
 
     private inner class InternalMemberView(session: Session) : AbstractMemberView(session) {
-        override fun attach(context: BusContext): Request = this@BusNodeImpl.attach(context)
-        override fun detach(): Request = this@BusNodeImpl.detach()
+        override fun attach(context: BusContext): Request = this@BusNodeImpl.attach(caller2, context)
+        override fun detach(): Request = this@BusNodeImpl.detach(caller2)
         override fun <V : View> lookupView(session: Session, type: KClass<V>): V? = this@BusNodeImpl.lookupView(session, type)
         override fun <V : View> getView(session: Session, type: KClass<V>): V = lookupView(session, type)
             ?: throw ViewNotFoundException(this@BusNodeImpl::class, type)
@@ -286,6 +294,8 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
     companion object {
         @JvmStatic
         protected val TEXT_TRANSITION_FAILED = LocalText("TransitionFailed3")
+        private val TEXT_NODE_ALREADY_DETACHING = LocalText("NodeAlreadyDetaching2")
+        private val TEXT_NODE_ALREADY_DETACHED = LocalText("NodeAlreadyDetached2")
     }
 
 }
