@@ -69,7 +69,7 @@ open class BasicAgent() : Logger(), Agent {
 
     override fun accepts(information: Information): Boolean = when (information) {
         is Command -> approvedCommands.any { it.isInstance(information) }
-        is Synchronization, is DummyRequest -> true
+        is DummyRequest -> true
         else -> routes.keys.any { it.isInstance(information) }
     }
 
@@ -84,7 +84,6 @@ open class BasicAgent() : Logger(), Agent {
                 notification.crash(CommandNotApprovedException(content))
                 error(TEXT_MESSAGE_NOT_APPROVED, content.classname, content)
             }
-        is Synchronization -> content.succeed().also { debug("Synchronization point «%s» reached", content) }
         is DummyRequest -> content.succeed().also { debug("DummyRequest processed.") }
         else -> {
             routes.filterKeys { it.isInstance(content) }.values.firstOrNull()?.apply {
@@ -134,10 +133,6 @@ open class BasicAgent() : Logger(), Agent {
         private val TEXT_MESSAGE_NOT_APPROVED = LocalText("MessageNotApproved2")
         private val TEXT_COMMAND_FAILED = LocalText("CommandFailed2")
         private val TEXT_MESSAGE_FAILED = LocalText("MessageFailed2")
-        private val INTERNAL_COMMANDS = listOf(
-            MultiRequest::class,
-            ActionCommand::class,
-            Synchronization::class
-        )
+        private val INTERNAL_COMMANDS = listOf(MultiRequest::class, ActionCommand::class, Synchronization::class)
     }
 }
