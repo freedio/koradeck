@@ -4,8 +4,10 @@
 
 package com.coradec.coradeck.ctrl.ctrl.impl
 
+import com.coradec.coradeck.com.model.Information
 import com.coradec.coradeck.com.model.Notification
 import com.coradec.coradeck.com.model.Notification.Companion.LOST_ITEMS
+import com.coradec.coradeck.com.model.NotificationState
 import com.coradec.coradeck.com.model.NotificationState.LOST
 import com.coradec.coradeck.com.model.impl.BasicInformation
 import com.coradec.coradeck.com.model.impl.BasicNotification
@@ -88,6 +90,23 @@ internal class CIMMEXUT {
         assertThat(LOST_ITEMS).contains(message)
     }
 
+
+    @Test
+    fun testRecoveredNotification() {
+        // given
+        val message = TestNotification1(here)
+        val agent = TestAgent1()
+        // when
+        CIMMEX.inject(message)
+        CIMMEX.synchronize()
+        CIMMEX.subscribe(agent)
+        Thread.sleep(100)
+        // then
+        assertThat(message.state).isEqualTo(NotificationState.PROCESSED)
+        // cleanup
+        CIMMEX.unsubscribe(agent)
+    }
+
     @Test
     fun testInjectionThroughAgent() {
         // given
@@ -146,7 +165,9 @@ internal class CIMMEXUT {
     }
 
     class TestInformation1(origin: Origin) : BasicInformation(origin)
-    class TestNotification1(origin: Origin) : BasicNotification<TestInformation1>(TestInformation1(origin))
+    class TestNotification1(origin: Origin) : BasicNotification<TestInformation1>(
+        TestInformation1(origin), validUpTo = ZonedDateTime.now() + Duration.ofSeconds(2)
+    )
     class TestInformation2(
         origin: Origin,
         delay: Duration
@@ -181,6 +202,8 @@ internal class CIMMEXUT {
         override fun accepts(notification: Notification<*>) =
             notification.content is TestInformation1 || super.accepts(notification)
 
+        override fun accepts(information: Information): Boolean = information is TestInformation1 || super.accepts(information)
+
         override fun receive(notification: Notification<*>) = when (notification.content) {
             is TestInformation1 -> gotMessage = true
             else -> super.receive(notification)
@@ -192,6 +215,8 @@ internal class CIMMEXUT {
 
         override fun accepts(notification: Notification<*>) =
             notification is TestNotification2 || notification.content is TestInformation2 || super.accepts(notification)
+
+        override fun accepts(information: Information): Boolean = information is TestInformation2 || super.accepts(information)
 
         override fun receive(notification: Notification<*>) = when {
             notification is TestNotification2 -> {

@@ -73,7 +73,7 @@ object CIMMEX : Logger(), IMMEX {
     private val inqueue = PrioQueue<Prioritized>(PROP_INQUEUE_SIZE.value)
     private val taskqueue = PrioQueue<Task>(PROP_TASKQUEUE_SIZE.value)
     private val delayQueue = DeferringQueue()
-    private val broadcastQueue = PrioQueue<Information>(PROP_BROADCAST_QUEUE_SIZE.value)
+    private val broadcastQueue = PrioQueue<Notification<*>>(PROP_BROADCAST_QUEUE_SIZE.value)
     private val workerGroup = WorkerThreadGroup()
     private val executors = ConcurrentHashMap<Int, Executor>()
     private val workers = ConcurrentHashMap<Int, Worker>()
@@ -187,6 +187,7 @@ object CIMMEX : Logger(), IMMEX {
         if (enabled.get()) {
             val sync = Semaphore(0)
             defaultAgent.accept(Synchronization(sync))
+            cleanBroadcastQueue()
             sync.acquire()
         } else error(TEXT_CIMMEX_DISABLED, "Synchronization")
     }
@@ -213,10 +214,9 @@ object CIMMEX : Logger(), IMMEX {
     override fun subscribe(vararg listeners: Recipient) {
         synchronized(registry) { registry += listeners.toSet() }
         cleanBroadcastQueue()
-        broadcastQueue.forEach { information ->
-            listeners.forEach { listener ->
-                if (listener.accepts(information)) listener.receive(information.wrap(here))
-            }
+        broadcastQueue.forEach { notification ->
+            val information = notification.content
+            listeners.forEach { listener -> if (listener.accepts(information)) dispatch(notification, listener) }
         }
     }
 
@@ -350,10 +350,10 @@ object CIMMEX : Logger(), IMMEX {
 
     private fun broadcast(item: Notification<*>) {
         cleanBroadcastQueue()
-        broadcastQueue.add(item.content)
+        broadcastQueue.add(item)
         val recipients = synchronized(registry) { registry.filter { observer -> observer.accepts(item) } }
         when (recipients.size) {
-            0 -> alert(TEXT_NO_RECIPIENTS, item.content.classname, item.content)
+            0 -> alert(TEXT_NO_RECIPIENTS, item.content.classname, item.content).also { item.discard() }
             1 -> dispatch(item, recipients.single())
             else -> {
                 recipients.forEach { dispatch(item.content, it) }

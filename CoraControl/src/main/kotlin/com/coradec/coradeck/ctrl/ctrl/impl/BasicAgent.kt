@@ -118,7 +118,7 @@ open class BasicAgent() : Logger(), Agent {
         routes -= type.java
     }
 
-    class Synchronization(val sync: Semaphore) : BasicCommand(caller) {
+    class Synchronization(private val sync: Semaphore) : BasicCommand(caller) {
         override fun execute() {
             debug("Synchronization point reached")
             sync.release()

@@ -12,7 +12,7 @@ import java.util.*
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
-open class PrioQueue<T>(private val capacity: Int): Logger() {
+open class PrioQueue<T>(private val capacity: Int): Logger(), Iterable<T> {
     private val internalQueues = LinkedHashMap<Priority, LinkedList<T>>()
     private val semaphore = Semaphore(0, true)
     private val capaphore = Semaphore(capacity, true)
@@ -105,8 +105,7 @@ open class PrioQueue<T>(private val capacity: Int): Logger() {
     }
 
     fun asSequence(): Sequence<T> = Sequence { iterator() }
-    fun iterator(): Iterator<T> = QueueIterator()
-    fun forEach(function: (T) -> Unit): Unit = synchronized(internalQueues) { internalQueues.values.flatten().forEach(function) }
+    override fun iterator(): Iterator<T> = internalQueues.values.flatten().iterator()
     override fun toString(): String = joinToString(", ", "[", "]")
     fun joinToString(
         separator: String = ",",
@@ -129,28 +128,4 @@ open class PrioQueue<T>(private val capacity: Int): Logger() {
         return false
     }
 
-    private inner class QueueIterator: /*Mutable*/Iterator<T> {
-        private val queues = LinkedHashMap<Priority, List<T>>().apply {
-            synchronized(internalQueues) {
-                for (prio in Priority.values()) {
-                    this[prio] = internalQueues[prio]?.let { ArrayList(it) } ?: emptyList()
-                }
-            }
-        }
-        private val priorities = Priority.values().iterator()
-        private var currentPrio: Priority? = priorities.next()
-        private var currentIterator: Iterator<T>? = nextIterator
-        @Suppress("RecursivePropertyAccessor")
-        private val nextIterator: Iterator<T>? get() {
-            currentPrio = if (priorities.hasNext()) priorities.next() else null
-            currentIterator = if (currentPrio == null) null
-            else queues[currentPrio]?.iterator() ?: nextIterator
-            return currentIterator
-        }
-        override fun hasNext(): Boolean = currentIterator?.hasNext() == true || nextIterator?.hasNext() == true
-        override fun next(): T = if (hasNext()) currentIterator!!.next() else throw NoSuchElementException("next")
-//        override fun remove() {
-//            TODO("Not yet implemented")
-//        }
-    }
 }

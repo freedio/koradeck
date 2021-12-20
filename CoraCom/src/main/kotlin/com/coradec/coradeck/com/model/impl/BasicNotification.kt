@@ -67,6 +67,8 @@ open class BasicNotification<I: Information>(
         if (content is Request) (content as Request).enqueue()
     }
     override fun dispatch() {
+        myStates.remove(LOST)
+        LOST_ITEMS.remove(this)
         state = DISPATCHED
         if (content is Request) (content as Request).dispatch()
     }
