@@ -66,9 +66,15 @@ open class PrioQueue<T>(private val capacity: Int): Logger() {
     open fun put(element: T) =
         if (element is Prioritized) put(element.priority, element) else throw IllegalArgumentException("Element !is Prioritized!")
 
+    fun add(element: T) {
+        if (isFull()) poll()
+        put(element)
+    }
+
     fun first(): T = peek() ?: throw NoSuchElementException("first")
     fun isEmpty(): Boolean = size == 0
     fun isNotEmpty(): Boolean = size != 0
+    fun isFull(): Boolean = size == capacity
     fun removeIf(filter: (T) -> Boolean) = synchronized(internalQueues) {
         Priority.values().forEach { prio -> internalQueues[prio]?.removeIf(filter) }
         semaphore.drainPermits()

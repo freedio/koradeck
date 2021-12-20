@@ -244,6 +244,7 @@ object CIMMEX : Logger(), IMMEX {
     }
 
     private fun fullStats(): String {
+        cleanBroadcastQueue()
         val collector = StringWriter()
         PrintWriter(collector).use { out ->
             out.println("     Basic Stats: $stats")
@@ -349,10 +350,10 @@ object CIMMEX : Logger(), IMMEX {
 
     private fun broadcast(item: Notification<*>) {
         cleanBroadcastQueue()
-        broadcastQueue.put(item.content)
+        broadcastQueue.add(item.content)
         val recipients = synchronized(registry) { registry.filter { observer -> observer.accepts(item) } }
         when (recipients.size) {
-            0 -> item.discard().also { warn(TEXT_NO_RECIPIENTS, item.content.classname, item.content) }
+            0 -> alert(TEXT_NO_RECIPIENTS, item.content.classname, item.content)
             1 -> dispatch(item, recipients.single())
             else -> {
                 recipients.forEach { dispatch(item.content, it) }

@@ -5,7 +5,7 @@ NotFinished5: CIMMEX (Central Information, Messaging, Market, Event & Execution 
               %d inputs, %d tasks, and %d messages left unprocessed: %s!
 DispatchFailed1: Failed to dispatch ‹%s›! → item dropped.
 CantDispatch1: Can't dispatch item ‹%s›: all queues are full! → item dropped.
-NoRecipients2: Nobody was interested in ‹%s› message «%s» → Message dropped.
+NoRecipients2: Nobody was currently interested in ‹%s› message «%s».
 DispatcherInterrupted: Dispatcher was interrupted!
 DispatcherStarted: Dispatcher started.
 DispatcherStopped: Dispatcher stopped.
@@ -20,4 +20,4 @@ RemainingItems1: Remaining items in CIMMEX: %s.
 WaitingForShutdownClearance: Acquiring license to kill ...
 ShutdownClearanceAcquired: Termination clearance acquired.
 ShutdownClearanceDenied1: ☠☠☠ FATAL ERROR: TERMINATION CLEARANCE WAS DENIED AFTER %s!!!\n\
-              SYSTEM HAD TO BE STABBED TO DEATH FROM BEHIND WITHOUT A LICENCE.  CHECK YOUR CODE FOR PROBLEMS!!! ☠☠☠
+                                  SYSTEM HAD TO BE STABBED FROM BEHIND WITHOUT A LICENCE.  CHECK YOUR CODE FOR PROBLEMS!!! ☠☠☠
