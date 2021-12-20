@@ -31,15 +31,17 @@ abstract class HsqlDbCollection<Record : Any>(
     private val connection = db.connection
     protected val statement = db.statement
     protected val fieldNames: Sequence<String> get() = model.memberProperties.map { it.name }.asSequence()
-    protected val insertFieldNames: Sequence<String> get() =
-        model.memberProperties
+    protected val insertFieldNames: Sequence<String> get() = model.memberProperties
             .filter { p -> model.members.single { it.name == p.name }.returnType.findAnnotation<Generated>() == null }
             .map { it.name }.asSequence()
     protected val tableName: String = model.simpleName?.toSqlObjectName()
         ?: throw IllegalArgumentException("Unsupported model: $model")
     private val columnNames: Sequence<String>
         get() = connection.metaData.getColumns(null, null, tableName, null)
-            .seqOf(ColumnMetadata::class).map { it.columnName }.ifEmpty { fieldNames.map { it.toSqlObjectName() } }
+            .seqOf(ColumnMetadata::class)
+            .sortedBy { it.ordinalPosition }
+            .map { it.columnName }
+            .ifEmpty { fieldNames.map { it.toSqlObjectName() } }
     private val tableNames: Sequence<String>
         get() = connection.metaData
             .getTables(null, null, tableName, listOf("TABLE").toTypedArray())

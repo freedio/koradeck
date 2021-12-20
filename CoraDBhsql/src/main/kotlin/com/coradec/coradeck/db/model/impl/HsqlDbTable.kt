@@ -154,7 +154,7 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
             voucher.value = statement.executeUpdate(stmt)
             voucher.succeed()
         } catch (e: Exception) {
-            error(e, TEXT_UPDATE_FAILED)
+            error(e, TEXT_UPDATE_FAILED, tableName)
             db.failed()
             voucher.fail(e)
         }
@@ -168,7 +168,7 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
             voucher.value = statement.executeUpdate(stmt)
             voucher.succeed()
         } catch (e: Exception) {
-            error(e, TEXT_DELETE_FAILED)
+            error(e, TEXT_DELETE_FAILED, tableName)
             db.failed()
             voucher.fail(e)
         }

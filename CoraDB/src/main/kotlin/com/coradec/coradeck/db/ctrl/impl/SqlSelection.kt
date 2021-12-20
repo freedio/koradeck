@@ -65,6 +65,6 @@ class SqlSelection(private val expr: String) : Selection {
                 "IS\\s+NULL|[Ii]s\\s+[Nn]ull|IS\\s+NOT\\s+NULL|[Ii]s\\s+[Nn]ot\\s+[Nn]ull)]")
         private val ORDER = Regex("(\\w+):(ASC|DESC|Asc|Desc|asc|desc)")
 
-        fun where(expr: String): Selection = SqlSelection(expr)
+        fun where(vararg expr: String): Selection = SqlSelection(expr.joinToString(" and "))
     }
 }
