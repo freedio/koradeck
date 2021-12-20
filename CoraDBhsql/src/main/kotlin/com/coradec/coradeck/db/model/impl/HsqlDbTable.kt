@@ -5,9 +5,11 @@
 package com.coradec.coradeck.db.model.impl
 
 import com.coradec.coradeck.com.model.Voucher
+import com.coradec.coradeck.com.model.impl.BasicCommand
 import com.coradec.coradeck.com.model.impl.BasicVoucher
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Timespan
+import com.coradec.coradeck.core.util.caller
 import com.coradec.coradeck.core.util.contains
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.swallow
@@ -174,6 +176,19 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
         }
     }
 
+    private fun synchronize(action: () -> Unit) = accept(SynchCommand(caller, action)).swallow()
+
+    class SynchCommand(origin: Origin, private val action: () -> Unit): BasicCommand(origin) {
+        override fun execute() {
+            try {
+                action.invoke()
+                succeed()
+            } catch (e: Exception) {
+                fail(e)
+            }
+        }
+    }
+
     class InsertRecordVoucher(origin: Origin, val element: Any): BasicVoucher<Int>(origin)
     class InsertRecordsVoucher(origin: Origin, val elements: Sequence<Any>): BasicVoucher<Int>(origin)
     class UpdateRecordVoucher(origin: Origin, val selector: Selection, val fields: Sequence<Pair<String, Any?>>):
@@ -194,6 +209,8 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
         override fun minusAssign(selector: Selection) = this@HsqlDbTable.minusAssign(selector)
         override fun commit() = this@HsqlDbTable.commit()
         override fun rollback() = this@HsqlDbTable.rollback()
+        override fun whenReady(action: () -> Unit) = this@HsqlDbTable.synchronize(action)
+        @Deprecated(replaceWith = ReplaceWith("whenReady()"), message = "Deprecated")
         override fun standby() = this@HsqlDbTable.synchronize()
     }
 

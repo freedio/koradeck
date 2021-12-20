@@ -31,5 +31,8 @@ interface RecordTable<Record: Any>: RecordCollection<Record> {
     /** Cancels the chanches made so far. */
     fun rollback()
     /** Waits until all pending operations have completed. */
+    @Deprecated(replaceWith = ReplaceWith("whenReady()"), message = "Deprecated")
     fun standby()
+    /** Performs the specified action after all DB actions so far have finished. */
+    fun whenReady(action: () -> Unit)
 }
