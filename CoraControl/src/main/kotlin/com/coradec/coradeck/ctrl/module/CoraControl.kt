@@ -17,8 +17,8 @@ import com.coradec.coradeck.ctrl.model.Task
 import com.coradec.coradeck.module.model.CoraModule
 
 object CoraControl : CoraModule<CoraControlAPI>() {
-    val Market: MarketSpace = impl.Market
-    val IMMEX: IMMEX = impl.IMMEX
+    val Market: MarketSpace get() = impl.Market
+    val IMMEX: IMMEX get() = impl.IMMEX
 
     /**
      * Creates a request set for the specified requests; injecting the set will trigger all requests at once and be successful

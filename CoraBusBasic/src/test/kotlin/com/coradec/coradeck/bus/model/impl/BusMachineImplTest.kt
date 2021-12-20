@@ -29,7 +29,14 @@ class BusMachineImplTest {
         @BeforeAll
         @JvmStatic
         fun setup() {
-            CoraModules.register(CoraConfImpl(), CoraTextImpl(), CoraTypeImpl(), CoraComImpl(), CoraControlImpl(), CoraDirImpl())
+            CoraModules.register(
+                CoraConfImpl::class,
+                CoraTextImpl::class,
+                CoraTypeImpl::class,
+                CoraComImpl::class,
+                CoraControlImpl::class,
+                CoraDirImpl::class
+            )
         }
     }
 
@@ -42,7 +49,7 @@ class BusMachineImplTest {
         // when:
         testee.add("node", node1.memberView)
         testee.add("engine", node2.memberView)
-        testee.attach(TestBusContext(TestBusHubView(), "machine")).standby()
+        testee.attach(context = TestBusContext(TestBusHubView(), "machine")).standby()
         // then:
         Assertions.assertThat(testee.state).isEqualTo(BusNodeState.READY)
         Assertions.assertThat(node1.state).isEqualTo(BusNodeState.READY)
@@ -56,7 +63,7 @@ class BusMachineImplTest {
         // when:
         testee.add("nodegain1", node1.memberView)
         testee.add("enginegain2", node2.memberView)
-        testee.attach(TestBusContext(TestBusHubView(), "remachine")).standby()
+        testee.attach(context = TestBusContext(TestBusHubView(), "remachine")).standby()
         Thread.sleep(100)
         // then:
         Assertions.assertThat(testee.state).isEqualTo(BusNodeState.READY)
@@ -74,7 +81,7 @@ class BusMachineImplTest {
         val member1 = node1.memberView
         val member2 = node2.memberView
         // when:
-        testee.attach(TestBusContext(TestBusHubView(), "machine")).standby()
+        testee.attach(context = TestBusContext(TestBusHubView(), "machine")).standby()
         testee.add("node", member1).standby()
         testee.add("engine", member2).standby()
         // then:
@@ -89,7 +96,7 @@ class BusMachineImplTest {
         Assertions.assertThat(node1.state).isEqualTo(BusNodeState.DETACHED)
         Assertions.assertThat(node2.state).isEqualTo(BusNodeState.DETACHED)
         // when:
-        testee.attach(TestBusContext(TestBusHubView(), "remachine")).standby()
+        testee.attach(context = TestBusContext(TestBusHubView(), "remachine")).standby()
         testee.add("nodagain1", member1).standby()
         testee.add("enginagain2", member2).standby()
         // then:

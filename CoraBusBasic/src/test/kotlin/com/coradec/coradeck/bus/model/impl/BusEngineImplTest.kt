@@ -29,7 +29,14 @@ class BusEngineImplTest {
         @BeforeAll
         @JvmStatic
         fun setup() {
-            CoraModules.register(CoraConfImpl(), CoraTextImpl(), CoraTypeImpl(), CoraComImpl(), CoraControlImpl(), CoraDirImpl())
+            CoraModules.register(
+                CoraConfImpl::class,
+                CoraTextImpl::class,
+                CoraTypeImpl::class,
+                CoraComImpl::class,
+                CoraControlImpl::class,
+                CoraDirImpl::class
+            )
         }
     }
 
@@ -38,7 +45,7 @@ class BusEngineImplTest {
         // given:
         val testee = BusEngineImpl()
         // when:
-        testee.attach(TestBusContext(TestBusHubView(), "einzel")).standby()
+        testee.attach(context = TestBusContext(TestBusHubView(), "einzel")).standby()
         // then:
         Assertions.assertThat(testee.state).isEqualTo(BusNodeState.READY)
         Assertions.assertThat(testee.name).isEqualTo("einzel")
@@ -47,7 +54,7 @@ class BusEngineImplTest {
         // then:
         Assertions.assertThat(testee.state).isEqualTo(BusNodeState.DETACHED)
         // when:
-        testee.attach(TestBusContext(TestBusHubView(), "wieder")).standby()
+        testee.attach(context = TestBusContext(TestBusHubView(), "wieder")).standby()
         // then:
         Assertions.assertThat(testee.state).isEqualTo(BusNodeState.READY)
         Assertions.assertThat(testee.name).isEqualTo("wieder")

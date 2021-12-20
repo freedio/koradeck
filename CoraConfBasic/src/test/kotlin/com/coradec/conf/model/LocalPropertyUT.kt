@@ -32,7 +32,7 @@ class LocalPropertyUT {
     companion object {
         @BeforeAll
         @JvmStatic fun setup() {
-            CoraModules.register(CoraComImpl(), CoraTextImpl(), CoraConfImpl(), CoraTypeImpl())
+            CoraModules.register(CoraComImpl::class, CoraTextImpl::class, CoraConfImpl::class, CoraTypeImpl::class)
         }
 
         @AfterAll

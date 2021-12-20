@@ -41,13 +41,13 @@ internal class BasicBusNodeTest {
         @JvmStatic
         fun setup() {
             CoraModules.register(
-                CoraConfImpl(),
-                CoraTextImpl(),
-                CoraTypeImpl(),
-                CoraComImpl(),
-                CoraControlImpl(),
-                CoraDirImpl(),
-                CoraBusImpl()
+                CoraConfImpl::class,
+                CoraTextImpl::class,
+                CoraTypeImpl::class,
+                CoraComImpl::class,
+                CoraControlImpl::class,
+                CoraDirImpl::class,
+                CoraBusImpl::class
             )
         }
     }

@@ -25,7 +25,7 @@ internal class DirectoryUT {
         @BeforeAll
         @JvmStatic
         fun setup() {
-            CoraModules.register(CoraDirImpl())
+            CoraModules.register(CoraDirImpl::class)
         }
 
         @AfterAll

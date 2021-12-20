@@ -108,7 +108,13 @@ internal class BasicAgentTest {
 
     companion object {
         @BeforeAll @JvmStatic fun setup() {
-            CoraModules.register(CoraConfImpl(), CoraComImpl(), CoraTextImpl(), CoraTypeImpl(), CoraControlImpl())
+            CoraModules.register(
+                CoraConfImpl::class,
+                CoraComImpl::class,
+                CoraTextImpl::class,
+                CoraTypeImpl::class,
+                CoraControlImpl::class
+            )
         }
     }
 }

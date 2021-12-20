@@ -36,14 +36,14 @@ class DatabaseTest {
         @JvmStatic
         fun setup() {
             CoraModules.register(
-                CoraConfImpl(),
-                CoraComImpl(),
-                CoraTextImpl(),
-                CoraTypeImpl(),
-                CoraDirImpl(),
-                CoraControlImpl(),
-                CoraBusImpl(),
-                CoraDbHsql()
+                CoraConfImpl::class,
+                CoraComImpl::class,
+                CoraTextImpl::class,
+                CoraTypeImpl::class,
+                CoraDirImpl::class,
+                CoraControlImpl::class,
+                CoraBusImpl::class,
+                CoraDbHsql::class
             )
             val log = CoraCom.log
             Files.deleteTree("/tmp/dbtest3".toPath())

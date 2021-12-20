@@ -10,11 +10,11 @@ import com.fasterxml.jackson.databind.ObjectMapper
 
 object CoraConf: CoraModule<CoraConfAPI>() {
     /** The system wide YAML parser. */
-    val yamlMapper: ObjectMapper = impl.yamlMapper
+    val yamlMapper: ObjectMapper get() = impl.yamlMapper
     /** The system wide JSON parser. */
-    val jsonMapper: ObjectMapper = impl.jsonMapper
+    val jsonMapper: ObjectMapper get() = impl.jsonMapper
     /** The system wide XML parser. */
-    val xmlMapper: ObjectMapper = impl.xmlMapper
+    val xmlMapper: ObjectMapper get() = impl.xmlMapper
 
     /** Returns the configuration containing the properties of the specified context. */
     fun getConfiguration(context: String): Configuration = impl.getConfiguration(context)

@@ -30,7 +30,13 @@ internal class CIMMEXUT {
         @BeforeAll
         @JvmStatic
         fun setup() {
-            CoraModules.register(CoraConfImpl(), CoraTypeImpl(), CoraComImpl(), CoraTextImpl(), CoraControlImpl())
+            CoraModules.register(
+                CoraConfImpl::class,
+                CoraTypeImpl::class,
+                CoraComImpl::class,
+                CoraTextImpl::class,
+                CoraControlImpl::class
+            )
         }
     }
 

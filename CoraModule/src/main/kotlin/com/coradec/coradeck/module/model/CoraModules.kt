@@ -4,14 +4,20 @@
 
 package com.coradec.coradeck.module.model
 
+import com.coradec.coradeck.module.trouble.ModuleWithoutPrimaryConstructorException
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.createType
 import kotlin.reflect.full.isSubtypeOf
+import kotlin.reflect.full.primaryConstructor
 
 object CoraModules {
     private val MODULE_API_TYPE = CoraModuleAPI::class.createType()
-    private val implementations = ArrayList<CoraModuleAPI>()
+    private val modules = ArrayList<KClass<out CoraModuleAPI>>()
+    private var impls = ArrayList<CoraModuleAPI>()
+    private val implementations: List<CoraModuleAPI> get() = impls.ifEmpty {
+        modules.map { it.primaryConstructor?.call() ?: throw ModuleWithoutPrimaryConstructorException(it) }.apply { impls += this }
+    }
 
     @Suppress("UNCHECKED_CAST")
     fun <M : CoraModuleAPI> implementations(klass: KClass<out CoraModule<M>>): CoraModuleList<M> =
@@ -27,9 +33,10 @@ object CoraModules {
     private fun getModuleAPI2(type: KClass<*>): KType =
             type.supertypes.first { t -> t.isSubtypeOf(MODULE_API_TYPE) }
 
-    fun register(vararg impl: CoraModuleAPI) = synchronized(implementations) { implementations += impl }
+    fun register(vararg impl: KClass<out CoraModuleAPI>) = synchronized(implementations) { modules += impl }
 
     fun initialize() {
-        implementations.clear()
+        modules.clear()
+        impls.clear()
     }
 }

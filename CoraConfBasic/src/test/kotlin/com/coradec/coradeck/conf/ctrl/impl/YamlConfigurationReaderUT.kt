@@ -26,7 +26,7 @@ internal class YamlConfigurationReaderUT {
 
     companion object {
         @BeforeAll @JvmStatic fun setup() {
-            CoraModules.register(CoraComImpl(), CoraTextImpl(), CoraConfImpl())
+            CoraModules.register(CoraComImpl::class, CoraTextImpl::class, CoraConfImpl::class)
             writeSaneConfig()
         }
 

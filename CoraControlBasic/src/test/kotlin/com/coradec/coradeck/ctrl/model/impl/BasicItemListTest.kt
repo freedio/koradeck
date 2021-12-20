@@ -31,7 +31,13 @@ internal class BasicItemListTest {
         @BeforeAll
         @JvmStatic
         fun setup() {
-            CoraModules.register(CoraConfImpl(), CoraTextImpl(), CoraTypeImpl(), CoraComImpl(), CoraControlImpl())
+            CoraModules.register(
+                CoraConfImpl::class,
+                CoraTextImpl::class,
+                CoraTypeImpl::class,
+                CoraComImpl::class,
+                CoraControlImpl::class
+            )
         }
     }
 
