@@ -11,6 +11,7 @@ import com.coradec.coradeck.com.model.RequestState.*
 import com.coradec.coradeck.com.model.RequestState.Companion.FINISHED
 import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.com.model.impl.RequestStateChangedEvent
+import com.coradec.coradeck.com.module.CoraCom
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
@@ -20,8 +21,6 @@ import com.coradec.coradeck.ctrl.model.RequestSet
 import com.coradec.coradeck.ctrl.module.CoraControl.IMMEX
 import com.coradec.coradeck.session.model.Session
 import com.coradec.coradeck.text.model.LocalText
-import java.time.LocalDateTime
-import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 class BasicRequestSet(
@@ -31,7 +30,7 @@ class BasicRequestSet(
     createdAt: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
     validFrom: ZonedDateTime = createdAt,
-    validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC),
+    validUpto: ZonedDateTime  = validFrom + CoraCom.standardValidity,
     private val processor: Agent? = null
 ) : BasicRequest(origin, priority, createdAt, session, validFrom, validUpto), RequestSet {
     private var outstanding = 0

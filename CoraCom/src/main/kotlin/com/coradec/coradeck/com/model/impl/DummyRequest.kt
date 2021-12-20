@@ -4,11 +4,10 @@
 
 package com.coradec.coradeck.com.model.impl
 
+import com.coradec.coradeck.com.module.CoraCom
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.session.model.Session
-import java.time.LocalDateTime
-import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 class DummyRequest(
@@ -17,5 +16,5 @@ class DummyRequest(
     override val createdAt: ZonedDateTime = ZonedDateTime.now(),
     override val session: Session = Session.current,
     override val validFrom: ZonedDateTime = createdAt,
-    override val validUpTo: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
+    override val validUpTo: ZonedDateTime  = validFrom + CoraCom.standardValidity
 ) : BasicRequest(origin, priority, createdAt, session, validFrom, validUpTo)

@@ -6,6 +6,7 @@ package com.coradec.coradeck.com.model.impl
 
 import com.coradec.coradeck.com.model.RequestState.*
 import com.coradec.coradeck.com.model.Voucher
+import com.coradec.coradeck.com.module.CoraCom
 import com.coradec.coradeck.com.trouble.RequestCancelledException
 import com.coradec.coradeck.com.trouble.RequestFailedException
 import com.coradec.coradeck.core.annot.NonRepresentable
@@ -15,8 +16,6 @@ import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
 import com.coradec.coradeck.core.model.Timespan
 import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.session.model.Session
-import java.time.LocalDateTime
-import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeoutException
@@ -28,7 +27,7 @@ open class BasicVoucher<V>(
     createdAt: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
     validFrom: ZonedDateTime = createdAt,
-    validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC),
+    validUpto: ZonedDateTime  = validFrom + CoraCom.standardValidity,
     initialValue: V? = null
 ) : BasicRequest(origin, priority, createdAt, session, validFrom, validUpto), Voucher<V> {
     private val valueSemaphore = CountDownLatch(1)

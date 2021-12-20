@@ -7,6 +7,7 @@ package com.coradec.coradeck.com.model.impl
 import com.coradec.coradeck.com.model.Message
 import com.coradec.coradeck.com.model.Notification
 import com.coradec.coradeck.com.model.RequestState.NEW
+import com.coradec.coradeck.com.module.CoraCom
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.model.Origin
@@ -23,8 +24,6 @@ import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import org.assertj.core.api.SoftAssertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
-import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 internal class BasicRequestTest {
@@ -48,7 +47,7 @@ internal class BasicRequestTest {
         softly.assertThat(request.createdAt).isBetween(started, finished)
         softly.assertThat(request.reason).isNull()
         softly.assertThat(request.validFrom).isEqualTo(request.createdAt)
-        softly.assertThat(request.validUpTo).isEqualTo(ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC))
+        softly.assertThat(request.validUpTo).isEqualTo(request.validFrom + CoraCom.standardValidity)
         softly.assertThat(request.observerCount).isEqualTo(0)
         softly.assertThat(request.state).isEqualTo(NEW)
         softly.assertThat(request.states).containsExactly(NEW)
@@ -231,7 +230,13 @@ internal class BasicRequestTest {
     companion object {
         @BeforeAll
         @JvmStatic fun setup() {
-            CoraModules.register(CoraConfImpl(), CoraComImpl(), CoraTextImpl(), CoraTypeImpl(), CoraControlImpl())
+            CoraModules.register(
+                CoraConfImpl::class,
+                CoraComImpl::class,
+                CoraTextImpl::class,
+                CoraTypeImpl::class,
+                CoraControlImpl::class
+            )
         }
     }
 }

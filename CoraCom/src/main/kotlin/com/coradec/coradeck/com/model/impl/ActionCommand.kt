@@ -4,12 +4,11 @@
 
 package com.coradec.coradeck.com.model.impl
 
+import com.coradec.coradeck.com.module.CoraCom
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.model.Priority.Companion.defaultPriority
 import com.coradec.coradeck.session.model.Session
-import java.time.LocalDateTime
-import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 class ActionCommand(
@@ -19,7 +18,7 @@ class ActionCommand(
     createdAt: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
     validFrom: ZonedDateTime = createdAt,
-    validUpTo: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
+    validUpTo: ZonedDateTime  = validFrom + CoraCom.standardValidity
 ): BasicCommand(origin, priority, createdAt, session, validFrom, validUpTo) {
     override fun execute() {
         try {

@@ -6,6 +6,7 @@ package com.coradec.coradeck.com.model.impl
 
 import com.coradec.coradeck.com.model.Notification
 import com.coradec.coradeck.com.model.Request
+import com.coradec.coradeck.com.module.CoraCom
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.model.Origin
@@ -23,8 +24,6 @@ import com.coradec.coradeck.type.module.impl.CoraTypeImpl
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.time.LocalDateTime
-import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.ZonedDateTime.now
 
@@ -49,8 +48,8 @@ internal class BasicInformationTest {
         assertThat(r1.priority).isEqualTo(testee.priority)
         assertThat(testee.deferred).isFalse()
         assertThat(r1.deferred).isEqualTo(testee.deferred)
-        assertThat(testee.validUpTo).isEqualTo(ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC))
-        assertThat(testee.validUpTo).isEqualTo(ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC))
+        assertThat(testee.validUpTo).isEqualTo(testee.validFrom + CoraCom.standardValidity)
+        assertThat(r1.validUpTo).isEqualTo(r1.validFrom + CoraCom.standardValidity)
         assertThat(r1.session).isEqualTo(testee.session)
         assertThat(testee.delayMs).isEqualTo(0)
         assertThat(r1.delayMs).isEqualTo(testee.delayMs)
@@ -84,8 +83,8 @@ internal class BasicInformationTest {
         assertThat(testee.validFrom).isEqualTo(testee.createdAt)
         assertThat(r1.validFrom).isEqualTo(testee.validFrom)
         assertThat(r2.validFrom).isBetween(now().plusMinutes(1), now().plusMinutes(2))
-        assertThat(testee.validUpTo).isEqualTo(ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC))
-        assertThat(r1.validUpTo).isEqualTo(ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC))
+        assertThat(testee.validUpTo).isEqualTo(testee.validFrom + CoraCom.standardValidity)
+        assertThat(r1.validUpTo).isEqualTo(r1.validFrom + CoraCom.standardValidity)
         assertThat(r2.validUpTo).isBefore(now())
         assertThat(testee.due).isEqualTo(testee.createdAt)
         assertThat(r1.due).isEqualTo(testee.due)
@@ -132,8 +131,8 @@ internal class BasicInformationTest {
         assertThat(testee.validFrom).isEqualTo(testee.createdAt)
         assertThat(r1.validFrom).isEqualTo(testee.validFrom)
         assertThat(r2.validFrom).isBetween(now().plusMinutes(1), now().plusMinutes(2))
-        assertThat(testee.validUpTo).isEqualTo(ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC))
-        assertThat(r1.validUpTo).isEqualTo(ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC))
+        assertThat(testee.validUpTo).isEqualTo(testee.validFrom + CoraCom.standardValidity)
+        assertThat(r1.validUpTo).isEqualTo(r1.validFrom + CoraCom.standardValidity)
         assertThat(r2.validUpTo).isBefore(now())
         assertThat(testee.due).isEqualTo(testee.createdAt)
         assertThat(r1.due).isEqualTo(testee.due)
@@ -160,7 +159,7 @@ internal class BasicInformationTest {
         val content: String,
         createdAt: ZonedDateTime = now(),
         validFrom: ZonedDateTime = createdAt,
-        validUpTo: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
+        validUpTo: ZonedDateTime  = validFrom + CoraCom.standardValidity
     ) : BasicInformation(origin, priority, createdAt, Session.current, validFrom, validUpTo)
 
     class TestAgent: BasicAgent() {
@@ -174,7 +173,13 @@ internal class BasicInformationTest {
     companion object {
         @BeforeAll
         @JvmStatic fun setup() {
-            CoraModules.register(CoraConfImpl(), CoraComImpl(), CoraTextImpl(), CoraTypeImpl(), CoraControlImpl())
+            CoraModules.register(
+                CoraConfImpl::class,
+                CoraComImpl::class,
+                CoraTextImpl::class,
+                CoraTypeImpl::class,
+                CoraControlImpl::class
+            )
         }
     }
 }

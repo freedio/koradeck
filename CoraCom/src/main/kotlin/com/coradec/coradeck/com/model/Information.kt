@@ -4,10 +4,12 @@
 
 package com.coradec.coradeck.com.model
 
+import com.coradec.coradeck.conf.model.LocalProperty
 import com.coradec.coradeck.core.model.Deferred
 import com.coradec.coradeck.core.model.Formattable
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.session.model.Session
+import java.time.Duration
 import java.time.ZonedDateTime
 
 interface Information: Formattable, Deferred {
@@ -27,4 +29,8 @@ interface Information: Formattable, Deferred {
     /** Creates and returns a fresh copy of this information with the specified properties substituted. */
     fun <I: Information> copy(vararg substitute: Pair<String, Any?>): I
     fun wrap(origin: Origin): Notification<*>
+
+    companion object {
+        val PROP_VALIDITY = LocalProperty("Validity", Duration.ofSeconds(20))
+    }
 }

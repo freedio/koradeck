@@ -12,10 +12,13 @@ import com.coradec.coradeck.com.model.TextLogEntry
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.module.model.CoraModule
 import com.coradec.coradeck.text.model.Text
+import java.time.Duration
 
 object CoraCom : CoraModule<CoraComAPI>() {
     /** The standard log. */
     val log: Log get() = impl.log
+    /** The standard information validity. */
+    val standardValidity: Duration get() = impl.standardValidity
 
     /**
      * Creates a string log entry with the specified text (optionally fitted with the specified arguments) at the specified

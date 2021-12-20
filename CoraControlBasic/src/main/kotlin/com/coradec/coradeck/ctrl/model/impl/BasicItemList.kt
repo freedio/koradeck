@@ -10,6 +10,7 @@ import com.coradec.coradeck.com.model.RequestState.Companion.FINISHED
 import com.coradec.coradeck.com.model.impl.BasicRequest
 import com.coradec.coradeck.com.model.impl.RequestStateChangedEvent
 import com.coradec.coradeck.com.model.impl.StateChangedEvent
+import com.coradec.coradeck.com.module.CoraCom
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.util.relax
@@ -19,8 +20,6 @@ import com.coradec.coradeck.ctrl.module.CoraControl.IMMEX
 import com.coradec.coradeck.ctrl.trouble.LostInformationException
 import com.coradec.coradeck.session.model.Session
 import com.coradec.coradeck.text.model.LocalText
-import java.time.LocalDateTime
-import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 class BasicItemList(
@@ -30,7 +29,7 @@ class BasicItemList(
     createdAt: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
     validFrom: ZonedDateTime = createdAt,
-    validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC),
+    validUpto: ZonedDateTime  = validFrom + CoraCom.standardValidity,
     private val processor: Agent? = null
 ) : BasicRequest(origin, priority, createdAt, session, validFrom, validUpto), ItemList {
     constructor(
@@ -40,7 +39,7 @@ class BasicItemList(
         createdAt: ZonedDateTime = ZonedDateTime.now(),
         session: Session = Session.current,
         validFrom: ZonedDateTime = createdAt,
-        validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC),
+        validUpto: ZonedDateTime  = validFrom + CoraCom.standardValidity,
         processor: Agent? = null
     ) : this(origin, items.iterator(), priority, createdAt, session, validFrom, validUpto, processor)
 

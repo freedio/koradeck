@@ -8,6 +8,7 @@ import com.coradec.coradeck.com.model.Message
 import com.coradec.coradeck.com.model.Notification
 import com.coradec.coradeck.com.model.NotificationState.PROCESSED
 import com.coradec.coradeck.com.model.Request
+import com.coradec.coradeck.com.module.CoraCom
 import com.coradec.coradeck.com.module.CoraComImpl
 import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.core.model.Origin
@@ -40,7 +41,7 @@ internal class BasicMessageTest {
         assertThat(testee.recipient).isEqualTo(agent)
         assertThat(testee.state).`as`("${testee.states} does not end with ‹PROCESSED›").isEqualTo(PROCESSED)
         assertThat(testee.validFrom).isEqualTo(info.validFrom)
-        assertThat(testee.validUpTo).isEqualTo(info.validFrom.plus(BasicInformation.PROP_VALIDITY.value))
+        assertThat(testee.validUpTo).isEqualTo(info.validFrom + CoraCom.standardValidity)
         assertThat(testee.due).isEqualTo(testee.validFrom)
         assertThat(testee.priority).isEqualTo(A2)
         assertThat(testee.new).isFalse()
@@ -70,7 +71,7 @@ internal class BasicMessageTest {
         assertThat(r2).isInstanceOf(NotificationAlreadyEnqueuedException::class.java)
         assertThat(r1.state).`as`("${r1.states} does not end with ‹PROCESSED›").isEqualTo(PROCESSED)
         assertThat(r1.validFrom).isEqualTo(info.validFrom)
-        assertThat(r1.validUpTo).isEqualTo(info.validFrom.plus(BasicInformation.PROP_VALIDITY.value))
+        assertThat(r1.validUpTo).isEqualTo(info.validFrom + CoraCom.standardValidity)
         assertThat(r1.due).isEqualTo(r1.validFrom)
         assertThat(r1.priority).isEqualTo(A2)
         assertThat(r1.new).isFalse()
@@ -102,7 +103,13 @@ internal class BasicMessageTest {
 
     companion object {
         init {
-            CoraModules.register(CoraConfImpl(), CoraComImpl(), CoraTextImpl(), CoraTypeImpl(), CoraControlImpl())
+            CoraModules.register(
+                CoraConfImpl::class,
+                CoraComImpl::class,
+                CoraTextImpl::class,
+                CoraTypeImpl::class,
+                CoraControlImpl::class
+            )
         }
 
         val IMMEX = CoraControl.IMMEX

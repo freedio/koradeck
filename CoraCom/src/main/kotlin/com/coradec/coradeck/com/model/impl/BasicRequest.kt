@@ -11,6 +11,7 @@ import com.coradec.coradeck.com.model.RequestState
 import com.coradec.coradeck.com.model.RequestState.*
 import com.coradec.coradeck.com.model.RequestState.Companion.FINISHED
 import com.coradec.coradeck.com.model.RequestStateObserver
+import com.coradec.coradeck.com.module.CoraCom
 import com.coradec.coradeck.com.trouble.RequestCancelledException
 import com.coradec.coradeck.com.trouble.RequestFailedException
 import com.coradec.coradeck.com.trouble.RequestNotAcceptedException
@@ -22,8 +23,6 @@ import com.coradec.coradeck.core.trouble.StandbyTimeoutException
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.session.model.Session
-import java.time.LocalDateTime
-import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.util.*
 import java.util.concurrent.CopyOnWriteArraySet
@@ -36,7 +35,7 @@ open class BasicRequest(
     createdAt: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
     validFrom: ZonedDateTime = createdAt,
-    validUpto: ZonedDateTime = ZonedDateTime.of(LocalDateTime.MAX, ZoneOffset.UTC)
+    validUpto: ZonedDateTime  = validFrom + CoraCom.standardValidity
 ) : BasicEvent(origin, priority, createdAt, session, validFrom, validUpto), Request {
     private val unfinished = CountDownLatch(1)
     private var myReason: Throwable? = null
