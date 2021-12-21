@@ -17,6 +17,7 @@ import com.coradec.coradeck.db.util.*
 import com.coradec.coradeck.session.model.Session
 import com.coradec.coradeck.session.view.View
 import com.coradec.coradeck.session.view.impl.BasicView
+import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.full.findAnnotation
@@ -58,11 +59,19 @@ abstract class HsqlDbCollection<Record : Any>(
                 }
             }
             .toMap()
+    protected val lock = ReentrantReadWriteLock()
+    internal val readLock = lock.readLock()
+    internal val writeLock = lock.writeLock()
 
     private fun count(selector: Selection): Int {
-        val stmt = "select count(*) from $tableName${selector.filter}"
-        debug("Executing query «$stmt»")
-        return statement.executeQuery(stmt).checkedSingleOf(Int::class)
+        readLock.lock()
+        try {
+            val stmt = "select count(*) from $tableName${selector.filter}"
+            debug("Executing query «$stmt»")
+            return statement.executeQuery(stmt).checkedSingleOf(Int::class)
+        } finally {
+            readLock.unlock()
+        }
     }
 
     fun Pair<KClass<*>, List<Annotation>>.toSqlType(): String = first.toSqlType(second)
@@ -73,6 +82,7 @@ abstract class HsqlDbCollection<Record : Any>(
     fun commit() = connection.commit()
     fun rollback() = connection.rollback()
     private fun select(selector: Selection): Sequence<Record> {
+        readLock.lock()
         try {
             val stmt = "select * from $tableName${selector.select}"
             debug("Executing query «$stmt»")
@@ -80,6 +90,8 @@ abstract class HsqlDbCollection<Record : Any>(
         } catch (e: Exception) {
             error(e)
             throw e
+        } finally {
+            readLock.unlock()
         }
     }
 
@@ -90,6 +102,17 @@ abstract class HsqlDbCollection<Record : Any>(
     }
 
     protected open inner class InternalRecordCollectionView(session: Session): BasicView(session), RecordCollection<Record> {
+        override var readLock: Boolean
+            get() = false
+            set(value) {
+                with(this@HsqlDbCollection.readLock) { if (value) lock() else unlock() }
+            }
+        override var writeLock: Boolean
+            get() = this@HsqlDbCollection.lock.isWriteLocked
+            set(value) {
+                with(this@HsqlDbCollection.writeLock) { if (value) lock() else unlock() }
+            }
+
         override val recordName: String get() = this@HsqlDbCollection.recordName
         override val fieldNames: Sequence<String> get() = this@HsqlDbCollection.fieldNames
         override val insertFieldNames: Sequence<String> = this@HsqlDbCollection.insertFieldNames

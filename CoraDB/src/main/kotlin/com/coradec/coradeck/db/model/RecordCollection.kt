@@ -27,6 +27,11 @@ interface RecordCollection<Record: Any>: View, Iterable<Record>, AutoCloseable {
     val all: Sequence<Record>
     /** Number of entries in the collection. */
     val size: Int
+    /** Lock/unlock the table for reading (by setting to true/false). */
+    var readLock: Boolean
+    /** Lock/unlock the table for writing (by setting to true/false). */
+    var writeLock: Boolean
+
 
     /** A sequence of the records in this collection limited to the specified selector. */
     fun select(selector: Selection): Sequence<Record>

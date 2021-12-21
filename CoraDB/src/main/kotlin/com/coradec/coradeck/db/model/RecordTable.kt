@@ -34,5 +34,5 @@ interface RecordTable<Record: Any>: RecordCollection<Record> {
     @Deprecated(replaceWith = ReplaceWith("whenReady()"), message = "Deprecated")
     fun standby()
     /** Performs the specified action after all DB actions so far have finished. */
-    fun whenReady(action: () -> Unit)
+    fun whenReady(action: RecordTable<Record>.() -> Unit)
 }
