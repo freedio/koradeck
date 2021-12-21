@@ -1,0 +1,5 @@
+# Localized text base for default locale of class BasicNotification
+
+MotificationLost1: Basckground notification ‹%s› went lost!
+NotificationRejected1: Background notification ‹%s› was rejected!
+NotificationCrashed1: Background notification ‹%s› crashed!

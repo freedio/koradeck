@@ -25,11 +25,21 @@ interface Log {
     fun log(entry: LogEntry)
     fun abort(problem: Throwable) = log(ProblemLogEntry(caller3, FATAL, problem))
     fun abort(template: Text, vararg args: Any) = log(TextLogEntry(caller3, FATAL, template, *args))
+    fun abort(problem: Throwable?, template: Text, vararg args: Any) = log(
+        if (problem == null) TextLogEntry(caller2, FATAL, template, *args)
+        else ProblemLogEntry(caller2, FATAL, problem, template, *args)
+    )
     fun error(problem: Throwable) = log(ProblemLogEntry(caller3, ERROR, problem))
     fun error(template: Text, vararg args: Any) = log(TextLogEntry(caller3, ERROR, template, *args))
-    fun error(problem: Throwable, template: Text, vararg args: Any) = log(ProblemLogEntry(caller3, ERROR, problem, template, *args))
+    fun error(problem: Throwable?, template: Text, vararg args: Any) = log(
+        if (problem == null) TextLogEntry(caller2, ERROR, template, *args)
+        else ProblemLogEntry(caller2, ERROR, problem, template, *args)
+    )
     fun warn(template: Text, vararg args: Any)  = log(TextLogEntry(caller3, WARNING, template, *args))
-    fun warn(problem: Throwable, template: Text, vararg args: Any) = log(ProblemLogEntry(caller3, WARNING, problem, template, *args))
+    fun warn(problem: Throwable?, template: Text, vararg args: Any) = log(
+        if (problem == null) TextLogEntry(caller2, WARNING, template, *args)
+        else ProblemLogEntry(caller2, WARNING, problem, template, *args)
+    )
     fun alert(template: Text, vararg args: Any) = log(TextLogEntry(caller3, ALERT, template, *args))
     fun info(template: Text, vararg args: Any) = log(TextLogEntry(caller3, INFORMATION, template, *args))
     fun detail(template: Text, vararg args: Any) = log(TextLogEntry(caller3, DETAIL, template, *args))

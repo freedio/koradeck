@@ -1,0 +1,5 @@
+# Localized text base for default locale of class BasicRequest
+
+RequestFailed1: Background request ‹%s› failed!
+RequestCancelled1: Background request ‹%s› was cancelled!
+RequestLost1: Background request ‹%s› went lost!

@@ -77,4 +77,6 @@ interface Request: Event {
     fun deregister(observer: Observer): Boolean
     /** Executes the specified action if the request was successful (see standby). */
     infix fun andThen(action: () -> Unit): Request
+    /** Discard the request, but still keep track when it fails or is cancelled. */
+    fun swallow()
 }

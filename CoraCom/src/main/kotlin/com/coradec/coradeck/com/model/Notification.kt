@@ -73,6 +73,8 @@ interface Notification<I: Information> : Information {
     @Throws(StandbyTimeoutException::class) fun standby(delay: Timespan): Notification<*>
     /** Executes the specified action if the notification was processed (see standby). */
     infix fun andThen(action: () -> Unit)
+    /** Discard the notification, but still keep track when it fails or is cancelled. */
+    fun swallow()
 
     companion object {
         val LOST_ITEMS = LinkedBlockingQueue<Notification<*>>()

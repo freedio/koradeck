@@ -51,4 +51,5 @@ open class TargetedNotification<I: Information>(
     override fun standby(): Notification<*> = notification.standby()
     override fun standby(delay: Timespan): Notification<*> = notification.standby(delay)
     override fun andThen(action: () -> Unit) = notification.andThen(action)
+    override fun swallow() = notification.swallow()
 }

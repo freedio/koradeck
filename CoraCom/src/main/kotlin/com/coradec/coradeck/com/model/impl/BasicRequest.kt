@@ -23,6 +23,7 @@ import com.coradec.coradeck.core.trouble.StandbyTimeoutException
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.session.model.Session
+import com.coradec.coradeck.text.model.LocalText
 import java.time.ZonedDateTime
 import java.util.*
 import java.util.concurrent.CopyOnWriteArraySet
@@ -211,6 +212,24 @@ open class BasicRequest(
     override fun enregister(observer: Observer) = !complete && stateRegistry.add(observer)
     override fun deregister(observer: Observer) = stateRegistry.remove(observer)
     override fun andThen(action: () -> Unit) = also { whenState(SUCCESSFUL, action) }
+    override fun swallow() {
+        whenFinished {
+            when (state) {
+                FAILED -> {
+                    CoraCom.log.warn(reason, TEXT_REQUEST_FAILED, this@BasicRequest)
+                    throw RequestFailedException(reason)
+                }
+                CANCELLED -> {
+                    CoraCom.log.warn(reason, TEXT_REQUEST_CANCELLED, this@BasicRequest)
+                    throw RequestCancelledException(reason)
+                }
+                LOST -> {
+                    CoraCom.log.warn(TEXT_REQUEST_LOST, this@BasicRequest)
+                }
+                else -> relax()
+            }
+        }
+    }
 
     private inner class PostActionObserver : Observer {
         override fun onNotification(event: Event): Boolean = when (event) {
@@ -219,5 +238,11 @@ open class BasicRequest(
             }
             else -> false
         }
+    }
+
+    companion object {
+        private val TEXT_REQUEST_FAILED = LocalText("RequestFailed1")
+        private val TEXT_REQUEST_CANCELLED = LocalText("RequestCancelled1")
+        private val TEXT_REQUEST_LOST = LocalText("RequestLost1")
     }
 }
