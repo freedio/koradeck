@@ -55,6 +55,7 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
         route(InsertRecordsVoucher::class, ::insertRecords)
         route(UpdateRecordVoucher::class, ::updateRecord)
         route(DeleteRecordsVoucher::class, ::deleteRecord)
+        approve(SynchCommand::class)
     }
 
     override fun onFinalizing() {
