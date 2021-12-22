@@ -117,7 +117,7 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
             debug("Executing «$stmt»...")
             voucher.value = statement.executeUpdate(stmt)
             voucher.succeed()
-            debug("Executed «$stmt».")
+            debug("Executed «$stmt» -> ${voucher.value} change(s).")
         } catch (e: Exception) {
             error(e, TEXT_INSERT_FAILED, tableName)
             db.failed()
@@ -170,6 +170,7 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
             debug("Executing command «$stmt»")
             voucher.value = statement.executeUpdate(stmt)
             voucher.succeed()
+            debug("Executed «$stmt» -> ${voucher.value} change(s).")
         } catch (e: Exception) {
             error(e, TEXT_UPDATE_FAILED, tableName)
             db.failed()
@@ -187,6 +188,7 @@ class HsqlDbTable<Record : Any>(db: Database, model: KClass<Record>) : HsqlDbCol
             debug("Executing command «$stmt»")
             voucher.value = statement.executeUpdate(stmt)
             voucher.succeed()
+            debug("Executed «$stmt» -> ${voucher.value} change(s).")
         } catch (e: Exception) {
             error(e, TEXT_DELETE_FAILED, tableName)
             db.failed()
