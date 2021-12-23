@@ -110,8 +110,8 @@ object CoraControl : CoraModule<CoraControlAPI>() {
     fun taskOf(executable: Runnable, prio: Priority): Task = impl.taskOf(executable, prio)
 }
 
-/** Subscribes to the specified type of information from the CIMMEX. */
+/** Subscribes the recipient to the CIMMEX for broadcast information. */
 fun Recipient.subscribe() = CoraControl.IMMEX.subscribe(this)
 
-/** Ignore further information from the CIMMEX. */
+/** Unsubscribes the recipient from further information from the CIMMEX. */
 fun Recipient.unsubscribe() = CoraControl.IMMEX.unsubscribe(this)
