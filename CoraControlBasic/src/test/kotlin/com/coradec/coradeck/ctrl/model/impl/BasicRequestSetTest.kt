@@ -143,6 +143,7 @@ internal class BasicRequestSetTest {
         assertThat(testee.successful).isTrue()
         assertThat(testee.failed).isFalse()
         assertThat(testee.cancelled).isFalse()
+        Thread.sleep(200)
         assertThat(agent.value.toList()).containsExactlyInAnyOrder(*"abcdefghi".toList().toTypedArray())
         assertThat(req1.observerCount).isEqualTo(0)
         assertThat(req2.observerCount).isEqualTo(0)
