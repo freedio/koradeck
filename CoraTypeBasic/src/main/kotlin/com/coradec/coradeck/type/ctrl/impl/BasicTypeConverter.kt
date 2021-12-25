@@ -4,6 +4,7 @@
 
 package com.coradec.coradeck.type.ctrl.impl
 
+import com.coradec.coradeck.core.util.classname
 import com.coradec.coradeck.core.util.contains
 import com.coradec.coradeck.core.util.formatted
 import com.coradec.coradeck.core.util.name
@@ -29,7 +30,7 @@ abstract class BasicTypeConverter<T : Any?>(val type: KType) : TypeConverter<T> 
         in type -> value as T
         is String -> decode(value)
         else -> convertFrom(value) ?: throw TypeConversionException(
-            "Failed to convert %s value %s to type %s".format(value::class.java.name, value.formatted, type.name)
+            "%s: Failed to convert %s value %s to type %s".format(classname, value::class.java.name, value.formatted, type.name)
         )
     }
 
