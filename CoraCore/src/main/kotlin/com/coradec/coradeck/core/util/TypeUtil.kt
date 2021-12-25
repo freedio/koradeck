@@ -6,7 +6,11 @@ package com.coradec.coradeck.core.util
 
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
+import kotlin.reflect.KTypeProjection
+import kotlin.reflect.KVariance
+import kotlin.reflect.full.createType
 import kotlin.reflect.full.isSubtypeOf
+import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.jvm.jvmErasure
 
 val KType.name: String
@@ -34,3 +38,7 @@ private fun checkMapMember(type: KType, instance: Map<*, *>): Boolean =
         val valueType = elementTypes[1]
         instance.isEmpty() || with(instance.iterator().next()) { keyType.isInstance(key) && valueType.isInstance(value) }
     }
+
+operator fun KClass<*>.get(vararg type: KType): KType = createType(type.map { KTypeProjection(KVariance.OUT, it) })
+operator fun KClass<*>.get(vararg type: KClass<*>): KType =
+    createType(type.map { KTypeProjection(KVariance.OUT, it.starProjectedType) })
