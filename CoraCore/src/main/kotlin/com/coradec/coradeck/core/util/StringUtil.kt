@@ -6,6 +6,7 @@ package com.coradec.coradeck.core.util
 
 import com.coradec.coradeck.core.model.Formattable
 import com.coradec.coradeck.core.model.Null
+import com.coradec.coradeck.core.model.Representable
 import com.coradec.coradeck.core.trouble.BasicException
 
 val Any?.formatted: String get() = formatAnyOrNull(this, emptySet<Any>(), this)
@@ -14,10 +15,11 @@ private fun formatAnyOrNull(obj: Any?, known: Set<Any?>, new: Any?): String = wh
     null -> "‹null›"
     is Null -> "‹null›"
     in known -> "‹known (see above)›"
-    is Map<*, *> -> obj.entries.joinToString(", ", "[", "]") { (key, value) -> "$key: ${formatAnyOrNull(value, known + new, obj)}" }
     is String -> "\"$obj\""
-    is BasicException -> "${obj.classname}: ${obj.message(known)}"
     is Formattable -> obj.format(known)
+    is Representable -> obj.representation
+    is BasicException -> "${obj.classname}: ${obj.message(known)}"
+    is Map<*, *> -> obj.entries.joinToString(", ", "[", "]") { (key, value) -> "$key: ${formatAnyOrNull(value, known + new, obj)}" }
     else -> obj.toString()
 }
 
