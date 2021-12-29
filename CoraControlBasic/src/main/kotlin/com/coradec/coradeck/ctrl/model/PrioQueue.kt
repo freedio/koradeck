@@ -128,4 +128,8 @@ open class PrioQueue<T>(private val capacity: Int): Logger(), Iterable<T> {
         return false
     }
 
+    fun clear() = synchronized(internalQueues) {
+        internalQueues.clear()
+    }
+
 }

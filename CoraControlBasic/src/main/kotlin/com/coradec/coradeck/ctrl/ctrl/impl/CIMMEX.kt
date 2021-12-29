@@ -56,6 +56,9 @@ object CIMMEX : Logger(), IMMEX {
     private val TEXT_WAITING_FOR_SHUTDOWN_CLEARANCE = LocalText("WaitingForShutdownClearance")
     private val TEXT_SHUTDOWN_CLEARANCE_ACQUIRED = LocalText("ShutdownClearanceAcquired")
     private val TEXT_SHUTDOWN_CLEARANCE_DENIED = LocalText("ShutdownClearanceDenied1")
+    private val TEXT_FLUSHING_CIMMEX = LocalText("Flushing")
+    private val TEXT_CIMMEX_FLUSHED = LocalText("Flushed")
+
     private val PROP_INQUEUE_SIZE = LocalProperty("InQueueSize", 4000)
     private val PROP_TASKQUEUE_SIZE = LocalProperty("TaskQueueSize", 1000)
     private val PROP_DEFERRINGQUEUE_SIZE = LocalProperty("DeferringQueueSize", 1000)
@@ -212,6 +215,17 @@ object CIMMEX : Logger(), IMMEX {
         shutdownSemaphore.release()
     }
 
+    override fun flush() {
+        warn(TEXT_FLUSHING_CIMMEX)
+        broadcastQueue.clear()
+        lostMessages.clear()
+        inqueue.clear()
+        dispatchOrder.clear()
+        dispatchTable.clear()
+        dispatchBlock.clear()
+        info(TEXT_CIMMEX_FLUSHED)
+    }
+
     override fun subscribe(vararg listeners: Recipient) {
         synchronized(registry) { registry += listeners.toSet() }
         cleanBroadcastQueue()
@@ -356,12 +370,9 @@ object CIMMEX : Logger(), IMMEX {
         broadcastQueue.add(item)
         val recipients = synchronized(registry) { registry.filter { observer -> observer.accepts(item) } }
         when (recipients.size) {
-            0 -> alert(TEXT_NO_RECIPIENTS, item.content.classname, item.content).also { item.discard() }
+            0 -> alert(TEXT_NO_RECIPIENTS, item.content.classname, item.content)
             1 -> dispatch(item, recipients.single())
-            else -> {
-                recipients.forEach { dispatch(item.content, it) }
-                item.discard()
-            }
+            else -> recipients.forEach { dispatch(item.content, it) }
         }
     }
 

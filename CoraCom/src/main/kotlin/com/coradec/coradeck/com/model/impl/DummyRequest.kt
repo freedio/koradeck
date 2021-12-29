@@ -10,7 +10,7 @@ import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.session.model.Session
 import java.time.ZonedDateTime
 
-class DummyRequest(
+open class DummyRequest(
     override val origin: Origin,
     override val priority: Priority = Priority.defaultPriority,
     override val createdAt: ZonedDateTime = ZonedDateTime.now(),

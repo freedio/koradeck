@@ -13,6 +13,8 @@ DispatcherCrashed: Dispatcher crashed!
 TimerStarted: Timer started.
 TimerStopped: Timer stopped.
 TimerCrashed: Timer crashed!
+Flushing: Flushing CIMMEX 🚩
+Flushed: CIMMEX flushed.
 ShuttingDown: Terminating CIMMEX (Central Information, Messaging, Market, Event & Execution Service) ...
 ShutDown: CIMMEX terminated.
 CimmexDisabled1: CIMMEX is disabled! → Message ‹%s› dropped.

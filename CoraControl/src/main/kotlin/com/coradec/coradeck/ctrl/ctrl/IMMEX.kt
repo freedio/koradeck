@@ -48,4 +48,6 @@ interface IMMEX {
     fun preventShutdown()
     /** Allows the IMMEX to shut down.  Make sure that this method is called only with a symmetrical #preventShutdown() */
     fun allowShutdown()
+    /** Flushes all queues.  Used to reset CIMMEX between test cases when the assumption is to start without pending messages. */
+    fun flush()
 }
