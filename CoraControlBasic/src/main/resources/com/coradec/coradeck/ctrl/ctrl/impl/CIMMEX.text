@@ -22,4 +22,4 @@ RemainingItems1: Remaining items in CIMMEX: %s.
 WaitingForShutdownClearance: Acquiring license to kill ...
 ShutdownClearanceAcquired: Termination clearance acquired.
 ShutdownClearanceDenied1: ☠☠☠ FATAL ERROR: TERMINATION CLEARANCE WAS DENIED AFTER %s!!!\n\
-                                  SYSTEM HAD TO BE STABBED FROM BEHIND WITHOUT A LICENCE.  CHECK YOUR CODE FOR PROBLEMS!!! ☠☠☠
+                                  SYSTEM HAD TO BE STABBED IN THE BACK WITHOUT A LICENCE.  CHECK YOUR CODE FOR PROBLEMS!!! ☠☠☠

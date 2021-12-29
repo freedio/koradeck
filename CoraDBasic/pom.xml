@@ -20,6 +20,10 @@
             <groupId>com.coradec.coradeck</groupId>
             <artifactId>db</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.coradec.coradeck</groupId>
+            <artifactId>type-basic</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
