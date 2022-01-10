@@ -58,6 +58,7 @@ object CIMMEX : Logger(), IMMEX {
     private val TEXT_SHUTDOWN_CLEARANCE_DENIED = LocalText("ShutdownClearanceDenied1")
     private val TEXT_FLUSHING_CIMMEX = LocalText("Flushing")
     private val TEXT_CIMMEX_FLUSHED = LocalText("Flushed")
+    private val TEXT_INFORMATION_LOST = LocalText("InformationLost2")
 
     private val PROP_INQUEUE_SIZE = LocalProperty("InQueueSize", 4000)
     private val PROP_TASKQUEUE_SIZE = LocalProperty("TaskQueueSize", 1000)
@@ -121,6 +122,18 @@ object CIMMEX : Logger(), IMMEX {
         timer.interrupt()
         dispatcher.interrupt()
         while (!clear && System.nanoTime() < end) cleanout()
+        lostMessages
+            .filter { NotificationState.DISPATCHED !in it.states }
+            .forEach { lost ->
+                val lostMessage = lost.content
+                warn(TEXT_INFORMATION_LOST, lostMessage.classname, lostMessage)
+            }
+        broadcastQueue
+            .filter { NotificationState.DISPATCHED !in it.states }
+            .forEach { lost ->
+                val lostMessage = lost.content
+                warn(TEXT_INFORMATION_LOST, lostMessage.classname, lostMessage)
+            }
         if (!clear)
             warn(TEXT_NOT_FINISHED, shutdownAllowance.representation, inqueue.size, taskqueue.size, undeliveredCount, dispatchTable
                 .flatMap { (key, value) -> value.asSequence().map { Pair(key, it.content) } }
@@ -265,17 +278,57 @@ object CIMMEX : Logger(), IMMEX {
         PrintWriter(collector).use { out ->
             out.println("     Basic Stats: $stats")
             out.println("         Workers: ${workers.size}")
-            out.println("         Inqueue: (#${inqueue.size})${if (inqueue.isNotEmpty()) inqueue.joinToString("\n• ", ":\n• ") else ""}")
-            out.println("       TaskQueue: (#${taskqueue.size})${if (taskqueue.isNotEmpty()) taskqueue.joinToString("\n• ", ":\n• ") else ""}")
-            out.println("      Recipients: (#${dispatchOrder.size})${if (dispatchOrder.isNotEmpty()) dispatchOrder.joinToString("\n• ", ":\n• ", limit = 50) else ""}")
-            out.println("   Lost Messages: (#${lostMessages.size})${if (lostMessages.isNotEmpty()) lostMessages.joinToString("\n• ", ":\n• ", limit = 50) else ""}")
-            out.println("Dispatcher Table: (#${undelivered})${if (undelivered > 0) dispatchTable.entries
-                .filter { it.value.isNotEmpty() }
-                .joinToString("\n\n", ": {\n", "\n}", limit = 48) { (recipient, entries) ->
-                    "------ $recipient ------${entries.joinToString("\n• ", "\n• ", limit = 64)}"
-                }
-            else ""}")
-            out.println(" Broadcast Queue: (#${broadcastQueue.size}) ${if (broadcastQueue.isNotEmpty()) broadcastQueue.joinToString("\n• ", "\n• ", limit = 50) else ""}")
+            out.println(
+                "         Inqueue: (#${inqueue.size})${
+                    if (inqueue.isNotEmpty()) inqueue.joinToString(
+                        "\n• ",
+                        ":\n• "
+                    ) else ""
+                }"
+            )
+            out.println(
+                "       TaskQueue: (#${taskqueue.size})${
+                    if (taskqueue.isNotEmpty()) taskqueue.joinToString(
+                        "\n• ",
+                        ":\n• "
+                    ) else ""
+                }"
+            )
+            out.println(
+                "      Recipients: (#${dispatchOrder.size})${
+                    if (dispatchOrder.isNotEmpty()) dispatchOrder.joinToString(
+                        "\n• ",
+                        ":\n• ",
+                        limit = 50
+                    ) else ""
+                }"
+            )
+            out.println(
+                "   Lost Messages: (#${lostMessages.size})${
+                    if (lostMessages.isNotEmpty()) lostMessages.joinToString(
+                        "\n• ",
+                        ":\n• ",
+                        limit = 50
+                    ) else ""
+                }"
+            )
+            out.println("Dispatcher Table: (#${undelivered})${
+                if (undelivered > 0) dispatchTable.entries
+                    .filter { it.value.isNotEmpty() }
+                    .joinToString("\n\n", ": {\n", "\n}", limit = 48) { (recipient, entries) ->
+                        "------ $recipient ------${entries.joinToString("\n• ", "\n• ", limit = 64)}"
+                    }
+                else ""
+            }")
+            out.println(
+                " Broadcast Queue: (#${broadcastQueue.size}) ${
+                    if (broadcastQueue.isNotEmpty()) broadcastQueue.joinToString(
+                        "\n• ",
+                        "\n• ",
+                        limit = 50
+                    ) else ""
+                }"
+            )
         }
         return collector.toString()
     }
@@ -378,7 +431,9 @@ object CIMMEX : Logger(), IMMEX {
 
     private fun cleanBroadcastQueue() {
         val now = ZonedDateTime.now()
-        broadcastQueue.filterTo(lostMessages) { it.validUpTo.isBefore(now) && it.lost }
+        broadcastQueue.filterTo(lostMessages) {
+            it.validUpTo.isBefore(now) && it.lost
+        }
         broadcastQueue.removeIf { it.validUpTo.isBefore(now) }
     }
 

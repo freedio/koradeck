@@ -6,6 +6,7 @@ NotFinished5: CIMMEX (Central Information, Messaging, Market, Event & Execution 
 DispatchFailed1: Failed to dispatch ‹%s›! → item dropped.
 CantDispatch1: Can't dispatch item ‹%s›: all queues are full! → item dropped.
 NoRecipients2: Nobody was currently interested in ‹%s› message «%s».
+InformationLost2: Nobody was ever interested in ‹%s› message «%s».
 DispatcherInterrupted: Dispatcher was interrupted!
 DispatcherStarted: Dispatcher started.
 DispatcherStopped: Dispatcher stopped.
