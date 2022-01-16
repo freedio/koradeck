@@ -26,12 +26,11 @@
         </dependency>
         <dependency>
             <groupId>com.coradec.coradeck</groupId>
-            <artifactId>conf-basic</artifactId>
-            <scope>test</scope>
+            <artifactId>type-basic</artifactId>
         </dependency>
         <dependency>
             <groupId>com.coradec.coradeck</groupId>
-            <artifactId>type-basic</artifactId>
+            <artifactId>conf-basic</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
