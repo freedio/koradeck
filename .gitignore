@@ -16,3 +16,4 @@
 /CoraTypeBasic/target/
 /IT/target/
 *.class
+**/target

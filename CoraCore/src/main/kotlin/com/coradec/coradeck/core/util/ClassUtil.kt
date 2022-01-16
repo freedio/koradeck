@@ -24,9 +24,11 @@ val KClass<*>.classname: String
         .removePrefix("collections.")
         .removePrefix("sequences.")
         .removePrefix("reflect.")
-val KClass<*>.shortClassname: String get() = (simpleName ?: throw IllegalStateException("Class $this has no simple name!"))
+val KClass<*>.shortClassname: String get() = simpleName ?: classname
+val KClass<*>.simpleClassname: String get() = simpleName ?: classname
 val Any.classname: String get() = this::class.classname
 val Any.shortClassname: String get() = this::class.shortClassname
+val Any.simpleClassname: String get() = this::class.shortClassname
 val Any.identityHashCode: Int get() = System.identityHashCode(this)
 val KClass<*>.asOrigin: Origin get() = ClassOrigin(this)
 val Any.asOrigin: Origin get() = this::class.asOrigin
