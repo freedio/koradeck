@@ -23,6 +23,7 @@
         <module name="type-basic" />
         <module name="CoraComBasic" />
         <module name="dir-basic" />
+        <module name="CoraGUISwing" />
         <module name="CoraCom" />
         <module name="CoraBus" />
         <module name="CoraTypeBasic" />
@@ -32,6 +33,7 @@
         <module name="CoraSession" />
         <module name="CoraDirBasic" />
         <module name="com-basic" />
+        <module name="CoraGUIBasic" />
         <module name="ctrl-basic" />
         <module name="module" />
         <module name="conf-basic" />
@@ -39,6 +41,8 @@
         <module name="IT" />
         <module name="core" />
         <module name="CoraTextBasic" />
+        <module name="CoraGUIHTML5" />
+        <module name="gui" />
         <module name="CoraCore" />
         <module name="CoraConfBasic" />
         <module name="CoraConf" />

@@ -34,11 +34,15 @@
         <module>CoraDB</module>
         <module>CoraDBhsql</module>
         <module>CoraDBasic</module>
+        <module>CoraGUI</module>
         <module>IT</module>
+        <module>CoraGUIBasic</module>
+        <module>CoraGUISwing</module>
+        <module>CoraGUIHTML5</module>
     </modules>
 
     <properties>
-        <kotlin.version>1.5.10</kotlin.version>
+        <kotlin.version>1.6.10</kotlin.version>
         <target.jdk.version>1.8</target.jdk.version>
         <jdk.release>11</jdk.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -138,7 +142,32 @@
             </dependency>
             <dependency>
                 <groupId>com.coradec.coradeck</groupId>
+                <artifactId>db-basic</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.coradec.coradeck</groupId>
                 <artifactId>db-hsql</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.coradec.coradeck</groupId>
+                <artifactId>gui</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.coradec.coradeck</groupId>
+                <artifactId>gui-basic</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.coradec.coradeck</groupId>
+                <artifactId>gui-swing</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.coradec.coradeck</groupId>
+                <artifactId>gui-html5</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
