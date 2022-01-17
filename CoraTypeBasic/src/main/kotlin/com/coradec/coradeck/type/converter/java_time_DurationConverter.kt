@@ -5,6 +5,7 @@
 package com.coradec.coradeck.type.converter
 
 import com.coradec.coradeck.type.ctrl.impl.BasicTypeConverter
+import java.math.BigDecimal
 import java.time.Duration
 import java.time.temporal.ChronoUnit
 
@@ -33,7 +34,11 @@ class java_time_DurationConverter : BasicTypeConverter<Duration>(Duration::class
             Duration.of(value.removeSuffix(unit.key).trim().toLong(), unit.value)
         }
 
-    override fun convertFrom(value: Any): Duration? {
-        TODO("Not yet implemented")
+    override fun convertFrom(value: Any): Duration? = when (value) {
+        is BigDecimal -> {
+            val nanos = value.stripTrailingZeros().remainder(BigDecimal.ONE).movePointRight(value.scale()).abs().toBigInteger()
+            Duration.ofSeconds(value.toLong(), nanos.toLong())
+        }
+        else -> TODO("Not yet implemented")
     }
 }

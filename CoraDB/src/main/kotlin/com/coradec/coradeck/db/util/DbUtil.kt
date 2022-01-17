@@ -46,68 +46,21 @@ fun Any?.toSqlFieldValue(type: KType): Any? = when (this) {
     is java.sql.Timestamp -> toLocalDateTime()
     is OffsetDateTime -> ZonedDateTime.from(this)
     else -> when (type) {
+        in Duration::class -> CoraType.castTo(this, type)
         in Currency::class -> CoraType.castTo(this, type)
         in SqlTransformable::class -> CoraType.castTo(this, type)
         else -> this
     }
 }
 
-@Suppress("UNCHECKED_CAST")
-fun KClass<*>.toSqlType(name: String, size: Int?): String = when (this) {
-    in String::class -> "VARCHAR(${sizeRequired(name, size)})"
-    in Byte::class -> "TINYINT"
-    in Short::class -> "SMALLINT"
-    in Int::class -> "INTEGER"
-    in Long::class -> "BIGINT"
-    in Float::class -> "FLOAT"
-    in Double::class -> "DOUBLE"
-    in BigDecimal::class -> "DECIMAL" // or "NUMERIC"
-    in ByteArray::class -> "VARBINARY(${sizeRequired(name, size)})"
-    in LocalDate::class -> "DATE"
-    in LocalDateTime::class -> "TIMESTAMP"
-    in LocalTime::class -> "TIME"
-    in OffsetTime::class -> "TIME WITH TIME ZONE"
-    in ZonedDateTime::class -> "TIMESTAMP WITH TIME ZONE"
-    in Currency::class -> "VARCHAR(7)"
-    in SqlTransformable::class -> (companionObject?.memberProperties
-        ?.singleOrNull { it.name == "sqlType" } as? KProperty1<Any, String>)
-        ?.get(companionObjectInstance ?: throw IllegalStateException("SqlTransformable without companion object!"))
-        ?: throw IllegalStateException("SqlTransformable without companion object or companion property ‹sqlType›!")
-    else -> throw IllegalArgumentException("Cannot determine external value of type $this")
-}
-
-fun KType.toColumnDef(name: String): ColumnDefinition {
-    val sqlType = this.toSqlType(name)
+fun KType.toColumnDef(): ColumnDefinition {
+    val sqlType = this.toSqlType()
     val nullable: Boolean = isMarkedNullable
     val primary: Boolean = findAnnotation<Primary>() != null
     val indexed: Boolean = findAnnotation<Indexed>() != null
     val generated: String? = findAnnotation<Generated>()?.type
     val always: Boolean = findAnnotation<Generated>()?.always ?: false
     return BasicColumnDefinition(sqlType, nullable, primary, indexed, generated, always)
-}
-
-@Suppress("UNCHECKED_CAST")
-fun KType.toSqlType(name: String): String = when (val klass = this.classifier as KClass<*>) {
-    in String::class -> "VARCHAR(${sizeRequired(name, findAnnotation<Size>()?.value)})"
-    in Byte::class -> "TINYINT"
-    in Short::class -> "SMALLINT"
-    in Int::class -> "INTEGER"
-    in Long::class -> "BIGINT"
-    in Float::class -> "FLOAT"
-    in Double::class -> "DOUBLE"
-    in BigDecimal::class -> "DECIMAL" // or "NUMERIC"
-    in ByteArray::class -> "VARBINARY(${sizeRequired(name, findAnnotation<Size>()?.value)})"
-    in LocalDate::class -> "DATE"
-    in LocalDateTime::class -> "TIMESTAMP"
-    in LocalTime::class -> "TIME"
-    in OffsetTime::class -> "TIME WITH TIME ZONE"
-    in ZonedDateTime::class -> "TIMESTAMP WITH TIME ZONE"
-    in Currency::class -> "VARCHAR(7)"
-    in SqlTransformable::class -> (klass.companionObject?.memberProperties
-        ?.singleOrNull { it.name == "sqlType" } as? KProperty1<Any, String>)
-        ?.get(klass.companionObjectInstance ?: throw IllegalStateException("SqlTransformable without companion object!"))
-        ?: throw IllegalStateException("SqlTransformable without companion object or companion property ‹sqlType›!")
-    else -> throw IllegalArgumentException("Cannot determine external value of type $this")
 }
 
 private fun sizeRequired(name: String, size: Int?): Int = size ?: throw IllegalArgumentException("Field «$name»: size is required!")
@@ -126,6 +79,7 @@ fun Any?.toSqlValueRepr() = when (this) {
     is LocalDateTime -> "TIMESTAMP '${this.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))}'"
     is ZonedDateTime -> "TIMESTAMP '${this.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssXXX"))}'"
     is OffsetTime -> "TIMESTAMP '${this.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ssXXX"))}'"
+    is Duration -> "${this.seconds.toBigDecimal() + this.nano.toBigDecimal().divide(1000000000.toBigDecimal())}"
     is Currency -> "'${this.currencyCode}'"
     is SqlTransformable -> toSqlValue()
     else -> toString()
@@ -133,25 +87,56 @@ fun Any?.toSqlValueRepr() = when (this) {
 
 @Suppress("UNCHECKED_CAST")
 fun KClass<*>.toSqlType(annotations: List<Annotation>): String = when (this) {
-    String::class -> "VARCHAR(%d)".format((annotations.singleOrNull { it is Size } as? Size)?.value
-        ?: throw IllegalArgumentException("Missing String @Size for ${this.java.name}"))
-    Boolean::class -> "BIT"
-    Byte::class -> "TINYINT"
-    Short::class -> "SMALLINT"
-    Int::class -> "INTEGER"
-    Long::class -> "BIGINT"
-    Float::class -> "FLOAT"
-    Double::class -> "DOUBLE"
-    BigDecimal::class -> "NUMERIC"
-    LocalDate::class -> "DATE"
-    LocalTime::class -> "TIME"
-    LocalDateTime::class -> "TIMESTAMP"
-    Currency::class -> "VARCHAR(7)"
+    in String::class -> "VARCHAR(%d)".format((annotations.singleOrNull { it is Size } as? Size)?.value
+        ?: throw IllegalArgumentException("Missing String @Size for ${this.classname}"))
+    in Boolean::class -> "BIT"
+    in Byte::class -> "TINYINT"
+    in Short::class -> "SMALLINT"
+    in Int::class -> "INTEGER"
+    in Long::class -> "BIGINT"
+    in Float::class -> "FLOAT"
+    in Double::class -> "DOUBLE"
+    in BigDecimal::class -> "NUMERIC"
+    in LocalDate::class -> "DATE"
+    in LocalTime::class -> "TIME"
+    in LocalDateTime::class -> "TIMESTAMP"
+    in OffsetTime::class -> "TIME WITH TIME ZONE"
+    in ZonedDateTime::class -> "TIMESTAMP WITH TIME ZONE"
+    in Duration::class -> "NUMERIC"
+    in Currency::class -> "VARCHAR(7)"
     in SqlTransformable::class -> (companionObject?.memberProperties
         ?.singleOrNull { it.name == "sqlType" } as? KProperty1<Any, String>)
         ?.get(companionObjectInstance ?: throw IllegalStateException("SqlTransformable without companion object!"))
         ?: throw IllegalStateException("SqlTransformable without companion object or companion property ‹sqlType›!")
     else -> throw IllegalArgumentException("Type \"$this\" cannot be translated to SQL!")
 }
+
+@Suppress("UNCHECKED_CAST")
+fun KClass<*>.toSqlType(name: String, size: Int?): String = when (this) {
+    in String::class -> "VARCHAR(${sizeRequired(name, size)})"
+    in Byte::class -> "TINYINT"
+    in Short::class -> "SMALLINT"
+    in Int::class -> "INTEGER"
+    in Long::class -> "BIGINT"
+    in Float::class -> "FLOAT"
+    in Double::class -> "DOUBLE"
+    in BigDecimal::class -> "DECIMAL" // or "NUMERIC"
+    in ByteArray::class -> "VARBINARY(${sizeRequired(name, size)})"
+    in LocalDate::class -> "DATE"
+    in LocalDateTime::class -> "TIMESTAMP"
+    in LocalTime::class -> "TIME"
+    in OffsetTime::class -> "TIME WITH TIME ZONE"
+    in ZonedDateTime::class -> "TIMESTAMP WITH TIME ZONE"
+    in Duration::class -> "NUMERIC"
+    in Currency::class -> "VARCHAR(7)"
+    in SqlTransformable::class -> (companionObject?.memberProperties
+        ?.singleOrNull { it.name == "sqlType" } as? KProperty1<Any, String>)
+        ?.get(companionObjectInstance ?: throw IllegalStateException("SqlTransformable without companion object!"))
+        ?: throw IllegalStateException("SqlTransformable without companion object or companion property ‹sqlType›!")
+    else -> throw IllegalArgumentException("Cannot determine external value of type $this")
+}
+
+@Suppress("UNCHECKED_CAST")
+fun KType.toSqlType(): String = (this.classifier as KClass<*>).toSqlType(this.annotations)
 
 fun <T> generate(expr: T) = expr

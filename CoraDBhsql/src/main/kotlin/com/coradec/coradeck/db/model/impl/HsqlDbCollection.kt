@@ -55,7 +55,7 @@ abstract class HsqlDbCollection<Record : Any>(
             .map { Pair(it.columnName, BasicColumnDefinition(it.typeName.withSize(it.columnSize),it.nullable == 1)) }
             .ifEmpty {
                 fields.map {
-                    Pair(it.key.toSqlObjectName(), it.value.toColumnDef(it.key))
+                    Pair(it.key.toSqlObjectName(), it.value.toColumnDef())
                 }
             }
             .toMap()
