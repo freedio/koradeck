@@ -10,6 +10,7 @@
         <module name="db-hsql" />
         <module name="CoraText" />
         <module name="bus" />
+        <module name="gui-html5" />
         <module name="bus-basic" />
         <module name="ctrl" />
         <module name="session" />
@@ -23,9 +24,9 @@
         <module name="type-basic" />
         <module name="CoraComBasic" />
         <module name="dir-basic" />
-        <module name="CoraGUISwing" />
         <module name="CoraCom" />
         <module name="CoraBus" />
+        <module name="gui-swing" />
         <module name="CoraTypeBasic" />
         <module name="int-test" />
         <module name="text" />
@@ -33,15 +34,14 @@
         <module name="CoraSession" />
         <module name="CoraDirBasic" />
         <module name="com-basic" />
-        <module name="CoraGUIBasic" />
         <module name="ctrl-basic" />
+        <module name="gui-basic" />
         <module name="module" />
         <module name="conf-basic" />
         <module name="db-basic" />
         <module name="IT" />
         <module name="core" />
         <module name="CoraTextBasic" />
-        <module name="CoraGUIHTML5" />
         <module name="gui" />
         <module name="CoraCore" />
         <module name="CoraConfBasic" />
