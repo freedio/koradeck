@@ -105,7 +105,7 @@ class HsqlDatabase(
         val model = voucher.model
         debug("Opening table ‹%s›...", model.classname)
         lookup(model.toSqlTableName()).whenVoucherFinished {
-            debug("OpenTable ‹%s›: lookup finished with state ‹%s›.", model.classname, state)
+            trace("OpenTable ‹%s›: lookup finished with state ‹%s›.", model.classname, state)
             when (state) {
                 FAILED -> accept(CreateTableVoucher(here, model)).content.apply {
                     forwardTo(voucher as Voucher<Any?>)
