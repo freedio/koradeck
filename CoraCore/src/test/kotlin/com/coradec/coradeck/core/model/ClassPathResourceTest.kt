@@ -27,9 +27,9 @@ internal class ClassPathResourceTest {
         val r7 = testee.stream
         // then:
         assertThat(r1).isTrue()
-        assertThat(r2).isEqualTo(URL("file:$CURRENT_DIR/projects/coradec/coradeck/CoraCore/target/test-classes/com/coradec/coradeck/core/model/ClassPathResourceTest/testExisting.txt"))
+        assertThat(r2).isEqualTo(URL("file:$CURRENT_DIR/target/test-classes/com/coradec/coradeck/core/model/ClassPathResourceTest/testExisting.txt"))
         assertThat(r3).isEqualTo("This is a test resource.\nIt has two lines.")
-        assertThat(r4).isEqualTo(File("$CURRENT_DIR/projects/coradec/coradeck/CoraCore/target/test-classes/com/coradec/coradeck/core/model/ClassPathResourceTest/testExisting.txt"))
+        assertThat(r4).isEqualTo(File("$CURRENT_DIR/target/test-classes/com/coradec/coradeck/core/model/ClassPathResourceTest/testExisting.txt"))
         assertThat(r5).containsExactly("This is a test resource.", "It has two lines.")
         assertThat(r6).isEqualTo("com/coradec/coradeck/core/model/ClassPathResourceTest/testExisting.txt")
         assertThat(r7).isInstanceOf(InputStream::class.java)

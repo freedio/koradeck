@@ -24,6 +24,7 @@ val KClass<*>.classname: String
         .removePrefix("collections.")
         .removePrefix("sequences.")
         .removePrefix("reflect.")
+        .removeSuffix(".Companion")
 val KClass<*>.shortClassname: String get() = simpleName ?: classname
 val KClass<*>.simpleClassname: String get() = simpleName ?: classname
 val Any.classname: String get() = this::class.classname

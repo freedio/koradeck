@@ -4,44 +4,50 @@
 
 package com.coradec.coradeck.conf.model
 
-import com.coradec.coradeck.com.ctrl.impl.Logger
 import com.coradec.coradeck.conf.ctrl.ConfigurationReader
-import com.coradec.coradeck.conf.model.impl.MappedConfiguration
+import com.coradec.coradeck.conf.model.impl.*
 import com.coradec.coradeck.conf.module.CoraConf
-import com.coradec.coradeck.conf.trouble.ContextConfigurationNotFoundException
-import com.coradec.coradeck.core.model.ClassPathResource
+import com.coradec.coradeck.conf.trouble.ConfigurationNotFoundException
 import com.coradec.coradeck.core.util.resource
 import com.fasterxml.jackson.module.kotlin.readValue
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArraySet
+import java.nio.file.Path
+import java.nio.file.Paths
+import kotlin.io.path.exists
+import kotlin.reflect.KClass
+import kotlin.reflect.KType
 
-object Configurations : Logger() {
-    private val allProperties = ConcurrentHashMap<String, Any>()
-    private val loadedContexts = CopyOnWriteArraySet<String>()
-    private val configuration =
+object Configurations : ContextConfiguration {
+    private val sysconf by lazy { SystemConfiguration() }
+    private val usrconf by lazy { UserConfiguration() }
+    private val appconf by lazy { ApplicationConfiguration() }
+    private val dflconf by lazy { DefaultConfiguration() }
+    private val modconf by lazy { ModuleConfigurations() }
+    private val ctrconf =
         CoraConf.yamlMapper.readValue<ConfigurationsConfig>(resource(Configurations::class, ".yaml").location)
-    private val readersByType: Map<String, ConfigurationReader> =
-        configuration.configurationReaders.mapValues { (_, klass) -> klass.kotlin.objectInstance as ConfigurationReader }
+    internal val readersByType: Map<String, ConfigurationReader> =
+        ctrconf.configurationReaders.mapValues { (_, klass) -> klass.kotlin.objectInstance as ConfigurationReader }
 
-    fun byContext(context: String): Configuration {
-        if (loadedContexts.add(context)) loadContext(context)
-        return allProperties
-            .filter { it.key.startsWith(context) }
-            .mapKeys { (key, _) -> key.substring(context.length + 1) }
-            .toConfiguration()
-    }
-
-    private fun loadContext(context: String) {
-        debug("Loading configuration context «%s»", context)
-        val ctxt = context.replace('.', '/')
-        for ((type, reader) in readersByType) {
-            if (ClassPathResource("$ctxt$type").ifExists {
-                    allProperties.putAll(reader.read(location).mapKeys { (key, _) -> "$context.$key" })
-                }
-            ) return
+    override fun <P : Any> get(type: KClass<P>, name: String, context: String?): P? =
+        if (context != null) {
+            val qn = "$context.$name"
+            sysconf[type, qn] ?: usrconf[type, qn] ?: modconf[type, name, context] ?: appconf[type, qn] ?: dflconf[type, qn]
         }
-        throw ContextConfigurationNotFoundException(context)
+        else sysconf[type, name] ?: usrconf[type, name] ?: appconf[type, name] ?: dflconf[type, name]
+
+    override fun <P : Any> get(type: KType, name: String, context: String?): P? =
+        if (context != null) {
+            val qn = "$context.$name"
+            sysconf[type, qn] ?: usrconf[type, qn] ?: modconf[type, name, context] ?: appconf[type, qn] ?: dflconf[type, qn]
+        }
+        else sysconf[type, name] ?: usrconf[type, name] ?: appconf[type, name] ?: dflconf[type, name]
+
+    internal fun loadGlobalConfiguration(path: Path): Map<String, Any> {
+        for ((type, reader) in readersByType) {
+            val confPath = Paths.get("$path.$type")
+            if (confPath.exists()) {
+                return reader.read(confPath)
+            }
+        }
+        throw ConfigurationNotFoundException(path.toString())
     }
 }
-
-private fun Map<String, Any>.toConfiguration(): Configuration = MappedConfiguration(this)

@@ -4,7 +4,7 @@
 
 package com.coradec.coradeck.conf.module
 
-import com.coradec.coradeck.conf.model.Configuration
+import com.coradec.coradeck.conf.model.ContextConfiguration
 import com.coradec.coradeck.module.model.CoraModule
 import com.fasterxml.jackson.databind.ObjectMapper
 
@@ -15,7 +15,6 @@ object CoraConf: CoraModule<CoraConfAPI>() {
     val jsonMapper: ObjectMapper get() = impl.jsonMapper
     /** The system wide XML parser. */
     val xmlMapper: ObjectMapper get() = impl.xmlMapper
-
-    /** Returns the configuration containing the properties of the specified context. */
-    fun getConfiguration(context: String): Configuration = impl.getConfiguration(context)
+    /** The central configuration. */
+    val config: ContextConfiguration get() = impl.config
 }

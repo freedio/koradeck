@@ -11,11 +11,13 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.node.*
 import java.net.URL
+import java.nio.file.Path
 
 abstract class JacksonConfigurationReader : BasicConfigurationReader() {
     protected abstract val mapper: ObjectMapper
 
     override fun read(location: URL): Map<String, Any> = mapper.readTree(location).remap(location)
+    override fun read(path: Path): Map<String, Any> = read(path.toFile().toURI().toURL())
 
     @Suppress("UNCHECKED_CAST")
     private fun JsonNode?.remap(location: URL): Map<String, Any> = when (this) {
