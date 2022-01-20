@@ -4,6 +4,7 @@
 
 package com.coradec.coradeck.type.model
 
+import com.coradec.coradeck.com.ctrl.impl.Logger
 import com.coradec.coradeck.core.util.classname
 import com.coradec.coradeck.core.util.name
 import com.coradec.coradeck.type.ctrl.TypeConverter
@@ -13,7 +14,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KType
 
 @Suppress("UNCHECKED_CAST")
-object TypeConverters {
+object TypeConverters: Logger() {
     private val registeredConverters = listOf<TypeConverter<*>>()
     operator fun <T : Any> get(type: KClass<T>): TypeConverter<T> =
             registeredConverters.firstOrNull { it.handles(type) } as? TypeConverter<T> ?: registerConverterFor(type)
@@ -30,9 +31,9 @@ object TypeConverters {
                 throw ClassCastException("${converterClass.name} is not a type converter!")
             converterClass.getConstructor().newInstance()
         } catch (e: ClassNotFoundException) {
-            throw TypeConverterNotFoundException(type.classname, converterName)
+            throw TypeConverterNotFoundException(type.classname, converterName).apply { error(this) }
         } catch (e: NoSuchMethodException) {
-            throw NonCompliantTypeConverterException(converterClass, e)
+            throw NonCompliantTypeConverterException(converterClass, e).apply { error(this) }
         }
     }
 
@@ -57,9 +58,9 @@ object TypeConverters {
                 converterClass.getConstructor().newInstance()
             }
         } catch (e: ClassNotFoundException) {
-            throw TypeConverterNotFoundException(type.name, converterName)
+            throw TypeConverterNotFoundException(type.name, converterName).apply { error(this) }
         } catch (e: NoSuchMethodException) {
-            throw NonCompliantTypeConverterException(converterClass, e)
+            throw NonCompliantTypeConverterException(converterClass, e).apply { error(this) }
         }
     }
 

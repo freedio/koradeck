@@ -20,6 +20,10 @@
             <groupId>com.coradec.coradeck</groupId>
             <artifactId>type</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.coradec.coradeck</groupId>
+            <artifactId>com</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
