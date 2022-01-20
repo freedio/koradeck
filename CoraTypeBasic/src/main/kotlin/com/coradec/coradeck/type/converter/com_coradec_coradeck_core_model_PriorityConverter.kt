@@ -8,7 +8,7 @@ import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.type.ctrl.impl.BasicTypeConverter
 
 class com_coradec_coradeck_core_model_PriorityConverter: BasicTypeConverter<Priority>(Priority::class) {
-    override fun decodeFrom(value: String): Priority? = with (value.lowercase()) {
+    override fun decodeFrom(value: String): Priority? = with (value.uppercase()) {
         Priority.values().singleOrNull { it.name == this }
     }
 
