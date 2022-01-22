@@ -12,8 +12,8 @@ interface TypeConverter<TargetType: Any?> {
     fun handles(klass: KClass<*>): Boolean
     /** Checks if the type converter handles objects of the specified type. */
     fun handles(type: KType): Boolean
-    /** Converts the specified value to a value of the target type. */
-    fun convert(value: Any?): TargetType
-    /** Decodes the specified string representation to a value of the target type, or `null` if the representation is `null`. */
-    fun decode(value: String?): TargetType
+    /** Converts the specified value to a value of the target type, preserving `null` values. */
+    fun convert(value: Any?): TargetType?
+    /** Decodes the specified string value to a value of the target type, preserving `null` values. */
+    fun decode(value: String?): TargetType?
 }

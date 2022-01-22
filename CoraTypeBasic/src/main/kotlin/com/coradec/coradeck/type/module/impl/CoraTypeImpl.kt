@@ -26,8 +26,8 @@ class CoraTypeImpl : CoraTypeAPI {
         return klass.createType(/* TODO type arguments! */)
     }
 
-    override fun <T : Any?> castTo(value: Any?, type: KType): T = (TypeConverters[type] as TypeConverter<T>).convert(value)
-    override fun <T : Any?> castTo(value: Any?, type: KClass<*>): T = (TypeConverters[type] as TypeConverter<T>).convert(value)
+    override fun <T : Any?> castTo(value: Any?, type: KType): T? = (TypeConverters[type] as TypeConverter<T>).convert(value)
+    override fun <T : Any?> castTo(value: Any?, type: KClass<*>): T? = (TypeConverters[type] as TypeConverter<T>).convert(value)
     override fun password(cleartext: String): Password = BasicPassword(cleartext)
     override fun secret(cleartext: String): Secret = BasicSecret(cleartext)
 }

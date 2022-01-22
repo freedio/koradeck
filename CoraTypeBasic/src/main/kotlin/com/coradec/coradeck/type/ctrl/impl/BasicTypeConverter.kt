@@ -26,8 +26,8 @@ abstract class BasicTypeConverter<T : Any?>(val type: KType) : Logger(), TypeCon
     override fun handles(klass: KClass<*>): Boolean = klass.isSuperclassOf(klass)
     override fun handles(type: KType): Boolean = type.isSupertypeOf(type)
 
-    override fun convert(value: Any?): T = when (value) {
-        null -> if (type.isMarkedNullable) null as T else throw IllegalArgumentException("null values not allowed here!")
+    override fun convert(value: Any?): T? = when (value) {
+        null -> null
         in type -> value as T
         is String -> decode(value)
         else -> convertFrom(value) ?: throw TypeConversionException(
@@ -35,8 +35,8 @@ abstract class BasicTypeConverter<T : Any?>(val type: KType) : Logger(), TypeCon
         ).apply { error(this) }
     }
 
-    override fun decode(value: String?): T = when (value) {
-        null -> if (type.isMarkedNullable) null as T else throw IllegalArgumentException("null values not allowed here!")
+    override fun decode(value: String?): T? = when (value) {
+        null -> null
         else -> decodeFrom(value) ?: throw TypeConversionException("Failed to decode \"%s\" to type %s".format(value, type.name))
             .apply { error(this) }
     }
