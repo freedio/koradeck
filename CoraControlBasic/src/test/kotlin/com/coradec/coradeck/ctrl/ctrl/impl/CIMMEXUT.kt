@@ -7,8 +7,8 @@ package com.coradec.coradeck.ctrl.ctrl.impl
 import com.coradec.coradeck.com.model.Information
 import com.coradec.coradeck.com.model.Notification
 import com.coradec.coradeck.com.model.Notification.Companion.LOST_ITEMS
-import com.coradec.coradeck.com.model.NotificationState
 import com.coradec.coradeck.com.model.NotificationState.LOST
+import com.coradec.coradeck.com.model.NotificationState.PROCESSED
 import com.coradec.coradeck.com.model.impl.BasicInformation
 import com.coradec.coradeck.com.model.impl.BasicNotification
 import com.coradec.coradeck.com.module.CoraComImpl
@@ -81,7 +81,7 @@ internal class CIMMEXUT {
     @Test
     fun testLostNotification() {
         // given
-        val message = TestNotification1(here)
+        val message = TestNotification3(here)
         // when
         CIMMEX.inject(message)
         CIMMEX.synchronize()
@@ -102,7 +102,7 @@ internal class CIMMEXUT {
         CIMMEX.subscribe(agent)
         Thread.sleep(100)
         // then
-        assertThat(message.state).isEqualTo(NotificationState.PROCESSED)
+        assertThat(message.state).isEqualTo(PROCESSED)
         // cleanup
         CIMMEX.unsubscribe(agent)
     }
@@ -195,6 +195,11 @@ internal class CIMMEXUT {
             semaphore.release()
         }
     }
+
+    class TestInformation3(origin: Origin) : BasicInformation(origin)
+    class TestNotification3(origin: Origin) : BasicNotification<TestInformation3>(
+        TestInformation3(origin), validUpTo = ZonedDateTime.now() + Duration.ofMillis(1)
+    )
 
     class TestAgent1 : BasicAgent() {
         var gotMessage: Boolean = false
