@@ -9,5 +9,5 @@ import com.coradec.coradeck.core.util.classname
 import kotlin.reflect.KClass
 
 class ClassOrigin(val klass: KClass<*>): Origin {
-    override val representation: String get() = klass.classname
+    override fun represent(): String = klass.classname
 }

@@ -19,7 +19,7 @@ class BasicStringLogEntry(
         worker.name,
         level.abbrev,
         text.let { if (args.isEmpty() && '%' in it) it.replace("%", "%%") else it }.format(*args),
-        origin.representation
+        origin.represent()
     )
     override fun toString(): String = formattedWith(Syslog.FORMAT)
 }

@@ -24,7 +24,7 @@ class BasicProblemLogEntry(
             createdAt, worker.name, level.abbrev,
             if (text != null) String.format(text.get(), *args)
             else "${problem::class.shortClassname}: ${problem.localizedMessage}",
-            origin.representation, repr()
+            origin.represent(), repr()
         )
 
     override fun toString(): String = formattedWith(Syslog.FORMAT)

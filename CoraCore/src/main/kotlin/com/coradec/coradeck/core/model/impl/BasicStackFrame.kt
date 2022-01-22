@@ -15,7 +15,7 @@ class BasicStackFrame(frame: StackTraceElement, effective: Any?): StackFrame {
     override val fileName: String = frame.fileName ?: "unknown"
     override val lineNumber: Int = frame.lineNumber
 
-    override val representation: String = "\tat ${trace()}"
+    override fun represent(): String = "\tat ${trace()}"
     override fun toString(): String = "BasicStackFrame[${trace()}]"
     private fun trace() =
         if (realClassName == className) "$className.$methodName($fileName:$lineNumber)"

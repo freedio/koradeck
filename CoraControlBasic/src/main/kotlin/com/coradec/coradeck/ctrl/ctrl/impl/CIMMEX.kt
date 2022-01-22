@@ -135,7 +135,7 @@ object CIMMEX : Logger(), IMMEX {
                 warn(TEXT_INFORMATION_LOST, lostMessage.classname, lostMessage)
             }
         if (!clear)
-            warn(TEXT_NOT_FINISHED, shutdownAllowance.representation, inqueue.size, taskqueue.size, undeliveredCount, dispatchTable
+            warn(TEXT_NOT_FINISHED, shutdownAllowance.represent(), inqueue.size, taskqueue.size, undeliveredCount, dispatchTable
                 .flatMap { (key, value) -> value.asSequence().map { Pair(key, it.content) } }
                 .joinToString("\n", "\n") { "${it.first} ← ${it.second}" }
             )
@@ -432,7 +432,7 @@ object CIMMEX : Logger(), IMMEX {
     private fun cleanBroadcastQueue() {
         val now = ZonedDateTime.now()
         broadcastQueue.filterTo(lostMessages) {
-            it.validUpTo.isBefore(now) && it.lost
+            it.validUpTo.isBefore(now).apply { if (this) it.discard() }
         }
         broadcastQueue.removeIf { it.validUpTo.isBefore(now) }
     }
@@ -441,13 +441,11 @@ object CIMMEX : Logger(), IMMEX {
         error(TEXT_CANT_DISPATCH, item)
     }
 
-    private val Recipient.order get() = dispatchTable[this]?.peek()
-
     private class Executor(val id: Int) : Thread("Exec-%03d".format(id)) {
         override fun run() {
             executors[id] = this
             val patience = PROP_PATIENCE.value
-            debug("Executor %d starting, patience = %s", id, patience.representation)
+            debug("Executor %d starting, patience = %s", id, patience.represent())
             while (!interrupted() && enabled.get()) {
                 val item = taskqueue.poll(patience.amount, patience.unit)
                 try {
@@ -470,7 +468,7 @@ object CIMMEX : Logger(), IMMEX {
         override fun run() {
             workers[id] = this
             val patience = PROP_PATIENCE.value
-            debug("Worker %d starting, patience = %s", id, patience.representation)
+            debug("Worker %d starting, patience = %s", id, patience.represent())
             while (!interrupted() && enabled.get()) {
                 val recipient = dispatchOrder.poll(patience.amount, patience.unit)
                 if (recipient != null) process(recipient)
@@ -528,25 +526,27 @@ object CIMMEX : Logger(), IMMEX {
         }
     }
 
-    private class RecipientComparator : Comparator<Recipient> {
-        override fun compare(o1: Recipient?, o2: Recipient?): Int =
-            when {
-                o1 == null && o2 == null -> 0
-                o1 == null -> 1
-                o2 == null -> -1
-                else -> {
-                    val i1 = o1.order
-                    val i2 = o2.order
-                    when {
-                        i1 == null && i2 == null -> 0
-                        i1 == null -> 1
-                        i2 == null -> -1
-                        i1.priority == i2.priority -> i1.due.compareTo(i2.due)
-                        else -> i1.priority.compareTo(i2.priority)
-                    }
-                }
-            }
-    }
+//    private val Recipient.order get() = dispatchTable[this]?.peek()
+
+//    private class RecipientComparator : Comparator<Recipient> {
+//        override fun compare(o1: Recipient?, o2: Recipient?): Int =
+//            when {
+//                o1 == null && o2 == null -> 0
+//                o1 == null -> 1
+//                o2 == null -> -1
+//                else -> {
+//                    val i1 = o1.order
+//                    val i2 = o2.order
+//                    when {
+//                        i1 == null && i2 == null -> 0
+//                        i1 == null -> 1
+//                        i2 == null -> -1
+//                        i1.priority == i2.priority -> i1.due.compareTo(i2.due)
+//                        else -> i1.priority.compareTo(i2.priority)
+//                    }
+//                }
+//            }
+//    }
 
     private class DeferringQueue : PrioQueue<Deferred>(PROP_DEFERRINGQUEUE_SIZE.value) {
         override fun put(element: Deferred) {

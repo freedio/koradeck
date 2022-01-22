@@ -16,6 +16,6 @@ class BasicTextLogEntry(
     private vararg val args: Any
 ) : BasicLogEntry(origin, level), TextLogEntry {
     override fun formattedWith(format: String): String =
-            format.format(createdAt, worker.name, level.abbrev, String.format(text.get(), *args), origin.representation)
+            format.format(createdAt, worker.name, level.abbrev, String.format(text.get(), *args), origin.represent())
     override fun toString(): String = formattedWith(Syslog.FORMAT)
 }

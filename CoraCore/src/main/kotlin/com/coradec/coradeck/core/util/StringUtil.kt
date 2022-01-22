@@ -17,7 +17,7 @@ private fun formatAnyOrNull(obj: Any?, known: Set<Any?>, new: Any?): String = wh
     in known -> "‹known (see above)›"
     is String -> "\"$obj\""
     is Formattable -> obj.format(known)
-    is Representable -> obj.representation
+    is Representable -> obj.represent()
     is BasicException -> "${obj.classname}: ${obj.message(known)}"
     is Map<*, *> -> obj.entries.joinToString(", ", "[", "]") { (key, value) -> "$key: ${formatAnyOrNull(value, known + new, obj)}" }
     else -> obj.toString()

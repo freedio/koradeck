@@ -29,11 +29,12 @@ open class BasicAgent() : Logger(), Agent {
     private val routes = ConcurrentHashMap<Class<*>, (Any) -> Unit>()
     private val approvedCommands = CopyOnWriteArraySet(INTERNAL_COMMANDS)
     private val shutdownActions = mutableListOf<() -> Unit>()
-    override val representation: String get() = "BasicAgent#$index"
 
     init {
         AGENTS[index] = this
     }
+
+    override fun represent() = "BasicAgent#$index"
 
     @Suppress("UNCHECKED_CAST")
     override fun <I : Information> accept(info: I): Message<I> = IMMEX.inject(
@@ -59,7 +60,7 @@ open class BasicAgent() : Logger(), Agent {
     }
 
     protected fun atEnd(action: () -> Unit) = synchronized(shutdownActions) {
-        if (shutdownActions.isEmpty()) Runtime.getRuntime().addShutdownHook(object : Thread("Finalization of $representation") {
+        if (shutdownActions.isEmpty()) Runtime.getRuntime().addShutdownHook(object : Thread("Finalization of ${represent()}") {
             override fun run() {
                 shutdownActions.forEach { it.invoke() }
             }
