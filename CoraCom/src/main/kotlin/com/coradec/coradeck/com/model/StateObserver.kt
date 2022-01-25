@@ -6,12 +6,16 @@ package com.coradec.coradeck.com.model
 
 import com.coradec.coradeck.com.ctrl.Observer
 import com.coradec.coradeck.com.model.impl.BasicStateObserver
+import java.util.*
 
 interface StateObserver: Observer {
-    val state: NotificationState
+    val states: EnumSet<NotificationState>
     val action: () -> Unit
 
     companion object {
-        operator fun invoke(state: NotificationState, action: () -> Unit): StateObserver = BasicStateObserver(state, action)
+        operator fun invoke(action: () -> Unit, vararg state: NotificationState): StateObserver =
+            BasicStateObserver(action, EnumSet.copyOf(state.toSet()))
+        operator fun invoke(action: () -> Unit, states: EnumSet<NotificationState>): StateObserver =
+            BasicStateObserver(action, states)
     }
 }
