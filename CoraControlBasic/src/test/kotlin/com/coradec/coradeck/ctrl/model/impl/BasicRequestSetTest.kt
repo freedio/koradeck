@@ -137,6 +137,7 @@ internal class BasicRequestSetTest {
         val req8 = TestRequest('h'.code)
         val req9 = TestRequest('i'.code)
         val testee = BasicRequestSet(here, sequenceOf(req1, req2, req3, req4, req5, req6, req7, req8, req9), processor = agent)
+        agent.synchronize()
         // when:
         agent.accept(testee).standby()
         // then:

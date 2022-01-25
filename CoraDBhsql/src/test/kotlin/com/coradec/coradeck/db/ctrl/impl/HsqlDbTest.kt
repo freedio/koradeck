@@ -293,7 +293,7 @@ internal class HsqlDbTest {
         } catch (e: RequestFailedException) {
             // then:
             assertThat(e).hasCauseInstanceOf(MemberNotFoundException::class.java)
-            assertThat(e).hasMessage("(Cause: com.coradec.coradeck.bus.trouble.MemberNotFoundException: (MemberName: \"COM_CORADEC_CORADECK_DB_CTRL_IMPL_HSQL_DB_TEST_TEST_CLASS3\"))")
+            assertThat(e).hasMessageStartingWith("(Cause: com.coradec.coradeck.bus.trouble.MemberNotFoundException: (MemberName: \"COM_CORADEC_CORADECK_DB_CTRL_IMPL_HSQL_DB_TEST_TEST_CLASS3\")")
         }
     }
 
@@ -321,7 +321,7 @@ internal class HsqlDbTest {
         } catch (e: RequestFailedException) {
             // then
             assertThat(e).hasCauseInstanceOf(MemberNotFoundException::class.java)
-            assertThat(e).hasMessage("(Cause: com.coradec.coradeck.bus.trouble.MemberNotFoundException: (MemberName: \"COM_CORADEC_CORADECK_DB_CTRL_IMPL_HSQL_DB_TEST_TEST_CLASS3\"))")
+            assertThat(e).hasMessageStartingWith("(Cause: com.coradec.coradeck.bus.trouble.MemberNotFoundException: (MemberName: \"COM_CORADEC_CORADECK_DB_CTRL_IMPL_HSQL_DB_TEST_TEST_CLASS3\")")
         }
     }
 
@@ -363,7 +363,7 @@ internal class HsqlDbTest {
         } catch (e: RequestFailedException) {
             // then:
             assertThat(e).hasCauseInstanceOf(MemberNotFoundException::class.java)
-            assertThat(e).hasMessage("(Cause: com.coradec.coradeck.bus.trouble.MemberNotFoundException: (MemberName: \"COM_CORADEC_CORADECK_DB_CTRL_IMPL_HSQL_DB_TEST_TEST_CLASS\"))")
+            assertThat(e).hasMessageStartingWith("(Cause: com.coradec.coradeck.bus.trouble.MemberNotFoundException: (MemberName: \"COM_CORADEC_CORADECK_DB_CTRL_IMPL_HSQL_DB_TEST_TEST_CLASS\")")
         }
     }
 

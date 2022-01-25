@@ -4,10 +4,7 @@
 
 package com.coradec.coradeck.bus.model.impl
 
-import com.coradec.coradeck.bus.model.BusNodeDelegate
-import com.coradec.coradeck.bus.model.BusNodeState
-import com.coradec.coradeck.bus.model.DelegatedBusNode
-import com.coradec.coradeck.bus.model.NodeDelegator
+import com.coradec.coradeck.bus.model.*
 import com.coradec.coradeck.bus.module.CoraBus
 import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.bus.view.MemberView
@@ -41,6 +38,7 @@ open class BasicBusNode : BasicAgent(), DelegatedBusNode {
     override fun standby(delay: Timespan, state: BusNodeState) = delegate.standby(delay, state)
     override fun standby(state: BusNodeState) = delegate.standby(state)
     override fun standby(delay: Timespan) = delegate.standby(delay)
+    override fun onState(state: BusNodeState, action: BusNode.() -> Unit) = delegate.onState(state, action)
 
     protected open fun onAttaching(context: BusContext) {}
     protected open fun onAttached(context: BusContext) {}

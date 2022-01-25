@@ -8,12 +8,11 @@ import com.coradec.coradeck.bus.com.AttachRequest
 import com.coradec.coradeck.bus.com.DetachRequest
 import com.coradec.coradeck.bus.com.NodeStateChangedEvent
 import com.coradec.coradeck.bus.com.TransitionTrigger
-import com.coradec.coradeck.bus.model.BusNodeDelegate
-import com.coradec.coradeck.bus.model.BusNodeState
+import com.coradec.coradeck.bus.model.*
 import com.coradec.coradeck.bus.model.BusNodeState.*
-import com.coradec.coradeck.bus.model.BusNodeStateTransition
-import com.coradec.coradeck.bus.model.NodeDelegator
-import com.coradec.coradeck.bus.trouble.*
+import com.coradec.coradeck.bus.trouble.NodeNotAttachedException
+import com.coradec.coradeck.bus.trouble.StateUnknownException
+import com.coradec.coradeck.bus.trouble.StateUnreachableException
 import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.bus.view.MemberView
 import com.coradec.coradeck.com.ctrl.Observer
@@ -193,14 +192,18 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
     }
 
     private fun detach(request: DetachRequest) {
+        val nodeName = name?.let { "«$it»" } ?: "<unknown>"
         if (state == DETACHED) {
-            warn(TEXT_NODE_ALREADY_DETACHED, name ?: "unknown", request.origin)
-            request.cancel(NodeAlreadyDetachedException(name))
+            warn(TEXT_NODE_ALREADY_DETACHED, nodeName, request.origin)
+            request.succeed()
             return
         }
         if (BUSY in myStates) {
-            warn(TEXT_NODE_ALREADY_DETACHING, name ?: "unknown", request.origin)
-            request.cancel(NodeAlreadyDetachingException(name))
+            warn(TEXT_NODE_ALREADY_DETACHING, nodeName, request.origin)
+            onState(DETACHED) {
+                debug(">>> node %s came down.", nodeName)
+                request.succeed()
+            }
             return
         }
         if (state == READY) {
@@ -259,6 +262,22 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
             })
         }
         if (delay.amount == 0L) latch.await() else if (!latch.await(delay.amount, delay.unit)) throw TimeoutException()
+    }
+
+    override fun onState(state: BusNodeState, action: BusNode.() -> Unit): Unit = synchronized(myStates) {
+        if ((state in upstates || state == READY) && (BUSY in myStates || DETACHED in myStates))
+            throw StateUnreachableException(state, this.state)
+        if (state in myStates) return
+        stateRegistry.add(object : Observer {
+            override fun onNotification(event: Event): Boolean = when (event) {
+                is NodeStateChangedEvent -> (event.current == state).also {
+                    if (it) {
+                        action.invoke(this@BusNodeImpl)
+                    }
+                }
+                else -> false
+            }
+        })
     }
 
     fun get(type: Class<*>): MemberView? = context?.get(type)

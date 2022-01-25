@@ -21,7 +21,6 @@ import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Priority.B1
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.core.util.relax
-import com.coradec.coradeck.core.util.swallow
 import com.coradec.coradeck.ctrl.module.CoraControl.createRequestList
 import com.coradec.coradeck.ctrl.module.CoraControl.createRequestSet
 import com.coradec.coradeck.dir.model.DirectoryNamespace
@@ -149,7 +148,7 @@ open class BusHubImpl(
         myMembers[name]?.apply {
             voucher.value = this
             detach().propagateTo(voucher)
-        } ?: voucher.fail(MemberNotFoundException(name))
+        } ?: voucher.fail(MemberNotFoundException(name).apply { error(this) })
     }
 
     private fun unlinkMember(request: UnlinkMemberRequest) {
@@ -247,11 +246,8 @@ open class BusHubImpl(
         trace("Unloading %d member(s): %s", myMembers.size, myMembers.values)
         if (myMembers.isEmpty()) transition.succeed()
         else accept(
-            createRequestSet(
-                this,
-                myMembers.keys.map { name -> RemoveMemberVoucher(here, name) },
-                this
-            ).propagateTo(transition) andThen { debug("Unloading ‹%s› completed.", name ?: "unknown") }
+            createRequestSet(this, myMembers.keys.map { name -> RemoveMemberVoucher(here, name) }, this)
+                .propagateTo(transition) andThen { debug("Unloading ‹%s› completed.", name ?: "unknown") }
         )
     }
 
