@@ -13,7 +13,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>gui-swing</artifactId>
+    <artifactId>gui-html5</artifactId>
 
     <dependencies>
         <dependency>
@@ -23,18 +23,6 @@
         <dependency>
             <groupId>com.coradec.coradeck</groupId>
             <artifactId>core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.coradec.coradeck</groupId>
-            <artifactId>module</artifactId>
-            <version>0.2</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.coradec.coradeck</groupId>
-            <artifactId>module</artifactId>
-            <version>0.2</version>
-            <scope>compile</scope>
         </dependency>
     </dependencies>
 
