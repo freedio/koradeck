@@ -14,8 +14,12 @@ import com.coradec.coradeck.ctrl.model.*
 import com.coradec.coradeck.module.model.CoraModuleAPI
 
 interface CoraControlAPI: CoraModuleAPI {
-    val Market: MarketSpace
+    /** The current information, message, market, event and execution system. */
     val IMMEX: IMMEX
+    /** The central market. */
+    val Market: MarketSpace
+    /** A new notification monitor. */
+    val Monitor: Monitor
 
     /**
      * Creates a request set for the specified requests; injecting the set will trigger all requests at once and be successful

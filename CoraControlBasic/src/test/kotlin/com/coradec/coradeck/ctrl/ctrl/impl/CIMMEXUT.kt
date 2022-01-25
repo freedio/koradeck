@@ -83,9 +83,11 @@ internal class CIMMEXUT {
         // given
         val message = TestNotification3(here)
         // when
+        CIMMEX.synchronize()
         CIMMEX.inject(message)
         CIMMEX.synchronize()
         // then
+        Thread.sleep(100)
         assertThat(message.state).isEqualTo(LOST)
         assertThat(LOST_ITEMS).contains(message)
     }

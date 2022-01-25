@@ -89,7 +89,7 @@ class BasicItemSet(
                 else -> throw IllegalStateException("Illegal end state: $endState")
             } else relax()
         }
-        NotificationState.REJECTED, NotificationState.CRASHED -> fail(notification.problem)
+        NotificationState.REJECTED, NotificationState.CRASHED -> fail(notification.reason)
         NotificationState.LOST -> fail(LostInformationException(element))
         else -> relax()
     }

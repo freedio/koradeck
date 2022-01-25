@@ -9,6 +9,7 @@ import com.coradec.coradeck.com.model.Notification
 import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.core.model.Timespan
+import com.coradec.coradeck.ctrl.model.Monitor
 import com.coradec.coradeck.ctrl.model.Task
 
 /** API of an information, market, messaging, event-handling and execution service. */
@@ -24,12 +25,16 @@ interface IMMEX {
     fun execute(executable: Runnable, prio: Priority)
     /** Schedules the specified task for execution. */
     fun execute(task: Task)
-    /** Injects the specified information, returning a notification for tracking pogress. */
+    /** Injects the specified information, returning a notification for tracking progress. */
     fun <I : Information> inject(info: I): Notification<I>
     /** Injects the specified notification. */
     fun <I : Information, N : Notification<I>> inject(notification: N): N
-    /** Waits until all current messages have been processed (without preventing new ones to be inserted). */
+    /** Waits until all current messages have been dispatched (without preventing new ones to be inserted). */
     fun synchronize()
+    /** Injects the specified information and tracks it through the specified monitor. */
+    fun monitor(monitor: Monitor, info: Information)
+    /** Injects the specified notification and tracks it through the specified monitor. */
+    fun <I : Information> monitor(monitor: Monitor, notification: Notification<I>)
     /** Registers a number of listeners for broadcast information. */
     fun subscribe(vararg listeners: Recipient)
     /** Unregisters a number of listeners from broadcast reception. */

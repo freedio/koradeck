@@ -18,6 +18,7 @@ import com.coradec.coradeck.core.trouble.StandbyTimeoutException
 import com.coradec.coradeck.core.util.classname
 import com.coradec.coradeck.core.util.here
 import com.coradec.coradeck.ctrl.ctrl.IMMEX
+import com.coradec.coradeck.ctrl.model.Monitor
 import com.coradec.coradeck.ctrl.model.PrioQueue
 import com.coradec.coradeck.ctrl.model.Task
 import com.coradec.coradeck.ctrl.module.CoraControl.createRequestList
@@ -209,6 +210,8 @@ object CIMMEX : Logger(), IMMEX {
         } else error(TEXT_CIMMEX_DISABLED, "Synchronization")
     }
 
+    override fun monitor(monitor: Monitor, info: Information) = monitor.register(inject(info))
+    override fun <I : Information> monitor(monitor: Monitor, notification: Notification<I>) = monitor.register(inject(notification))
     override fun standby() = standby(PROP_SHUTDOWN_ALLOWANCE.value)
     override fun standby(delay: Timespan) {
         val end = System.nanoTime() + delay.let { it.unit.toNanos(it.amount) }

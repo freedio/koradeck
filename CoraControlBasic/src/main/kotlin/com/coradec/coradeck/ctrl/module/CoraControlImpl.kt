@@ -11,15 +11,13 @@ import com.coradec.coradeck.core.model.Priority
 import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.ctrl.IMMEX
 import com.coradec.coradeck.ctrl.ctrl.impl.CIMMEX
-import com.coradec.coradeck.ctrl.model.AgentPool
-import com.coradec.coradeck.ctrl.model.CentralMarketSpace
-import com.coradec.coradeck.ctrl.model.MarketSpace
-import com.coradec.coradeck.ctrl.model.Task
+import com.coradec.coradeck.ctrl.model.*
 import com.coradec.coradeck.ctrl.model.impl.*
 
 class CoraControlImpl : CoraControlAPI {
-    override val Market: MarketSpace = CentralMarketSpace
     override val IMMEX: IMMEX get() = CIMMEX
+    override val Market: MarketSpace = CentralMarketSpace
+    override val Monitor: Monitor get() = BasicMonitor()
 
     override fun createRequestSet(origin: Origin, requests: Sequence<Request>, processor: Agent?) =
         BasicRequestSet(origin, requests, processor = processor)

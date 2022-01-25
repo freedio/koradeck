@@ -1,0 +1,4 @@
+# Localized text base for default locale of class BasicMonitor
+
+RequestNotMonitored1: Request ‹%s› was not or no longer monitored! → monitor not updated.
+NotificationNotMonitored1: Notification ‹%s› was not or no longer monitored! → monitor not updated.

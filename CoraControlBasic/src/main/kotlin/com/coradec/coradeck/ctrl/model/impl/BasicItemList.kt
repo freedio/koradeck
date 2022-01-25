@@ -87,7 +87,7 @@ class BasicItemList(
 
     private fun process(notification: Notification<out Information>, element: Information, state: NotificationState) = when (state) {
         NotificationState.PROCESSED -> execute()
-        NotificationState.REJECTED, NotificationState.CRASHED -> fail(notification.problem)
+        NotificationState.REJECTED, NotificationState.CRASHED -> fail(notification.reason)
         NotificationState.LOST -> fail(LostInformationException(element))
         else -> relax()
     }

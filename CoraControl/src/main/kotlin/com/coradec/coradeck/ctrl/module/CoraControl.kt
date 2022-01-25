@@ -13,12 +13,17 @@ import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.ctrl.ctrl.IMMEX
 import com.coradec.coradeck.ctrl.model.AgentPool
 import com.coradec.coradeck.ctrl.model.MarketSpace
+import com.coradec.coradeck.ctrl.model.Monitor
 import com.coradec.coradeck.ctrl.model.Task
 import com.coradec.coradeck.module.model.CoraModule
 
 object CoraControl : CoraModule<CoraControlAPI>() {
-    val Market: MarketSpace get() = impl.Market
+    /** The current information, message, market, event and execution system. */
     val IMMEX: IMMEX get() = impl.IMMEX
+    /** The central market. */
+    val Market: MarketSpace get() = impl.Market
+    /** A new notification monitor. */
+    val Monitor: Monitor get() = impl.Monitor
 
     /**
      * Creates a request set for the specified requests; injecting the set will trigger all requests at once and be successful
