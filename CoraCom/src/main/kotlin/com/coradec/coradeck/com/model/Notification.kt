@@ -39,7 +39,7 @@ interface Notification<I: Information> : Information {
     /** Indicates whether the notification is complete (processed). */
     val complete: Boolean
     /** The problem description (only meaningful with states REJECTED and CRASHED). */
-    val problem: Throwable?
+    val reason: Throwable?
 
     /** Registers the specified observer for state changes. @return `true` if the observer was enregistered. */
     fun enregister(observer: Observer): Boolean
@@ -61,6 +61,8 @@ interface Notification<I: Information> : Information {
     fun reject(reason: Throwable)
     /** Triggers the specified action whenever the specified state is reached. */
     fun whenState(state: NotificationState, action: () -> Unit)
+    /** Triggers the specified action when a terminal state has been reached. */
+    fun whenFinished(action: Notification<I>.() -> Unit)
     /**
      * Wait for the notification to finish (i. e. its request to become successful, cancelled, or failed, or its information to
      * be processed).  Fluid.

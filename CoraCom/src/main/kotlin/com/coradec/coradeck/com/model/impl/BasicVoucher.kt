@@ -56,14 +56,14 @@ open class BasicVoucher<V>(
     }
 
     private fun lookup(): V = when (state) {
-        FAILED -> throw reason ?: RequestFailedException()
-        CANCELLED -> throw RequestCancelledException()
+        FAILED -> throw reason ?: RequestFailedException(this)
+        CANCELLED -> throw RequestCancelledException(this)
         SUCCESSFUL -> current as V
         else -> valueSemaphore.await().let {
             when (state) {
                 SUCCESSFUL -> current as V
-                FAILED -> throw RequestFailedException(reason)
-                CANCELLED -> throw RequestCancelledException()
+                FAILED -> throw RequestFailedException(this)
+                CANCELLED -> throw RequestCancelledException(this)
                 else -> lookup()
             }
         }

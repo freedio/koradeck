@@ -4,6 +4,6 @@
 
 package com.coradec.coradeck.com.trouble
 
-class RequestFailedException(message: String?, problem: Throwable?) : CommunicationException(message, problem) {
-    constructor(problem: Throwable? = null) : this(null, problem)
-}
+import com.coradec.coradeck.com.model.Request
+
+class RequestFailedException(val request: Request) : CommunicationException(null, request.reason)

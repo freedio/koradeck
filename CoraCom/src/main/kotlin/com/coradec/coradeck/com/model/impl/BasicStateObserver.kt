@@ -7,11 +7,12 @@ package com.coradec.coradeck.com.model.impl
 import com.coradec.coradeck.com.model.Event
 import com.coradec.coradeck.com.model.NotificationState
 import com.coradec.coradeck.com.model.StateObserver
+import java.util.*
 
-class BasicStateObserver(override val state: NotificationState, override val action: () -> Unit) : StateObserver {
+class BasicStateObserver(override val action: () -> Unit, override val states: EnumSet<NotificationState>) : StateObserver {
     override fun onNotification(event: Event): Boolean = when (event) {
         is StateChangedEvent ->
-            if (event.current == state) {
+            if (event.current in states) {
                 action.invoke()
                 true
             } else false

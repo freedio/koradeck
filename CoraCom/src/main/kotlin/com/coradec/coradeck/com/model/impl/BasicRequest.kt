@@ -130,8 +130,8 @@ open class BasicRequest(
     }
 
     private fun report(): BasicRequest {
-        if (failed) throw RequestFailedException(reason)
-        if (cancelled) throw RequestCancelledException(reason)
+        if (failed) throw RequestFailedException(this)
+        if (cancelled) throw RequestCancelledException(this)
         if (lost) throw RequestNotAcceptedException()
         Thread.yield()
         return this
@@ -217,11 +217,11 @@ open class BasicRequest(
             when (state) {
                 FAILED -> {
                     CoraCom.log.warn(reason, TEXT_REQUEST_FAILED, this@BasicRequest)
-                    throw RequestFailedException(reason)
+                    throw RequestFailedException(this)
                 }
                 CANCELLED -> {
                     CoraCom.log.warn(reason, TEXT_REQUEST_CANCELLED, this@BasicRequest)
-                    throw RequestCancelledException(reason)
+                    throw RequestCancelledException(this)
                 }
                 LOST -> {
                     CoraCom.log.warn(TEXT_REQUEST_LOST, this@BasicRequest)

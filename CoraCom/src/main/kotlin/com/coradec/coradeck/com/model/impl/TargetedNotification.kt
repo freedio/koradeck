@@ -34,7 +34,7 @@ open class TargetedNotification<I: Information>(
     override val processed: Boolean get() = notification.processed
     override val crashed: Boolean get() = notification.crashed
     override val lost: Boolean get() = notification.lost
-    override val problem: Throwable? get() = notification.problem
+    override val reason: Throwable? get() = notification.reason
     override val complete: Boolean get() = notification.complete
     override val observerCount: Int get() = notification.observerCount
 
@@ -52,4 +52,5 @@ open class TargetedNotification<I: Information>(
     override fun standby(delay: Timespan): Notification<*> = notification.standby(delay)
     override fun andThen(action: () -> Unit) = notification.andThen(action)
     override fun swallow() = notification.swallow()
+    override fun whenFinished(action: Notification<I>.() -> Unit) = notification.whenFinished(action)
 }

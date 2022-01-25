@@ -6,4 +6,4 @@ package com.coradec.coradeck.com.trouble
 
 import com.coradec.coradeck.com.model.Request
 
-class RequestCancelledException(val request: Request) : CommunicationException(null, request.reason)
+class RequestLostException(val request: Request) : CommunicationException(null, request.reason)

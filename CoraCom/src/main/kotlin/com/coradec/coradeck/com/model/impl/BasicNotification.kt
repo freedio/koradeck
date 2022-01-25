@@ -8,6 +8,7 @@ import com.coradec.coradeck.com.ctrl.Observer
 import com.coradec.coradeck.com.model.*
 import com.coradec.coradeck.com.model.Notification.Companion.LOST_ITEMS
 import com.coradec.coradeck.com.model.NotificationState.*
+import com.coradec.coradeck.com.model.NotificationState.Companion.TERMINAL
 import com.coradec.coradeck.com.model.RequestState.SUCCESSFUL
 import com.coradec.coradeck.com.module.CoraCom
 import com.coradec.coradeck.core.model.Origin
@@ -47,7 +48,7 @@ open class BasicNotification<I : Information>(
     override val crashed: Boolean get() = CRASHED in myStates
     override val lost: Boolean get() = LOST in myStates
     override val complete: Boolean get() = PROCESSED in myStates
-    override var problem: Throwable? = null
+    override var reason: Throwable? = null
     override val observerCount: Int get() = stateRegistry.size
     override var state: NotificationState
         get() = synchronized(myStates) { states.last() }
@@ -84,7 +85,7 @@ open class BasicNotification<I : Information>(
     }
 
     override fun reject(reason: Throwable) {
-        problem = reason
+        this.reason = reason
         state = REJECTED
         if (content is Request) (content as Request).fail(reason)
     }
@@ -96,7 +97,7 @@ open class BasicNotification<I : Information>(
     }
 
     override fun crash(reason: Throwable) {
-        problem = reason
+        this.reason = reason
         state = CRASHED
         if (content is Request) (content as Request).fail(reason)
         unfinished.countDown()
@@ -111,7 +112,7 @@ open class BasicNotification<I : Information>(
 
     override fun whenState(state: NotificationState, action: () -> Unit) {
         if (synchronized(myStates) {
-                (state in myStates).also { if (!it) stateRegistry.add(StateObserver(state, action)) }
+                (state in myStates).also { if (!it) stateRegistry.add(StateObserver(action, state)) }
             }) action.invoke()
     }
 
@@ -148,5 +149,11 @@ open class BasicNotification<I : Information>(
         private val TEXT_NOTIFICATION_LOST = LocalText("MotificationLost1")
         private val TEXT_NOTIFICATION_REJECTED = LocalText("NotificationRejected1")
         private val TEXT_NOTIFICATION_CRASHED = LocalText("NotificationCrashed1")
+    }
+
+    override fun whenFinished(action: Notification<I>.() -> Unit) {
+        if (synchronized(myStates) {
+                (state in TERMINAL).also { if (!it) stateRegistry.add(StateObserver({ action.invoke(this) }, TERMINAL)) }
+            }) action.invoke(this)
     }
 }

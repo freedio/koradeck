@@ -6,4 +6,4 @@ package com.coradec.coradeck.com.trouble
 
 import com.coradec.coradeck.com.model.Notification
 
-class NotificationRejectedException(val notification: Notification<*>): CommunicationException(null, notification.reason)
+class NotificationCrashedException(val notification: Notification<*>) : CommunicationException(null, notification.reason)
