@@ -30,11 +30,13 @@ interface BusContext {
     /** Indicates that the node is about to leave the context. */
     fun leaving()
     /** Indicates that the node has left the context. */
-    fun left()
+    fun left(): Boolean
+
     /** Indicates that the specified node is about to join the context. */
     fun joining(node: MemberView)
     /** Indicates that the specified node has joined the context. */
-    fun joined(node: MemberView)
+    fun joined(node: MemberView): Boolean
+
     /** Indicates that the node has become ready. */
     fun ready()
     /** Indicates that the node has become busy (which practically means it is going down). */

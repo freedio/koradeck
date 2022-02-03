@@ -5,9 +5,10 @@
 package com.coradec.coradeck.bus.view
 
 import com.coradec.coradeck.dir.model.Path
+import com.coradec.coradeck.session.view.View
 import kotlin.reflect.KClass
 
-interface BusHubView {
+interface BusHubView : View {
     /** The path of the member with the specified name. */
     fun pathOf(name: String): Path
     /** Looks up the superior with the specified type, if there is any. */
@@ -17,11 +18,13 @@ interface BusHubView {
     /** Invoked when the specified member is leaving the context. */
     fun onLeaving(member: MemberView)
     /** Invoked when the specified member left the context. */
-    fun onLeft(member: MemberView)
+    fun onLeft(member: MemberView): Boolean
+
     /** Invoked when the specified candidate is about to join the context. */
     fun onJoining(node: MemberView)
     /** Invoked when the specified member joined the context. */
-    fun onJoined(node: MemberView)
+    fun onJoined(node: MemberView): Boolean
+
     /** Invoked when the member becomes ready. */
     fun onReady(member: MemberView)
     /** Invoked when the member becomes busy. */

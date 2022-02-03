@@ -4,18 +4,24 @@
 
 package com.coradec.coradeck.bus.module
 
-import com.coradec.coradeck.bus.model.*
+import com.coradec.coradeck.bus.model.BusApplication
+import com.coradec.coradeck.bus.model.BusHub
+import com.coradec.coradeck.bus.model.delegation.*
 import com.coradec.coradeck.dir.model.DirectoryNamespace
 import com.coradec.coradeck.dir.module.CoraDir
 import com.coradec.coradeck.module.model.CoraModule
 
 object CoraBus : CoraModule<CoraBusAPI>() {
     /** The system bus. */
-    val systemBus: BusHub = impl.systemBus
+    val systemBus: BusHub get() = impl.systemBus
     /** The machine bus. */
-    val machineBus: BusHub = impl.machineBus
+    val machineBus: BusHub get() = impl.machineBus
     /** The application bus. */
-    val applicationBus: BusHub = impl.applicationBus
+    val applicationBus: BusHub get() = impl.applicationBus
+    /** The current application. */
+    var application: BusApplication
+        get() = impl.application
+        set(value) { impl.application = value }
 
     /** Creates a node implementation with the specified optional delegator. */
     fun createNode(delegator: NodeDelegator? = null): BusNodeDelegate = impl.createNode(delegator)

@@ -8,8 +8,12 @@ import com.coradec.coradeck.bus.com.AttachRequest
 import com.coradec.coradeck.bus.com.DetachRequest
 import com.coradec.coradeck.bus.com.NodeStateChangedEvent
 import com.coradec.coradeck.bus.com.TransitionTrigger
-import com.coradec.coradeck.bus.model.*
+import com.coradec.coradeck.bus.model.BusNode
+import com.coradec.coradeck.bus.model.BusNodeState
 import com.coradec.coradeck.bus.model.BusNodeState.*
+import com.coradec.coradeck.bus.model.BusNodeStateTransition
+import com.coradec.coradeck.bus.model.delegation.BusNodeDelegate
+import com.coradec.coradeck.bus.model.delegation.NodeDelegator
 import com.coradec.coradeck.bus.trouble.NodeNotAttachedException
 import com.coradec.coradeck.bus.trouble.StateUnknownException
 import com.coradec.coradeck.bus.trouble.StateUnreachableException
@@ -95,73 +99,263 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
         route(DetachRequest::class, ::detach)
     }
 
+    protected open fun onAttaching(context: BusContext) {}
+    protected open fun onAttached(context: BusContext): Boolean = true
+    protected open fun onInitializing() {}
+    protected open fun onInitialized(): Boolean = true
+    protected open fun onFinalizing() {}
+    protected open fun onFinalized(): Boolean = true
+    protected open fun onDetaching(forced: Boolean) {}
+    protected open fun onDetached(): Boolean = true
+    protected open fun onReady() {}
+    protected open fun onBusy() {}
+
     protected open fun stateChanged(transition: BusNodeStateTransition) {
         val ctxt = transition.context
         val name = name ?: ctxt?.name ?: throw IllegalStateException("Name must be present here!")
         try {
             when (val terminalState = transition.unto) {
-                ATTACHING -> {
-                    val contxt = ctxt ?: throw IllegalArgumentException("Context not specified!")
-                    debug("Attaching %s ‹%s› to context ‹%s›.", mytype, name, contxt.path)
-                    state = ATTACHING
-                    delegator?.onAttaching(contxt)
-                    contxt.joining(transition.member)
-                    transition.succeed()
-                }
-                ATTACHED -> {
-                    val contxt = ctxt ?: throw IllegalArgumentException("Context not specified!")
-                    state = ATTACHED
-                    debug("Attached %s ‹%s› to context ‹%s›.", mytype, name, contxt.path)
-                    context = contxt
-                    delegator?.onAttached(contxt)
-                    contxt.joined(transition.member)
-                    transition.succeed()
-                }
-                INITIALIZING -> {
-                    debug("Initializing %s ‹%s›.", mytype, name)
-                    state = INITIALIZING
-                    delegator?.onInitializing()
-                    transition.succeed()
-                }
-                INITIALIZED -> {
-                    state = INITIALIZED
-                    delegator?.onInitialized()
-                    debug("Initialized %s ‹%s›.", mytype, name)
-                    readify(name)
-                    transition.succeed()
-                }
-                FINALIZING -> {
-                    busify(name)
-                    debug("Finalizing %s ‹%s›.", mytype, name)
-                    state = FINALIZING
-                    delegator?.onFinalizing()
-                    transition.succeed()
-                }
-                FINALIZED -> {
-                    state = FINALIZED
-                    delegator?.onFinalized()
-                    debug("Finalized %s ‹%s›.", mytype, name)
-                    transition.succeed()
-                }
-                DETACHING -> {
-                    debug("Detaching %s ‹%s›.", mytype, name)
-                    state = DETACHING
-                    delegator?.onDetaching(detachForced.getAndSet(true))
-                    context?.leaving()
-                    transition.succeed()
-                }
-                DETACHED -> {
-                    context?.left()
-                    context = null
-                    state = DETACHED
-                    delegator?.onDetached()
-                    transition.succeed()
-                    debug("Detached %s ‹%s›.", mytype, name)
-                }
+                ATTACHING -> becomeAttaching(transition, ctxt, name)
+                ATTACHED -> becomeAttached(transition, ctxt, name)
+                INITIALIZING -> becomeInitializing(transition, name)
+                INITIALIZED -> becomeInitialized(transition, name, readify = true)
+                FINALIZING -> becomeFinalizing(transition, name, busify = true)
+                FINALIZED -> becomeFinalized(transition, name)
+                DETACHING -> becomeDetaching(transition, name)
+                DETACHED -> becomeDetached(transition, name)
                 else -> throw StateUnknownException(terminalState)
             }
         } catch (e: Exception) {
             error(e, TEXT_TRANSITION_FAILED, transition.from, transition.unto, ctxt ?: "none")
+            transition.fail(e)
+        }
+    }
+
+    protected fun becomeAttaching(transition: BusNodeStateTransition, ctxt: BusContext?, name: String) {
+        val contxt = ctxt ?: throw IllegalArgumentException("Context not specified!")
+        transition.whenFinished {
+            when (state) {
+                SUCCESSFUL -> {
+                    debug("Attaching %s ‹%s› to context ‹%s›.", mytype, name, contxt.path)
+                    this@BusNodeImpl.state = ATTACHING
+                }
+                FAILED -> {
+                    detail("Failed to attach %s ‹%s› to context ‹%s›!", mytype, name, contxt.path)
+                    if (reason != null) error(reason!!)
+                }
+                CANCELLED -> {
+                    detail("Attaching %s ‹%s› to context ‹%s› was cancelled!", mytype, name, contxt.path)
+                    if (reason != null) error(reason!!)
+                }
+                else -> relax()
+            }
+        }
+        try {
+            onAttaching(contxt)
+            delegator?.onAttaching(contxt)
+            contxt.joining(transition.member)
+            transition.succeed()
+        } catch (e: Exception) {
+            error(e)
+            transition.fail(e)
+        }
+    }
+
+    protected fun becomeAttached(transition: BusNodeStateTransition, ctxt: BusContext?, name: String) {
+        val contxt = ctxt ?: throw IllegalArgumentException("Context not specified!")
+        transition.whenFinished {
+            when (state) {
+                SUCCESSFUL -> {
+                    context = contxt
+                    this@BusNodeImpl.state = ATTACHING
+                    debug("Attached %s ‹%s› to context ‹%s›.", mytype, name, contxt.path)
+                }
+                FAILED -> {
+                    detail("Failed to attach %s ‹%s› to context ‹%s›!", mytype, name, contxt.path)
+                    if (reason != null) error(reason!!)
+                }
+                CANCELLED -> {
+                    detail("Attaching %s ‹%s› to context ‹%s› was cancelled!", mytype, name, contxt.path)
+                    if (reason != null) error(reason!!)
+                }
+                else -> relax()
+            }
+        }
+        try {
+            if (onAttached(contxt) && delegator?.onAttached(contxt) != false && contxt.joined(transition.member))
+                transition.succeed()
+        } catch (e: Exception) {
+            error(e)
+            transition.fail(e)
+        }
+    }
+
+    protected fun becomeInitializing(transition: BusNodeStateTransition, name: String) {
+        transition.whenFinished {
+            when (state) {
+                SUCCESSFUL -> {
+                    debug("Initializing %s ‹%s›.", mytype, name)
+                    this@BusNodeImpl.state = INITIALIZING
+                }
+                FAILED -> {
+                    detail("Failed to initialize %s ‹%s›!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                CANCELLED -> {
+                    detail("Initializing %s ‹%s› was cancelled!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                else -> relax()
+            }
+        }
+        try {
+            onInitializing()
+            delegator?.onInitializing()
+            transition.succeed()
+        } catch (e: Exception) {
+            error(e)
+            transition.fail(e)
+        }
+    }
+
+    protected fun becomeInitialized(transition: BusNodeStateTransition, name: String, readify: Boolean) {
+        transition.whenFinished {
+            when (state) {
+                SUCCESSFUL -> {
+                    this@BusNodeImpl.state = INITIALIZED
+                    debug("Initialized %s ‹%s›.", mytype, name)
+                }
+                FAILED -> {
+                    detail("Failed to initialize %s ‹%s›!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                CANCELLED -> {
+                    detail("Initializing %s ‹%s› was cancelled!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                else -> relax()
+            }
+        }
+        try {
+            if (onInitialized() && delegator?.onInitialized() != false) {
+                transition.succeed()
+                if (readify) readify(name)
+            }
+        } catch (e: Exception) {
+            error(e)
+            transition.fail(e)
+        }
+    }
+
+    protected fun becomeFinalizing(transition: BusNodeStateTransition, name: String, busify: Boolean) {
+        transition.whenFinished {
+            when (state) {
+                SUCCESSFUL -> {
+                    debug("Finalizing %s ‹%s›.", mytype, name)
+                    this@BusNodeImpl.state = FINALIZING
+                }
+                FAILED -> {
+                    detail("Failed to finalize %s ‹%s›!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                CANCELLED -> {
+                    detail("Finalizing %s ‹%s› was cancelled!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                else -> relax()
+            }
+        }
+        if (busify) busify(name)
+        try {
+            onFinalizing()
+            delegator?.onFinalizing()
+            transition.succeed()
+        } catch (e: Exception) {
+            error(e)
+            transition.fail(e)
+        }
+    }
+
+    protected fun becomeFinalized(transition: BusNodeStateTransition, name: String) {
+        transition.whenFinished {
+            when (state) {
+                SUCCESSFUL -> {
+                    this@BusNodeImpl.state = FINALIZED
+                    debug("Finalized %s ‹%s›.", mytype, name)
+                }
+                FAILED -> {
+                    detail("Failed to finalize %s ‹%s›!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                CANCELLED -> {
+                    detail("Finalizing %s ‹%s› was cancelled!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                else -> relax()
+            }
+        }
+        try {
+            if (onFinalized() && delegator?.onFinalized() != false) transition.succeed()
+        } catch (e: Exception) {
+            error(e)
+            transition.fail(e)
+        }
+    }
+
+    protected fun becomeDetaching(transition: BusNodeStateTransition, name: String) {
+        transition.whenFinished {
+            when (state) {
+                SUCCESSFUL -> {
+                    debug("Detaching %s ‹%s›.", mytype, name)
+                    this@BusNodeImpl.state = DETACHING
+                }
+                FAILED -> {
+                    detail("Failed to detach %s ‹%s›!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                CANCELLED -> {
+                    detail("Detaching %s ‹%s› was cancelled!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                else -> relax()
+            }
+        }
+        val forced = detachForced.getAndSet(true)
+        try {
+            onDetaching(forced)
+            delegator?.onDetaching(forced)
+            context?.leaving()
+            transition.succeed()
+        } catch (e: Exception) {
+            error(e)
+            transition.fail(e)
+        }
+    }
+
+    protected fun becomeDetached(transition: BusNodeStateTransition, name: String) {
+        transition.whenFinished {
+            when (state) {
+                SUCCESSFUL -> {
+                    context?.left()
+                    context = null
+                    this@BusNodeImpl.state = DETACHED
+                    debug("Detached %s ‹%s›.", mytype, name)
+                }
+                FAILED -> {
+                    detail("Failed to detach %s ‹%s›!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                CANCELLED -> {
+                    detail("Detaching %s ‹%s› was cancelled!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                else -> relax()
+            }
+        }
+        try {
+            if (onDetached() && delegator?.onDetached() != false) transition.succeed()
+        } catch (e: Exception) {
+            error(e)
             transition.fail(e)
         }
     }
@@ -201,14 +395,10 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
         if (BUSY in myStates) {
             warn(TEXT_NODE_ALREADY_DETACHING, nodeName, request.origin)
             onState(DETACHED) {
-                debug(">>> node %s came down.", nodeName)
+                trace(">>> node %s came down.", nodeName)
                 request.succeed()
             }
             return
-        }
-        if (state == READY) {
-            myStates -= READY
-            myStates += BUSY
         }
         trace("Detach: downstates = %s.", downstates.filter { it !in states })
         accept(Trajectory(this, downstates.filter { it !in states })).content.propagateTo(request)
@@ -246,28 +436,17 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
     override fun standby(delay: Timespan) = standby(delay, READY)
     override fun standby(delay: Timespan, state: BusNodeState) {
         val latch = CountDownLatch(1)
-        synchronized(myStates) {
-            if ((state in upstates || state == READY) && (BUSY in myStates || DETACHED in myStates))
-                throw StateUnreachableException(state, this.state)
-            if (state in myStates) return
-            stateRegistry.add(object : Observer {
-                override fun onNotification(event: Event): Boolean = when (event) {
-                    is NodeStateChangedEvent -> (event.current == state).also {
-                        if (it) {
-                            latch.countDown()
-                        }
-                    }
-                    else -> false
-                }
-            })
-        }
+        onState(state) { latch.countDown() }
         if (delay.amount == 0L) latch.await() else if (!latch.await(delay.amount, delay.unit)) throw TimeoutException()
     }
 
     override fun onState(state: BusNodeState, action: BusNode.() -> Unit): Unit = synchronized(myStates) {
         if ((state in upstates || state == READY) && (BUSY in myStates || DETACHED in myStates))
             throw StateUnreachableException(state, this.state)
-        if (state in myStates) return
+        if (state in myStates) {
+            action.invoke(this@BusNodeImpl)
+            return
+        }
         stateRegistry.add(object : Observer {
             override fun onNotification(event: Event): Boolean = when (event) {
                 is NodeStateChangedEvent -> (event.current == state).also {
@@ -289,7 +468,12 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
         else -> delegator?.getView(session, type)
     }
 
-    override fun toString(): String = if (attached) "%s «$name»".format(this.classname) else super.toString()
+    override fun toString(): String = when {
+        attached && delegator != null -> "$delegator «$name»"
+        delegator != null -> delegator.toString()
+        attached -> "$classname «$name»"
+        else -> super.toString()
+    }
 
     internal inner class Trajectory(
         origin: Origin,
@@ -308,6 +492,7 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
         override fun <V : View> lookupView(session: Session, type: KClass<V>): V? = this@BusNodeImpl.lookupView(session, type)
         override fun <V : View> getView(session: Session, type: KClass<V>): V = lookupView(session, type)
             ?: throw ViewNotFoundException(this@BusNodeImpl::class, type)
+        override fun toString() = "${this@BusNodeImpl}.member($session)"
     }
 
     companion object {

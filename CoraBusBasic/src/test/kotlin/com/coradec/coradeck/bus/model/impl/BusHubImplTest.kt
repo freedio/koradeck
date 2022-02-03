@@ -18,6 +18,7 @@ import com.coradec.coradeck.ctrl.module.CoraControlImpl
 import com.coradec.coradeck.dir.model.Path
 import com.coradec.coradeck.dir.module.CoraDirImpl
 import com.coradec.coradeck.module.model.CoraModules
+import com.coradec.coradeck.session.model.Session
 import com.coradec.coradeck.session.view.View
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
@@ -54,7 +55,8 @@ class BusHubImplTest {
         // when:
         testee.add("e1", node1.memberView)
         testee.add("e2", node2.memberView)
-        testee.attach(context = TestBusContext(TestBusHubView(), "container")).standby()
+        testee.attach(context = TestBusContext(TestBusHubView(Session.current), "container"))
+        testee.standby()
         // then:
         var softly = SoftAssertions()
         softly.assertThat(testee.state).isEqualTo(READY)
@@ -72,7 +74,9 @@ class BusHubImplTest {
         // when:
         testee.add("egain1", node1.memberView)
         testee.add("egain2", node2.memberView)
-        testee.attach(context = TestBusContext(TestBusHubView(), "recontainer")).standby()
+        testee.attach(context = TestBusContext(TestBusHubView(Session.current), "recontainer"))
+        Thread.sleep(10)
+        testee.standby()
         // then:
         CoraCom.log.debug("-------------------------------------------------------------------")
         softly = SoftAssertions()
@@ -90,7 +94,7 @@ class BusHubImplTest {
         val node1 = BusNodeImpl()
         val node2 = BusNodeImpl()
         // when:
-        testee.attach(context = TestBusContext(TestBusHubView(), "container")).standby()
+        testee.attach(context = TestBusContext(TestBusHubView(Session.current), "container")).standby()
         testee.add("e1", node1.memberView).standby()
         testee.add("e2", node2.memberView).standby()
         // then:
@@ -108,7 +112,7 @@ class BusHubImplTest {
         softly.assertThat(node2.state).isEqualTo(DETACHED)
         softly.assertAll()
         // when:
-        testee.attach(context = TestBusContext(TestBusHubView(), "recontainer")).standby()
+        testee.attach(context = TestBusContext(TestBusHubView(Session.current), "recontainer")).standby()
         testee.add("egain1", node1.memberView).standby()
         testee.add("egain2", node2.memberView).standby()
         // then:
@@ -118,6 +122,7 @@ class BusHubImplTest {
         softly.assertThat(node1.state).isIn(INITIALIZED, READY)
         softly.assertThat(node2.state).isIn(INITIALIZED, READY)
         softly.assertThat(testee.name).isEqualTo("recontainer")
+        softly.assertThat(testee.names.value).containsExactlyInAnyOrder("egain1", "egain2")
         softly.assertAll()
     }
 
@@ -132,7 +137,7 @@ class BusHubImplTest {
         // when:
         testee.add("e1", member1)
         testee.add("e2", member2)
-        testee.attach(context = TestBusContext(TestBusHubView(), "container")).standby()
+        testee.attach(context = TestBusContext(TestBusHubView(Session.current), "container")).standby()
         // then:
         assertThat(testee.names.value).containsExactlyInAnyOrder("e1", "e2")
         assertThat(testee.members.value).containsAllEntriesOf(mapOf("e1" to member1, "e2" to member2))
@@ -185,7 +190,7 @@ class BusHubImplTest {
         testee.detach().standby()
     }
 
-    class TestBusHubView : BusHubView {
+    class TestBusHubView(override val session: Session) : BusHubView {
         private val states = mutableListOf<String>()
 
         override fun pathOf(name: String): Path = "=$name"
@@ -195,7 +200,7 @@ class BusHubImplTest {
             states += "leaving"
         }
 
-        override fun onLeft(member: MemberView) {
+        override fun onLeft(member: MemberView) = true.also {
             states += "left"
         }
 
@@ -203,7 +208,7 @@ class BusHubImplTest {
             states += "joining"
         }
 
-        override fun onJoined(node: MemberView) {
+        override fun onJoined(node: MemberView) = true.also {
             states += "joined"
         }
 
@@ -240,7 +245,7 @@ class BusHubImplTest {
             states += "$member leaving"
         }
 
-        override fun left() {
+        override fun left() = true.also {
             states += "$member left"
         }
 
@@ -248,7 +253,7 @@ class BusHubImplTest {
             states += "$node joining"
         }
 
-        override fun joined(node: MemberView) {
+        override fun joined(node: MemberView) = true.also {
             states += "$node joined"
         }
 

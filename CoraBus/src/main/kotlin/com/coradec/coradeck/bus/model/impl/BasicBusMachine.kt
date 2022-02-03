@@ -4,25 +4,26 @@
 
 package com.coradec.coradeck.bus.model.impl
 
-import com.coradec.coradeck.bus.model.BusMachineDelegate
-import com.coradec.coradeck.bus.model.DelegatedBusMachine
-import com.coradec.coradeck.bus.model.MachineDelegator
+import com.coradec.coradeck.bus.model.delegation.BusMachineDelegate
+import com.coradec.coradeck.bus.model.delegation.DelegatedBusMachine
+import com.coradec.coradeck.bus.model.delegation.MachineDelegator
 import com.coradec.coradeck.bus.module.CoraBus
 import com.coradec.coradeck.dir.model.DirectoryNamespace
 import com.coradec.coradeck.dir.module.CoraDir
 
-abstract class BasicBusMachine(namespace: DirectoryNamespace = CoraDir.defaultNamespace) : BasicBusHub(namespace), DelegatedBusMachine {
+abstract class BasicBusMachine(namespace: DirectoryNamespace = CoraDir.defaultNamespace) : BasicBusHub(namespace),
+    DelegatedBusMachine {
     override val delegate: BusMachineDelegate = CoraBus.createMachine(InternalMachineDelegator())
     protected lateinit var thread: Thread
 
     protected open fun onStarting() {}
-    protected open fun onStarted() {}
+    protected open fun onStarted(): Boolean = true
     protected open fun onPausing() {}
-    protected open fun onPaused() {}
+    protected open fun onPaused(): Boolean = true
     protected open fun onResuming() {}
-    protected open fun onResumed() {}
+    protected open fun onResumed(): Boolean = true
     protected open fun onStopping() {}
-    protected open fun onStopped() {}
+    protected open fun onStopped(): Boolean = true
 
     protected open inner class InternalMachineDelegator : InternalHubDelegator(), MachineDelegator {
         override var thread: Thread

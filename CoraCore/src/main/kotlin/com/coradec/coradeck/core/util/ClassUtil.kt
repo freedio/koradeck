@@ -42,7 +42,8 @@ val Any.properties: Map<String, Any?>
                     prop.name, try {
                         prop.call(this@properties)
                     } catch (e: IllegalCallableAccessException) {
-                        println("Property $classname.${prop.name} is not accessible!"); null
+                        println("Property $classname.${prop.name} is not accessible! → ignored")
+                        e.printStackTrace()
                     }
                 )
             }

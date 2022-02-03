@@ -15,6 +15,7 @@ import com.coradec.coradeck.ctrl.module.CoraControlImpl
 import com.coradec.coradeck.dir.model.Path
 import com.coradec.coradeck.dir.module.CoraDirImpl
 import com.coradec.coradeck.module.model.CoraModules
+import com.coradec.coradeck.session.model.Session
 import com.coradec.coradeck.session.view.View
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
@@ -49,7 +50,8 @@ class BusMachineImplTest {
         // when:
         testee.add("node", node1.memberView)
         testee.add("engine", node2.memberView)
-        testee.attach(context = TestBusContext(TestBusHubView(), "machine")).standby()
+        testee.attach(context = TestBusContext(TestBusHubView(Session.current), "machine"))
+        testee.standby()
         // then:
         Assertions.assertThat(testee.state).isEqualTo(BusNodeState.READY)
         Assertions.assertThat(node1.state).isEqualTo(BusNodeState.READY)
@@ -63,7 +65,7 @@ class BusMachineImplTest {
         // when:
         testee.add("nodegain1", node1.memberView)
         testee.add("enginegain2", node2.memberView)
-        testee.attach(context = TestBusContext(TestBusHubView(), "remachine")).standby()
+        testee.attach(context = TestBusContext(TestBusHubView(Session.current), "remachine")).standby()
         Thread.sleep(100)
         // then:
         Assertions.assertThat(testee.state).isEqualTo(BusNodeState.READY)
@@ -81,9 +83,10 @@ class BusMachineImplTest {
         val member1 = node1.memberView
         val member2 = node2.memberView
         // when:
-        testee.attach(context = TestBusContext(TestBusHubView(), "machine")).standby()
+        testee.attach(context = TestBusContext(TestBusHubView(Session.current), "machine")).standby()
         testee.add("node", member1).standby()
-        testee.add("engine", member2).standby()
+        testee.add("engine", member2)
+        node2.standby()
         // then:
         Assertions.assertThat(testee.state).isEqualTo(BusNodeState.READY)
         Assertions.assertThat(node1.state).isEqualTo(BusNodeState.READY)
@@ -96,7 +99,7 @@ class BusMachineImplTest {
         Assertions.assertThat(node1.state).isEqualTo(BusNodeState.DETACHED)
         Assertions.assertThat(node2.state).isEqualTo(BusNodeState.DETACHED)
         // when:
-        testee.attach(context = TestBusContext(TestBusHubView(), "remachine")).standby()
+        testee.attach(context = TestBusContext(TestBusHubView(Session.current), "remachine")).standby()
         testee.add("nodagain1", member1).standby()
         testee.add("enginagain2", member2).standby()
         // then:
@@ -106,7 +109,7 @@ class BusMachineImplTest {
         Assertions.assertThat(testee.name).isEqualTo("remachine")
     }
 
-    class TestBusHubView : BusHubView {
+    class TestBusHubView(override val session: Session) : BusHubView {
         private val states = mutableListOf<String>()
 
         override fun pathOf(name: String): Path = "=$name"
@@ -116,7 +119,7 @@ class BusMachineImplTest {
             states += "leaving"
         }
 
-        override fun onLeft(member: MemberView) {
+        override fun onLeft(member: MemberView) = true.also {
             states += "left"
         }
 
@@ -124,7 +127,7 @@ class BusMachineImplTest {
             states += "joining"
         }
 
-        override fun onJoined(node: MemberView) {
+        override fun onJoined(node: MemberView) = true.also {
             states += "joined"
         }
 
@@ -161,7 +164,7 @@ class BusMachineImplTest {
             states += "$member leaving"
         }
 
-        override fun left() {
+        override fun left() = true.also {
             states += "$member left"
         }
 
@@ -169,7 +172,7 @@ class BusMachineImplTest {
             states += "$node joining"
         }
 
-        override fun joined(node: MemberView) {
+        override fun joined(node: MemberView) = true.also {
             states += "$node joined"
         }
 

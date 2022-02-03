@@ -2,10 +2,7 @@
  * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
  */
 
-package com.coradec.coradeck.bus.model
-
-import com.coradec.coradeck.dir.model.DirectoryEntry
-import com.coradec.coradeck.dir.model.DirectoryNamespace
+package com.coradec.coradeck.dir.model
 
 interface DirectoryNode {
     val namespace: DirectoryNamespace

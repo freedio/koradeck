@@ -4,7 +4,13 @@
 
 package com.coradec.coradeck.bus.model.impl
 
-import com.coradec.coradeck.bus.model.*
+import com.coradec.coradeck.bus.model.BusEngine
+import com.coradec.coradeck.bus.model.BusNodeState
+import com.coradec.coradeck.bus.model.BusNodeStateTransition
+import com.coradec.coradeck.bus.model.delegation.BusMachineDelegate
+import com.coradec.coradeck.bus.model.delegation.MachineDelegator
+import com.coradec.coradeck.com.model.RequestState
+import com.coradec.coradeck.core.util.relax
 import com.coradec.coradeck.dir.model.DirectoryNamespace
 import com.coradec.coradeck.dir.module.CoraDir
 import com.coradec.coradeck.text.model.LocalText
@@ -19,56 +25,161 @@ open class BusMachineImpl(
     override val mytype = "machine"
     override val myType = "Machine"
 
+    protected open fun onStarting() {}
+    protected open fun onStarted(): Boolean = true
+    protected open fun onPausing() {}
+    protected open fun onPaused(): Boolean = true
+    protected open fun onResuming() {}
+    protected open fun onResumed(): Boolean = true
+    protected open fun onStopping() {}
+    protected open fun onStopped(): Boolean = true
+
     override fun stateChanged(transition: BusNodeStateTransition) {
         try {
             val context = transition.context
             val name = name ?: context?.name ?: throw IllegalStateException("Name must be present here!")
             when (transition.unto) {
-                BusNodeState.LOADED -> {
-                    debug("Loaded %s ‹%s›.", mytype, name)
-                    state = BusNodeState.LOADED
-                    delegator?.onLoaded()
-                    transition.succeed()
-                }
-                BusNodeState.STARTING -> {
-                    debug("Starting %s ‹%s›.", mytype, name)
-                    state = BusNodeState.STARTING
-                    delegator?.onStarting()
-                    transition.succeed()
-                }
-                BusNodeState.STARTED -> {
-                    run()
-                    debug("Started %s ‹%s›.", mytype, name)
-                    state = BusNodeState.STARTED
-                    delegator?.onStarted()
-                    readify(name)
-                    transition.succeed()
-                }
-                BusNodeState.STOPPING -> {
-                    busify(name)
-                    debug("Stopping %s ‹%s›.", mytype, name)
-                    stop()
-                    state = BusNodeState.STOPPING
-                    delegator?.onStopping()
-                    transition.succeed()
-                }
-                BusNodeState.STOPPED -> {
-                    debug("Stopped %s ‹%s›.", mytype, name)
-                    state = BusNodeState.STOPPED
-                    delegator?.onStopped()
-                    transition.succeed()
-                }
-                BusNodeState.UNLOADING -> {
-                    debug("Unloading %s ‹%s›.", mytype, name)
-                    state = BusNodeState.UNLOADING
-                    delegator?.onUnloading()
-                    unloadMembers(transition)
-//                    return // avoid succeeding prematurely
-                }
+                BusNodeState.LOADED -> becomeLoaded(transition, name, readify = false)
+                BusNodeState.STARTING -> becomeStarting(transition, name)
+                BusNodeState.STARTED -> becomeStarted(transition, name, readify = true)
+                BusNodeState.PAUSING -> becomePausing(transition, name)
+                BusNodeState.PAUSED -> becomePaused(transition, name)
+                BusNodeState.RESUMING -> becomeResuming(transition, name)
+                BusNodeState.STOPPING -> becomeStopping(transition, name, busify = true)
+                BusNodeState.STOPPED -> becomeStopped(transition, name)
+                BusNodeState.UNLOADING -> becomeUnloading(transition, name, busify = false)
                 else -> super.stateChanged(transition)
             }
         } catch (e: Exception) {
             error(e, TEXT_TRANSITION_FAILED, transition.from, transition.unto, context ?: "none")
+            transition.fail(e)
+        }
+    }
+
+    protected fun becomeStarting(transition: BusNodeStateTransition, name: String) {
+        transition.whenFinished {
+            when (state) {
+                RequestState.SUCCESSFUL -> {
+                    debug("Starting %s ‹%s›.", mytype, name)
+                    this@BusMachineImpl.state = BusNodeState.STARTING
+                }
+                RequestState.FAILED -> {
+                    detail("Failed to start %s ‹%s›!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                RequestState.CANCELLED -> {
+                    detail("Starting %s ‹%s› was cancelled!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                else -> relax()
+            }
+        }
+        try {
+            onStarting()
+            delegator?.onStarting()
+            transition.succeed()
+        } catch (e: Exception) {
+            error(e)
+            transition.fail(e)
+        }
+    }
+
+    protected fun becomeStarted(transition: BusNodeStateTransition, name: String, readify: Boolean) {
+        transition.whenFinished {
+            when (state) {
+                RequestState.SUCCESSFUL -> {
+                    this@BusMachineImpl.state = BusNodeState.STARTED
+                    debug("%s ‹%s› started.", myType, name)
+                }
+                RequestState.FAILED -> {
+                    detail("Failed to start %s ‹%s›!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                RequestState.CANCELLED -> {
+                    detail("Starting %s ‹%s› was cancelled!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                else -> relax()
+            }
+        }
+        try {
+            if (onStarted() && delegator?.onStarted() != false) {
+                run()
+                transition.succeed()
+                if (readify) readify(name)
+            }
+        } catch (e: Exception) {
+            error(e)
+            transition.fail(e)
+        }
+    }
+
+    protected fun becomePausing(transition: BusNodeStateTransition, name: String) {
+        TODO("Not yet implemented")
+    }
+
+    protected fun becomePaused(transition: BusNodeStateTransition, name: String) {
+        TODO("Not yet implemented")
+    }
+
+    protected fun becomeResuming(transition: BusNodeStateTransition, name: String) {
+        TODO("Not yet implemented")
+    }
+
+    protected fun becomeStopping(transition: BusNodeStateTransition, name: String, busify: Boolean) {
+        transition.whenFinished {
+            when (state) {
+                RequestState.SUCCESSFUL -> {
+                    debug("Stopping %s ‹%s›.", mytype, name)
+                    this@BusMachineImpl.state = BusNodeState.STOPPING
+                }
+                RequestState.FAILED -> {
+                    detail("Failed to start %s ‹%s›!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                RequestState.CANCELLED -> {
+                    detail("Starting %s ‹%s› was cancelled!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                else -> relax()
+            }
+        }
+        try {
+            if (busify) busify(name)
+            onStopping()
+            delegator?.onStopping()
+            transition.succeed()
+        } catch (e: Exception) {
+            error(e)
+            transition.fail(e)
+        }
+    }
+
+    protected fun becomeStopped(transition: BusNodeStateTransition, name: String) {
+        transition.whenFinished {
+            when (state) {
+                RequestState.SUCCESSFUL -> {
+                    this@BusMachineImpl.state = BusNodeState.STARTED
+                    debug("%s ‹%s› stopped.", myType, name)
+                }
+                RequestState.FAILED -> {
+                    detail("Failed to stop %s ‹%s›!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                RequestState.CANCELLED -> {
+                    detail("Stopping %s ‹%s› was cancelled!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                else -> relax()
+            }
+        }
+        try {
+            if (onStopped() && delegator?.onStopped() != false) {
+                stop()
+                transition.succeed()
+            }
+        } catch (e: Exception) {
+            error(e)
             transition.fail(e)
         }
     }

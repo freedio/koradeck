@@ -3,3 +3,4 @@
 RequestFailed1: Background request ‹%s› failed!
 RequestCancelled1: Background request ‹%s› was cancelled!
 RequestLost1: Background request ‹%s› went lost!
+RequestAlreadyComplete2: Request ‹%s› was already complete! -> ignored state «%s».

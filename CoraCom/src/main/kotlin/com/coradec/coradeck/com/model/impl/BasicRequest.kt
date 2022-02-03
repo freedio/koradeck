@@ -97,14 +97,14 @@ open class BasicRequest(
     }
 
     override fun succeed() {
-        if (!complete) {
+        if (complete) warn(TEXT_REQUEST_ALREADY_COMPLETE, this, SUCCESSFUL) else {
             state = SUCCESSFUL
             unfinished.countDown()
         }
     }
 
     override fun cancel(reason: Throwable?) {
-        if (!complete) {
+        if (complete) warn(TEXT_REQUEST_ALREADY_COMPLETE, this, CANCELLED) else {
             myReason = reason
             state = CANCELLED
             unfinished.countDown()
@@ -112,7 +112,7 @@ open class BasicRequest(
     }
 
     override fun fail(reason: Throwable?) {
-        if (!complete) {
+        if (complete) warn(TEXT_REQUEST_ALREADY_COMPLETE, this, FAILED) else {
             myReason = reason
             state = FAILED
             unfinished.countDown()
@@ -196,7 +196,7 @@ open class BasicRequest(
     }
 
     private fun runPostActions() {
-        postActionSemaphore.release()
+//        postActionSemaphore.release()
         try {
             if (successful) successActions.forEach { it.invoke(this) }
             if (failed) failureActions.forEach { it.invoke(this) }
@@ -205,7 +205,7 @@ open class BasicRequest(
             failureActions.clear()
             cancellationActions.clear()
         } finally {
-            postActionSemaphore.acquire()
+//            postActionSemaphore.acquire()
         }
     }
 
@@ -244,5 +244,6 @@ open class BasicRequest(
         private val TEXT_REQUEST_FAILED = LocalText("RequestFailed1")
         private val TEXT_REQUEST_CANCELLED = LocalText("RequestCancelled1")
         private val TEXT_REQUEST_LOST = LocalText("RequestLost1")
+        private val TEXT_REQUEST_ALREADY_COMPLETE = LocalText("RequestAlreadyComplete2")
     }
 }

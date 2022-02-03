@@ -6,6 +6,6 @@ package com.coradec.coradeck.module.trouble
 
 import kotlin.reflect.KClass
 
-class MissingModuleImplementationException(val type: KClass<*>) : ModuleException() {
+class MissingModuleImplementationException(val type: KClass<*>, val registeredModules: List<Any>) : ModuleException() {
 
 }

@@ -13,29 +13,35 @@ import kotlin.reflect.full.primaryConstructor
 
 object CoraModules {
     private val MODULE_API_TYPE = CoraModuleAPI::class.createType()
-    private val modules = ArrayList<KClass<out CoraModuleAPI>>()
-    private var impls = ArrayList<CoraModuleAPI>()
-    private val implementations: List<CoraModuleAPI> get() = impls.ifEmpty {
-        modules.map { it.primaryConstructor?.call() ?: throw ModuleWithoutPrimaryConstructorException(it) }.apply { impls += this }
-    }
+    private val modules = HashSet<KClass<out CoraModuleAPI>>()
+    private var impls = HashSet<CoraModuleAPI>()
+    private val implementations: Set<CoraModuleAPI>
+        get() = synchronized(impls) {
+            impls.ifEmpty {
+                modules
+                    .map { it.primaryConstructor?.call() ?: throw ModuleWithoutPrimaryConstructorException(it).apply { printStackTrace() } }
+                    .toSet()
+                    .apply { impls += this }
+            }
+        }
 
     @Suppress("UNCHECKED_CAST")
-    fun <M : CoraModuleAPI> implementations(klass: KClass<out CoraModule<M>>): CoraModuleList<M> =
-            getModuleAPI(klass).let { type ->
-                CoraModuleList(klass, implementations.filter { type == getModuleAPI2(it::class) } as List<M>)
-            }
+    fun <M : CoraModuleAPI> implementations(klass: KClass<out CoraModule<M>>): CoraModuleList<M> = getModuleAPI(klass).let { type ->
+        CoraModuleList(klass, implementations.filter { type == getModuleAPI2(it::class) } as List<M>)
+    }
 
-    private fun getModuleAPI(type: KClass<*>): KType =
-            type.supertypes
-                    .first { t -> t.arguments.any { it.type?.isSubtypeOf(MODULE_API_TYPE) == true } }
-                    .arguments.single { it.type?.isSubtypeOf(MODULE_API_TYPE) == true }.type!!
+    private fun getModuleAPI(type: KClass<*>): KType = type.supertypes
+        .first { t -> t.arguments.any { it.type?.isSubtypeOf(MODULE_API_TYPE) == true } }
+        .arguments.single { it.type?.isSubtypeOf(MODULE_API_TYPE) == true }.type!!
 
     private fun getModuleAPI2(type: KClass<*>): KType =
-            type.supertypes.first { t -> t.isSubtypeOf(MODULE_API_TYPE) }
+        type.supertypes.first { t -> t.isSubtypeOf(MODULE_API_TYPE) }
 
-    fun register(vararg impl: KClass<out CoraModuleAPI>) = synchronized(implementations) { modules += impl }
+    fun register(vararg impl: KClass<out CoraModuleAPI>) = synchronized(impls) {
+        if (modules.addAll(impl.toSet())) impls.clear()
+    }
 
-    fun initialize() {
+    fun initialize() = synchronized(impls) {
         modules.clear()
         impls.clear()
     }

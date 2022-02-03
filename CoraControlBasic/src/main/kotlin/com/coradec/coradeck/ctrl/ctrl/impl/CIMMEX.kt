@@ -529,28 +529,6 @@ object CIMMEX : Logger(), IMMEX {
         }
     }
 
-//    private val Recipient.order get() = dispatchTable[this]?.peek()
-
-//    private class RecipientComparator : Comparator<Recipient> {
-//        override fun compare(o1: Recipient?, o2: Recipient?): Int =
-//            when {
-//                o1 == null && o2 == null -> 0
-//                o1 == null -> 1
-//                o2 == null -> -1
-//                else -> {
-//                    val i1 = o1.order
-//                    val i2 = o2.order
-//                    when {
-//                        i1 == null && i2 == null -> 0
-//                        i1 == null -> 1
-//                        i2 == null -> -1
-//                        i1.priority == i2.priority -> i1.due.compareTo(i2.due)
-//                        else -> i1.priority.compareTo(i2.priority)
-//                    }
-//                }
-//            }
-//    }
-
     private class DeferringQueue : PrioQueue<Deferred>(PROP_DEFERRINGQUEUE_SIZE.value) {
         override fun put(element: Deferred) {
             super.put(element)

@@ -4,7 +4,11 @@
 
 package com.coradec.coradeck.bus.model.impl
 
-import com.coradec.coradeck.bus.model.*
+import com.coradec.coradeck.bus.model.BusNode
+import com.coradec.coradeck.bus.model.BusNodeState
+import com.coradec.coradeck.bus.model.delegation.BusNodeDelegate
+import com.coradec.coradeck.bus.model.delegation.DelegatedBusNode
+import com.coradec.coradeck.bus.model.delegation.NodeDelegator
 import com.coradec.coradeck.bus.module.CoraBus
 import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.bus.view.MemberView
@@ -41,13 +45,13 @@ open class BasicBusNode : BasicAgent(), DelegatedBusNode {
     override fun onState(state: BusNodeState, action: BusNode.() -> Unit) = delegate.onState(state, action)
 
     protected open fun onAttaching(context: BusContext) {}
-    protected open fun onAttached(context: BusContext) {}
+    protected open fun onAttached(context: BusContext): Boolean = true
     protected open fun onInitializing() {}
-    protected open fun onInitialized() {}
+    protected open fun onInitialized(): Boolean = true
     protected open fun onFinalizing() {}
-    protected open fun onFinalized() {}
+    protected open fun onFinalized(): Boolean = true
     protected open fun onDetaching(forced: Boolean) {}
-    protected open fun onDetached() {}
+    protected open fun onDetached(): Boolean = true
     protected open fun onReady() {}
     protected open fun onBusy() {}
     protected open fun <V : View> lookupView(session: Session, type: KClass<V>): V? = null

@@ -2,6 +2,6 @@
  * Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
  */
 
-package com.coradec.coradeck.bus.model
+package com.coradec.coradeck.bus.model.delegation
 
 interface MachineDelegator: HubDelegator, EngineDelegator

@@ -4,7 +4,7 @@
 
 package com.coradec.coradeck.bus.model.impl
 
-import com.coradec.coradeck.bus.model.BusHubDelegate
+import com.coradec.coradeck.bus.model.delegation.BusHubDelegate
 import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.bus.view.BusHubView
 import com.coradec.coradeck.bus.view.MemberView
@@ -41,7 +41,7 @@ object SystemBus : BasicBusHub(CoraDir.rootNamespace) {
     }
 
     @Suppress("UNCHECKED_CAST")
-    class SystemBusContext(session: Session) : BasicBusContext(session, SYSTEM_BUS_NAME, DummyHub()) {
+    class SystemBusContext(session: Session) : BasicBusContext(session, SYSTEM_BUS_NAME, DummyHub(session)) {
         override val hub: BusHubView get() = throw UnsupportedOperationException()
         override val path: Path get() = namespace.concat("", name)
         override var member: MemberView? = null
@@ -58,7 +58,7 @@ object SystemBus : BasicBusHub(CoraDir.rootNamespace) {
             info(TEXT_ATTACHING)
         }
 
-        override fun joined(node: MemberView) {
+        override fun joined(node: MemberView) = true.also {
             if (node is BusHubDelegate && node.delegator?.node !is SystemBusView)
                 throw IllegalArgumentException("Only accepted applicant is the system bus.")
             member = node
@@ -77,7 +77,7 @@ object SystemBus : BasicBusHub(CoraDir.rootNamespace) {
             info(TEXT_DETACHING)
         }
 
-        override fun left() {
+        override fun left(): Boolean = true.also {
             member = null
             info(TEXT_SHUTDOWN)
         }
@@ -91,14 +91,14 @@ object SystemBus : BasicBusHub(CoraDir.rootNamespace) {
             ?: throw ViewNotFoundException(SystemBus::class, type)
     }
 
-    private class DummyHub : BusHubView {
+    private class DummyHub(override val session: Session) : BusHubView {
         override fun pathOf(name: String): Path = name
         override fun get(type: Class<*>): MemberView? = null
         override fun get(type: KClass<*>): MemberView? = null
         override fun onLeaving(member: MemberView) = relax()
-        override fun onLeft(member: MemberView) = relax()
+        override fun onLeft(member: MemberView): Boolean = true
         override fun onJoining(node: MemberView) = relax()
-        override fun onJoined(node: MemberView) = relax()
+        override fun onJoined(node: MemberView): Boolean = true
         override fun onReady(member: MemberView) = relax()
         override fun onBusy(member: MemberView) = relax()
         override fun onCrashed(member: MemberView) = relax()

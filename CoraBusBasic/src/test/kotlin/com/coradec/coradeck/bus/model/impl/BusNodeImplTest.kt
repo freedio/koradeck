@@ -4,7 +4,8 @@
 
 package com.coradec.coradeck.bus.model.impl
 
-import com.coradec.coradeck.bus.model.BusNodeState
+import com.coradec.coradeck.bus.model.BusNodeState.DETACHED
+import com.coradec.coradeck.bus.model.BusNodeState.READY
 import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.bus.view.BusHubView
 import com.coradec.coradeck.bus.view.MemberView
@@ -15,52 +16,40 @@ import com.coradec.coradeck.ctrl.module.CoraControlImpl
 import com.coradec.coradeck.dir.model.Path
 import com.coradec.coradeck.dir.module.CoraDirImpl
 import com.coradec.coradeck.module.model.CoraModules
+import com.coradec.coradeck.session.model.Session
 import com.coradec.coradeck.session.view.View
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.reflect.KClass
 
 class BusNodeImplTest {
 
-    companion object {
-        @BeforeAll
-        @JvmStatic
-        fun setup() {
-            CoraModules.register(
-                CoraConfImpl::class,
-                CoraTextImpl::class,
-                CoraTypeImpl::class,
-                CoraComImpl::class,
-                CoraControlImpl::class,
-                CoraDirImpl::class
-            )
-        }
-    }
-
     @Test
     fun attachDetachReattachSimpleBusNode() {
         // given:
         val testee = BusNodeImpl()
         // when:
-        testee.attach(context = TestBusContext(TestBusHubView(), "einzel")).standby()
+        testee.attach(context = TestBusContext(TestBusHubView(Session.current), "einzel")).standby()
+        testee.standby()
         // then:
-        Assertions.assertThat(testee.state).isEqualTo(BusNodeState.READY)
-        Assertions.assertThat(testee.name).isEqualTo("einzel")
+        assertThat(testee.state).isEqualTo(READY)
+        assertThat(testee.name).isEqualTo("einzel")
         // when:
         testee.detach().standby()
         // then:
-        Assertions.assertThat(testee.state).isEqualTo(BusNodeState.DETACHED)
+        assertThat(testee.state).isEqualTo(DETACHED)
         // when:
-        testee.attach(context = TestBusContext(TestBusHubView(), "wieder")).standby()
+        testee.attach(context = TestBusContext(TestBusHubView(Session.current), "wieder")).standby()
+        testee.standby()
         // then:
-        Assertions.assertThat(testee.state).isEqualTo(BusNodeState.READY)
-        Assertions.assertThat(testee.name).isEqualTo("wieder")
+        assertThat(testee.state).isEqualTo(READY)
+        assertThat(testee.name).isEqualTo("wieder")
     }
 
-    class TestBusHubView : BusHubView {
+    class TestBusHubView(override val session: Session) : BusHubView {
         private val states = mutableListOf<String>()
 
         override fun pathOf(name: String): Path = "=$name"
@@ -70,7 +59,7 @@ class BusNodeImplTest {
             states += "leaving"
         }
 
-        override fun onLeft(member: MemberView) {
+        override fun onLeft(member: MemberView) = true.also {
             states += "left"
         }
 
@@ -78,7 +67,7 @@ class BusNodeImplTest {
             states += "joining"
         }
 
-        override fun onJoined(node: MemberView) {
+        override fun onJoined(node: MemberView) = true.also {
             states += "joined"
         }
 
@@ -103,7 +92,7 @@ class BusNodeImplTest {
         override val hub: BusHubView,
         override var name: String
     ) : BusContext {
-        val states = mutableListOf<String>()
+        private val states = mutableListOf<String>()
         override fun get(type: Class<*>): MemberView? = null
         override fun get(type: KClass<*>): MemberView? = null
         override fun <V : View> get(type: Class<*>, viewType: KClass<V>): V? = null
@@ -115,7 +104,7 @@ class BusNodeImplTest {
             states += "$member leaving"
         }
 
-        override fun left() {
+        override fun left() = true.also {
             states += "$member left"
         }
 
@@ -123,7 +112,7 @@ class BusNodeImplTest {
             states += "$node joining"
         }
 
-        override fun joined(node: MemberView) {
+        override fun joined(node: MemberView) = true.also {
             states += "$node joined"
         }
 
@@ -141,6 +130,21 @@ class BusNodeImplTest {
 
         override fun renameTo(name: String) {
             this.name = name
+        }
+    }
+
+    companion object {
+        @BeforeAll
+        @JvmStatic
+        fun setup() {
+            CoraModules.register(
+                CoraConfImpl::class,
+                CoraTextImpl::class,
+                CoraTypeImpl::class,
+                CoraComImpl::class,
+                CoraControlImpl::class,
+                CoraDirImpl::class
+            )
         }
     }
 

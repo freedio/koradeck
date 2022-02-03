@@ -4,7 +4,8 @@
 
 package com.coradec.coradeck.bus.model
 
-import com.coradec.coradeck.bus.model.BusNodeState.INITIALIZED
+import com.coradec.coradeck.bus.model.BusNodeState.LOADING
+import com.coradec.coradeck.bus.model.BusNodeState.READY
 import com.coradec.coradeck.bus.trouble.NodeNotAttachedException
 import com.coradec.coradeck.bus.trouble.StateUnreachableException
 import com.coradec.coradeck.bus.view.BusContext
@@ -30,8 +31,8 @@ interface BusNode : Origin, Recipient {
     val context: BusContext?
     /** If this node is attached to a bus context. */
     val attached: Boolean get() = context != null
-    /** If this node is initialized. */
-    val initialized: Boolean get() = INITIALIZED in states
+    /** If this node is already loading. */
+    val loading: Boolean get() = LOADING in states
     /** The directory path of this node.  Absent if unattached. */
     val path: Path?
     /** The name of this node in its context.  Absent if unattached. */
@@ -53,7 +54,7 @@ interface BusNode : Origin, Recipient {
     /** Waits for at most [delay] until the node has reached the specified state.  Fails if the specified state is unreachable. */
     @Throws(StateUnreachableException::class, TimeoutException::class) fun standby(delay: Timespan, state: BusNodeState)
     /** Waits until the node has reached the specified state.  Fails if the specified state is unreachable. */
-    @Throws(StateUnreachableException::class) fun standby(state: BusNodeState)
+    @Throws(StateUnreachableException::class) fun standby(state: BusNodeState = READY)
     /** Waits for at most [delay] until the node is ready.  Fails if the node is shutting down already. */
     @Throws(StateUnreachableException::class, TimeoutException::class) fun standby(delay: Timespan)
     /** Executes the specified action when the specified state is reached. */

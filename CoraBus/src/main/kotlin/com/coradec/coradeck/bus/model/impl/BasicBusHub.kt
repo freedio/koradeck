@@ -4,9 +4,9 @@
 
 package com.coradec.coradeck.bus.model.impl
 
-import com.coradec.coradeck.bus.model.BusHubDelegate
-import com.coradec.coradeck.bus.model.DelegatedBusHub
-import com.coradec.coradeck.bus.model.HubDelegator
+import com.coradec.coradeck.bus.model.delegation.BusHubDelegate
+import com.coradec.coradeck.bus.model.delegation.DelegatedBusHub
+import com.coradec.coradeck.bus.model.delegation.HubDelegator
 import com.coradec.coradeck.bus.module.CoraBus
 import com.coradec.coradeck.bus.view.MemberView
 import com.coradec.coradeck.com.model.Request
@@ -29,13 +29,13 @@ open class BasicBusHub(protected val namespace: DirectoryNamespace = CoraDir.def
     override val memberView: MemberView get() = memberView(Session.current)
 
     protected open fun onLoading() {}
-    protected open fun onLoaded() {}
+    protected open fun onLoaded(): Boolean = true
     protected open fun onUnloading() {}
-    protected open fun onUnloaded() {}
+    protected open fun onUnloaded(): Boolean = true
     protected open fun onJoining(name: String, node: MemberView) {}
-    protected open fun onJoined(name: String, node: MemberView) {}
+    protected open fun onJoined(name: String, node: MemberView): Boolean = true
     protected open fun onLeaving(name: String, node: MemberView) {}
-    protected open fun onLeft(name: String, node: MemberView) {}
+    protected open fun onLeft(name: String, node: MemberView): Boolean = true
 
     protected open inner class InternalHubDelegator : InternalNodeDelegator(), HubDelegator {
         override val node: MemberView get() = this@BasicBusHub.memberView

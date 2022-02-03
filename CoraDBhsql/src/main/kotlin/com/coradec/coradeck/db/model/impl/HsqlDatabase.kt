@@ -42,22 +42,18 @@ class HsqlDatabase(
     private val statement: Statement get() = connection.createStatement()
     private var failed: Boolean = false
 
-    override fun onInitializing() {
-        super.onInitializing()
+    override fun onInitialized(): Boolean = true.also {
+        super.onInitialized()
         myConnection = DriverManager.getConnection(uri.toASCIIString(), username, password.decoded)
         route(GetTableVoucher::class, ::getTable)
         route(OpenTableVoucher::class, ::openTable)
         route(CreateTableVoucher::class, ::createTable)
-    }
-
-    override fun onInitialized() {
-        super.onInitialized()
-        debug("Database ‹%s› initialized.", uri)
         statement.executeUpdate("set autocommit $autocommit")
+        debug("Database ‹%s› initialized.", uri)
     }
 
-    override fun onFinalizing() {
-        super.onFinalizing()
+    override fun onFinalized() = true.also {
+        super.onFinalized()
         if (failed) connection.rollback() else connection.commit()
         connection.close()
     }

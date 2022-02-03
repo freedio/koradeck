@@ -15,6 +15,7 @@ import com.coradec.coradeck.ctrl.module.CoraControlImpl
 import com.coradec.coradeck.dir.model.Path
 import com.coradec.coradeck.dir.module.CoraDirImpl
 import com.coradec.coradeck.module.model.CoraModules
+import com.coradec.coradeck.session.model.Session
 import com.coradec.coradeck.session.view.View
 import com.coradec.coradeck.text.module.CoraTextImpl
 import com.coradec.coradeck.type.module.impl.CoraTypeImpl
@@ -45,7 +46,8 @@ class BusEngineImplTest {
         // given:
         val testee = BusEngineImpl()
         // when:
-        testee.attach(context = TestBusContext(TestBusHubView(), "einzel")).standby()
+        testee.attach(context = TestBusContext(TestBusHubView(Session.current), "einzel"))
+        testee.standby()
         // then:
         Assertions.assertThat(testee.state).isEqualTo(BusNodeState.READY)
         Assertions.assertThat(testee.name).isEqualTo("einzel")
@@ -54,13 +56,15 @@ class BusEngineImplTest {
         // then:
         Assertions.assertThat(testee.state).isEqualTo(BusNodeState.DETACHED)
         // when:
-        testee.attach(context = TestBusContext(TestBusHubView(), "wieder")).standby()
+        testee.attach(context = TestBusContext(TestBusHubView(Session.current), "wieder")).standby()
+        Thread.sleep(10)
+        testee.standby()
         // then:
         Assertions.assertThat(testee.state).isEqualTo(BusNodeState.READY)
         Assertions.assertThat(testee.name).isEqualTo("wieder")
     }
 
-    class TestBusHubView : BusHubView {
+    class TestBusHubView(override val session: Session) : BusHubView {
         private val states = mutableListOf<String>()
 
         override fun pathOf(name: String): Path = "=$name"
@@ -70,7 +74,7 @@ class BusEngineImplTest {
             states += "leaving"
         }
 
-        override fun onLeft(member: MemberView) {
+        override fun onLeft(member: MemberView) = true.also {
             states += "left"
         }
 
@@ -78,7 +82,7 @@ class BusEngineImplTest {
             states += "joining"
         }
 
-        override fun onJoined(node: MemberView) {
+        override fun onJoined(node: MemberView) = true.also {
             states += "joined"
         }
 
@@ -116,7 +120,7 @@ class BusEngineImplTest {
             states += "$member leaving"
         }
 
-        override fun left() {
+        override fun left() = true.also {
             states += "$member left"
         }
 
@@ -124,7 +128,7 @@ class BusEngineImplTest {
             states += "$node joining"
         }
 
-        override fun joined(node: MemberView) {
+        override fun joined(node: MemberView) = true.also {
             states += "$node joined"
         }
 

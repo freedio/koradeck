@@ -8,5 +8,6 @@ import com.coradec.coradeck.module.trouble.MissingModuleImplementationException
 import kotlin.reflect.KClass
 
 class CoraModuleList<M: CoraModuleAPI>(val klass: KClass<out CoraModule<M>>, val modules: List<M>) {
-    val best: M get() = modules.lastOrNull() ?: throw MissingModuleImplementationException(klass)
+    val best: M get() = modules.lastOrNull()
+        ?: throw MissingModuleImplementationException(klass, modules.toList())
 }

@@ -4,9 +4,9 @@
 
 package com.coradec.coradeck.bus.model.impl
 
-import com.coradec.coradeck.bus.model.BusEngineDelegate
-import com.coradec.coradeck.bus.model.DelegatedBusEngine
-import com.coradec.coradeck.bus.model.EngineDelegator
+import com.coradec.coradeck.bus.model.delegation.BusEngineDelegate
+import com.coradec.coradeck.bus.model.delegation.DelegatedBusEngine
+import com.coradec.coradeck.bus.model.delegation.EngineDelegator
 import com.coradec.coradeck.bus.module.CoraBus
 
 abstract class BasicBusEngine : BasicBusNode(), DelegatedBusEngine {
@@ -14,13 +14,13 @@ abstract class BasicBusEngine : BasicBusNode(), DelegatedBusEngine {
     protected lateinit var thread: Thread
 
     protected open fun onStarting() {}
-    protected open fun onStarted() {}
+    protected open fun onStarted(): Boolean = true
     protected open fun onPausing() {}
-    protected open fun onPaused() {}
+    protected open fun onPaused(): Boolean = true
     protected open fun onResuming() {}
-    protected open fun onResumed() {}
+    protected open fun onResumed(): Boolean = true
     protected open fun onStopping() {}
-    protected open fun onStopped() {}
+    protected open fun onStopped(): Boolean = true
 
     protected open inner class InternalEngineDelegator : InternalNodeDelegator(), EngineDelegator {
         override var thread: Thread

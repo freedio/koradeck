@@ -4,11 +4,11 @@
 
 package com.coradec.coradeck.bus.model.impl
 
-import com.coradec.coradeck.bus.model.BusHubDelegate
 import com.coradec.coradeck.bus.model.BusNodeState
 import com.coradec.coradeck.bus.model.BusNodeState.*
 import com.coradec.coradeck.bus.model.BusNodeStateTransition
-import com.coradec.coradeck.bus.model.HubDelegator
+import com.coradec.coradeck.bus.model.delegation.BusHubDelegate
+import com.coradec.coradeck.bus.model.delegation.HubDelegator
 import com.coradec.coradeck.bus.trouble.MemberNotFoundException
 import com.coradec.coradeck.bus.view.BusHubView
 import com.coradec.coradeck.bus.view.MemberView
@@ -59,6 +59,15 @@ open class BusHubImpl(
         route(UnlinkMemberRequest::class, ::unlinkMember)
     }
 
+    protected open fun onLoading() {}
+    protected open fun onLoaded(): Boolean = true
+    protected open fun onUnloading() {}
+    protected open fun onUnloaded(): Boolean = true
+    protected open fun onJoining(name: String, node: MemberView) {}
+    protected open fun onJoined(name: String, node: MemberView): Boolean = true
+    protected open fun onLeaving(name: String, node: MemberView) {}
+    protected open fun onLeft(name: String, node: MemberView): Boolean = true
+
     private fun lookupMember(voucher: LookupMemberVoucher) {
         val memberName = voucher.name
         myMembers[memberName]?.apply {
@@ -89,7 +98,8 @@ open class BusHubImpl(
         val candEntry = candidates.mapNotNull { if (it.key.name == name) it else null }.singleOrNull()
             ?: throw IllegalStateException("Expected exactly one candidate with name ‹$name›, but got $candidates")
         val candidate = candEntry.value
-        candidate.attach(InternalBusContext(request.session, name, InternalBusHubView())).whenFinished {
+        val session = request.session
+        candidate.attach(InternalBusContext(session, name, InternalBusHubView(session))).whenFinished {
             when (this.state) {
                 SUCCESSFUL -> {
                     debug("Candidate «%s» attached.", name)
@@ -124,15 +134,15 @@ open class BusHubImpl(
     private fun addMember(request: AddMemberRequest) {
         val name = request.name
         val node = request.node
-        debug("Received request to add member ‹%s› as «%s».", node, name)
+        trace("Received request to add member ‹%s› as «%s».", node, name)
         try {
-            if (initialized) {
+            if (loading) {
                 debug("Hub already attached -> attaching member «%s» directly.", name)
-                node.attach(InternalBusContext(request.session, name, InternalBusHubView())).propagateTo(request) andThen {
+                val session = request.session
+                node.attach(InternalBusContext(session, name, InternalBusHubView(session))).propagateTo(request) andThen {
                     debug("Attached member ‹%s› as «%s».", node, name)
                 }
-            }
-            else {
+            } else {
                 debug("Hub not (yet) attached -> adding node «%s» as candidate.", name)
                 candidates[request] = node
             }
@@ -148,7 +158,7 @@ open class BusHubImpl(
         myMembers[name]?.apply {
             voucher.value = this
             detach().propagateTo(voucher)
-        } ?: voucher.fail(MemberNotFoundException(name).apply { error(this) })
+        } ?: voucher.fail(MemberNotFoundException(name)/*.apply { error(this) }*/)
     }
 
     private fun unlinkMember(request: UnlinkMemberRequest) {
@@ -190,50 +200,12 @@ open class BusHubImpl(
             val context = transition.context
             val name = name ?: context?.name ?: throw IllegalStateException("Name must be present here! Transition: $transition")
             when (transition.unto) {
-                INITIALIZED -> {
-                    debug("Initialized %s ‹%s›.", mytype, name)
-                    state = INITIALIZED
-                    delegator?.onInitialized()
-                    transition.succeed()
-                }
-                LOADING -> {
-                    debug("Loading %s ‹%s›.", mytype, name)
-                    state = LOADING
-                    delegator?.onLoading()
-                    accept(
-                        createRequestSet(this, candidates.keys.map {
-                            AddCandidateRequest(here, it.name)
-                        }, this).propagateTo(transition)
-                    )
-//                    return // avoid succeeding prematurely
-                }
-                LOADED -> {
-                    debug("Loaded %s ‹%s›.", mytype, name)
-                    state = LOADED
-                    delegator?.onLoaded()
-                    readify(name)
-                    transition.succeed()
-                }
-                UNLOADING -> {
-                    busify(name)
-                    debug("Unloading %s ‹%s›.", mytype, name)
-                    state = UNLOADING
-                    delegator?.onUnloading()
-                    unloadMembers(transition)
-//                    return // avoid succeeding prematurely
-                }
-                UNLOADED -> {
-                    debug("Unloaded %s ‹%s›.", mytype, name)
-                    state = UNLOADED
-                    delegator?.onUnloaded()
-                    transition.succeed()
-                }
-                FINALIZING -> {
-                    debug("Finalizing %s ‹%s›.", mytype, name)
-                    state = FINALIZING
-                    delegator?.onFinalizing()
-                    transition.succeed()
-                }
+                INITIALIZED -> becomeInitialized(transition, name, readify = false)
+                LOADING -> becomeLoading(transition, name)
+                LOADED -> becomeLoaded(transition, name, readify = true)
+                UNLOADING -> becomeUnloading(transition, name, busify = true)
+                UNLOADED -> becomeUnloaded(transition, name)
+                FINALIZING -> becomeFinalizing(transition, name, busify = false)
                 else -> super.stateChanged(transition)
             }
         } catch (e: Exception) {
@@ -242,13 +214,157 @@ open class BusHubImpl(
         }
     }
 
-    protected fun unloadMembers(transition: BusNodeStateTransition) {
-        trace("Unloading %d member(s): %s", myMembers.size, myMembers.values)
-        if (myMembers.isEmpty()) transition.succeed()
+    protected fun becomeLoading(transition: BusNodeStateTransition, name: String) {
+        transition.whenFinished {
+            when (state) {
+                SUCCESSFUL -> {
+                    debug("Loading %s ‹%s›.", mytype, name)
+                    this@BusHubImpl.state = LOADING
+                }
+                FAILED -> {
+                    detail("Failed to load %s ‹%s›!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                CANCELLED -> {
+                    detail("Loading %s ‹%s› was cancelled!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                else -> relax()
+            }
+        }
+        try {
+            onLoading()
+            delegator?.onLoading()
+            transition.succeed()
+        } catch (e: Exception) {
+            error(e)
+            transition.fail(e)
+        }
+    }
+
+    protected fun becomeLoaded(transition: BusNodeStateTransition, name: String, readify: Boolean) {
+        fun endLoaded() {
+            try {
+                if (onLoaded() && delegator?.onLoaded() != false) {
+                    transition.succeed()
+                    if (readify) readify(name)
+                }
+            } catch (e: Exception) {
+                error(e)
+                transition.fail(e)
+            }
+        }
+        transition.whenFinished {
+            when (state) {
+                SUCCESSFUL -> {
+                    this@BusHubImpl.state = LOADED
+                    debug("Loaded %s ‹%s›.", mytype, name)
+                }
+                FAILED -> {
+                    detail("Failed to load %s ‹%s›!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                CANCELLED -> {
+                    detail("Loading %s ‹%s› was cancelled!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                else -> relax()
+            }
+        }
+        if (candidates.isEmpty()) endLoaded()
+        else accept(createRequestSet(this, candidates.keys.map { AddCandidateRequest(here, it.name) }, this).whenFinished {
+            when (state) {
+                SUCCESSFUL -> endLoaded()
+                FAILED -> {
+                    detail("Failed to add members of %s ‹%s›!", mytype, name)
+                    if (reason != null) error(reason!!)
+                    transition.fail(reason)
+                }
+                CANCELLED -> {
+                    detail("Adding members to %s ‹%s› was cancelled!", mytype, name)
+                    if (reason != null) error(reason!!)
+                    transition.fail(reason)
+                }
+                else -> relax()
+            }
+        })
+    }
+
+    protected fun becomeUnloading(transition: BusNodeStateTransition, name: String, busify: Boolean) {
+        transition.whenFinished {
+            when (state) {
+                SUCCESSFUL -> {
+                    debug("Unloading %s ‹%s›.", mytype, name)
+                    this@BusHubImpl.state = LOADING
+                }
+                FAILED -> {
+                    detail("Failed to unload %s ‹%s›!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                CANCELLED -> {
+                    detail("Unloading %s ‹%s› was cancelled!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                else -> relax()
+            }
+        }
+        if (busify) busify(name)
+        try {
+            onUnloading()
+            delegator?.onUnloading()
+            transition.succeed()
+        } catch (e: Exception) {
+            error(e)
+            transition.fail(e)
+        }
+    }
+
+    protected fun becomeUnloaded(transition: BusNodeStateTransition, name: String) {
+        fun endUnload() {
+            try {
+                if (onUnloaded() && delegator?.onUnloaded() != false) {
+                    transition.succeed()
+                }
+            } catch (e: Exception) {
+                error(e)
+                transition.fail(e)
+            }
+        }
+        transition.whenFinished {
+            when (state) {
+                SUCCESSFUL -> {
+                    this@BusHubImpl.state = UNLOADED
+                    debug("Unloaded %s ‹%s›.", mytype, name)
+                }
+                FAILED -> {
+                    detail("Failed to unload %s ‹%s›!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                CANCELLED -> {
+                    detail("Unloading %s ‹%s› was cancelled!", mytype, name)
+                    if (reason != null) error(reason!!)
+                }
+                else -> relax()
+            }
+        }
+        if (myMembers.isEmpty()) endUnload()
         else accept(
-            createRequestSet(this, myMembers.keys.map { name -> RemoveMemberVoucher(here, name) }, this)
-                .propagateTo(transition) andThen { debug("Unloading ‹%s› completed.", name ?: "unknown") }
-        )
+            createRequestSet(this, myMembers.keys.map { RemoveMemberVoucher(here, it) }, this).whenFinished {
+                when (state) {
+                    SUCCESSFUL -> endUnload()
+                    FAILED -> {
+                        detail("Failed to remove members of %s ‹%s›!", mytype, name)
+                        if (reason != null) error(reason!!)
+                        transition.fail(reason)
+                    }
+                    CANCELLED -> {
+                        detail("Removing members of %s ‹%s› was cancelled!", mytype, name)
+                        if (reason != null) error(reason!!)
+                        transition.fail(reason)
+                    }
+                    else -> relax()
+                }
+            })
     }
 
     inner class InternalBusContext(session: Session, name: String, hubView: BusHubView) : BasicBusContext(session, name, hubView)
@@ -262,9 +378,9 @@ open class BusHubImpl(
         accept(ReplaceMemberVoucher(this, name, substitute)).content
 
     protected open fun onJoining(node: MemberView) {}
-    protected open fun onJoined(node: MemberView) {}
+    protected open fun onJoined(node: MemberView): Boolean = true
     protected open fun onLeaving(member: MemberView) {}
-    protected open fun onLeft(member: MemberView) {}
+    protected open fun onLeft(member: MemberView): Boolean = true
     protected open fun onReady(member: MemberView) {}
     protected open fun onBusy(member: MemberView) {}
     protected open fun onCrashed(member: MemberView) {
@@ -274,6 +390,7 @@ open class BusHubImpl(
     protected open fun link(name: String, member: MemberView) {
         accept(AcceptMemberRequest(here, name, member))
     }
+
     protected open fun unlink(name: String) {
         accept(UnlinkMemberRequest(here, name))
     }
@@ -283,24 +400,28 @@ open class BusHubImpl(
     private class MemberVoucher(origin: Origin) : BasicVoucher<Map<String, MemberView>>(origin)
     internal class AddMemberRequest(origin: Origin, val name: String, val node: MemberView) : BasicRequest(origin, priority = B1)
     private class AddCandidateRequest(origin: Origin, val name: String) : BasicRequest(origin, priority = B1)
-    private class AcceptCandidateRequest(origin: Origin, val name: String, val node: MemberView) : BasicRequest(origin, priority = B1)
+    private class AcceptCandidateRequest(origin: Origin, val name: String, val node: MemberView) :
+        BasicRequest(origin, priority = B1)
+
     internal class AcceptMemberRequest(origin: Origin, val name: String, val node: MemberView) : BasicRequest(origin, priority = B1)
-    private class RemoveMemberVoucher(origin: Origin, val name: String) : BasicVoucher<MemberView>(origin)
+    internal class RemoveMemberVoucher(origin: Origin, val name: String) : BasicVoucher<MemberView>(origin)
     private class RenameMemberRequest(origin: Origin, val name: String, val newName: String) : BasicRequest(origin)
-    private class ReplaceMemberVoucher(origin: Origin, val name: String, val substitute: MemberView) : BasicVoucher<MemberView>(origin)
+    private class ReplaceMemberVoucher(origin: Origin, val name: String, val substitute: MemberView) :
+        BasicVoucher<MemberView>(origin)
+
     internal class UnlinkMemberRequest(origin: Origin, val name: String) : BasicRequest(origin)
     private class NamesVoucher(origin: Origin) : BasicVoucher<Set<String>>(origin)
 
-    private inner class InternalBusHubView : BusHubView {
+    private inner class InternalBusHubView(override val session: Session) : BusHubView {
         private val my = this@BusHubImpl
 
         override fun pathOf(name: String): Path = my.path.let { if (it == null) name else namespace.concat(it, name) }
         override fun get(type: Class<*>): MemberView? = my.delegator?.node
         override fun get(type: KClass<*>): MemberView? = my.delegator?.node
         override fun onLeaving(member: MemberView) = my.onLeaving(member)
-        override fun onLeft(member: MemberView) = my.onLeft(member)
+        override fun onLeft(member: MemberView): Boolean = my.onLeft(member)
         override fun onJoining(node: MemberView) = my.onJoining(node)
-        override fun onJoined(node: MemberView) = my.onJoined(node)
+        override fun onJoined(node: MemberView): Boolean = my.onJoined(node)
         override fun onReady(member: MemberView) = my.onReady(member)
         override fun onBusy(member: MemberView) = my.onBusy(member)
         override fun onCrashed(member: MemberView) = my.onCrashed(member)
