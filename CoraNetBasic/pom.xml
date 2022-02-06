@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright ⓒ 2018 − 2021 by Coradec LLC.  All rights reserved.
+  -->
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>coradeck</artifactId>
+        <groupId>com.coradec.coradeck</groupId>
+        <version>0.4</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>net-basic</artifactId>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.coradec.coradeck</groupId>
+            <artifactId>bus</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.coradec.coradeck</groupId>
+            <artifactId>module</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.coradec.coradeck</groupId>
+            <artifactId>type-basic</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.coradec.coradeck</groupId>
+            <artifactId>conf-basic</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.coradec.coradeck</groupId>
+            <artifactId>ctrl-basic</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.coradec.coradeck</groupId>
+            <artifactId>text-basic</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.coradec.coradeck</groupId>
+            <artifactId>com-basic</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.coradec.coradeck</groupId>
+            <artifactId>dir</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.coradec.coradeck</groupId>
+            <artifactId>dir-basic</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.coradec.coradeck</groupId>
+            <artifactId>net</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <sourceDirectory>src/main/kotlin</sourceDirectory>
+        <testSourceDirectory>src/test/kotlin</testSourceDirectory>
+    </build>
+
+</project>

@@ -37,6 +37,8 @@
     <file url="file://$PROJECT_DIR$/CoraGUISwing/src/main/kotlin" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/CoraGUISwing/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/CoraModule/src/main/kotlin" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/CoraNet/src/main/kotlin" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/CoraNetBasic/src/main/kotlin" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/CoraSession/src/main/kotlin" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/CoraSession/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/CoraText/src/main/kotlin" charset="UTF-8" />

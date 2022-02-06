@@ -1,0 +1,4 @@
+---
+Modules:
+  Swing: com.coradec.coradeck.gui.module.SwingGUI
+  HTML5: com.coradec.coradeck.gui.module.HTML5GUI

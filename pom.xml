@@ -11,7 +11,7 @@
     <groupId>com.coradec.coradeck</groupId>
     <artifactId>coradeck</artifactId>
     <packaging>pom</packaging>
-    <version>0.3</version>
+    <version>0.4</version>
 
     <modules>
         <module>CoraModule</module>
@@ -35,10 +35,12 @@
         <module>CoraDBhsql</module>
         <module>CoraDBasic</module>
         <module>CoraGUI</module>
-        <module>IT</module>
         <module>CoraGUIBasic</module>
         <module>CoraGUISwing</module>
         <module>CoraGUIHTML5</module>
+        <module>CoraNet</module>
+        <module>CoraNetBasic</module>
+        <module>IT</module>
     </modules>
 
     <properties>
@@ -168,6 +170,16 @@
             <dependency>
                 <groupId>com.coradec.coradeck</groupId>
                 <artifactId>gui-html5</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.coradec.coradeck</groupId>
+                <artifactId>net</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.coradec.coradeck</groupId>
+                <artifactId>net-basic</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

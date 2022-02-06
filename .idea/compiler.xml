@@ -22,6 +22,7 @@
         <module name="CoraDir" />
         <module name="text-basic" />
         <module name="type-basic" />
+        <module name="net-basic" />
         <module name="CoraComBasic" />
         <module name="dir-basic" />
         <module name="CoraCom" />
@@ -33,6 +34,7 @@
         <module name="CoraType" />
         <module name="CoraSession" />
         <module name="CoraDirBasic" />
+        <module name="net" />
         <module name="com-basic" />
         <module name="ctrl-basic" />
         <module name="gui-basic" />

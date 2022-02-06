@@ -4,13 +4,11 @@
 
 package com.coradec.coradeck.gui.module
 
-import com.coradec.coradeck.gui.model.bus.*
-import com.coradec.coradeck.gui.model.delegation.*
+import com.coradec.coradeck.gui.ctrl.BasicGUI
+import com.coradec.coradeck.gui.ctrl.GUI
+import com.coradec.coradeck.gui.model.GUIType
 
 class CoraGUIImpl : CoraGUIAPI {
-    override fun createWindow(delegator: WindowDelegator?): WindowDelegate = WindowImpl(delegator)
-    override fun createFrame(delegator: FrameDelegator?): FrameDelegate = FrameImpl(delegator)
-    override fun createButton(delegator: ButtonDelegator?): ButtonDelegate = ButtonImpl(delegator)
-    override fun createTextfield(delegator: TextfieldDelegator?): TextfieldDelegate = TextfieldImpl(delegator)
-    override fun createLabel(delegator: LabelDelegator?): LabelDelegate = LabelImpl(delegator)
+    /** Creates a GUI of the specified type. */
+    override fun createGUI(type: GUIType): GUI = BasicGUI(type)
 }

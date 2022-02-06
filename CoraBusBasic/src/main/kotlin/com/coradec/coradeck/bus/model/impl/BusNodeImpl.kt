@@ -56,10 +56,6 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
     override val path: Path? get() = context?.path
     override val name: String? get() = context?.name
     override val memberView: MemberView get() = memberView(Session.current)
-
-    override fun memberView(session: Session): MemberView =
-        session.view[this, MemberView::class] ?: InternalMemberView(session).also { session.view[this, MemberView::class] = it }
-
     override var state: BusNodeState
         get() = synchronized(myStates) { myStates.last() }
         set(state) {
@@ -98,6 +94,9 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
         route(AttachRequest::class, ::attach)
         route(DetachRequest::class, ::detach)
     }
+
+    override fun memberView(session: Session): MemberView =
+        session.view[this, MemberView::class] ?: InternalMemberView(session).also { session.view[this, MemberView::class] = it }
 
     protected open fun onAttaching(context: BusContext) {}
     protected open fun onAttached(context: BusContext): Boolean = true
@@ -486,7 +485,7 @@ open class BusNodeImpl(override val delegator: NodeDelegator? = null) : BasicAge
         }
     }
 
-    private inner class InternalMemberView(session: Session) : AbstractMemberView(session) {
+    private inner class InternalMemberView(override val session: Session) : MemberView {
         override fun attach(context: BusContext): Request = this@BusNodeImpl.attach(caller2, context)
         override fun detach(): Request = this@BusNodeImpl.detach(caller2)
         override fun <V : View> lookupView(session: Session, type: KClass<V>): V? = this@BusNodeImpl.lookupView(session, type)

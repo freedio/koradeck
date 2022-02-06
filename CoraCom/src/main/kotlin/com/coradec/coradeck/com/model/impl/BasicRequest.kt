@@ -36,7 +36,7 @@ open class BasicRequest(
     createdAt: ZonedDateTime = ZonedDateTime.now(),
     session: Session = Session.current,
     validFrom: ZonedDateTime = createdAt,
-    validUpto: ZonedDateTime  = validFrom + CoraCom.standardValidity
+    validUpto: ZonedDateTime = validFrom + CoraCom.standardValidity
 ) : BasicEvent(origin, priority, createdAt, session, validFrom, validUpto), Request {
     private val unfinished = CountDownLatch(1)
     private var myReason: Throwable? = null
@@ -196,17 +196,12 @@ open class BasicRequest(
     }
 
     private fun runPostActions() {
-//        postActionSemaphore.release()
-        try {
-            if (successful) successActions.forEach { it.invoke(this) }
-            if (failed) failureActions.forEach { it.invoke(this) }
-            if (cancelled) cancellationActions.forEach { it.invoke(this) }
-            successActions.clear()
-            failureActions.clear()
-            cancellationActions.clear()
-        } finally {
-//            postActionSemaphore.acquire()
-        }
+        if (successful) successActions.toList().forEach { it.invoke(this) }
+        if (failed) failureActions.toList().forEach { it.invoke(this) }
+        if (cancelled) cancellationActions.toList().forEach { it.invoke(this) }
+        successActions.clear()
+        failureActions.clear()
+        cancellationActions.clear()
     }
 
     override fun enregister(observer: Observer) = !complete && stateRegistry.add(observer)

@@ -13,6 +13,4 @@ interface ComponentDelegate: Component, BusNodeDelegate {
     val properties: ComponentProperties
     /** The delegator. */
     override val delegator: ComponentDelegator?
-    /** The peer. */
-    val peer: java.awt.Component
 }
