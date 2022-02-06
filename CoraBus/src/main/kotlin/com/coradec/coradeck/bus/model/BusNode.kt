@@ -10,17 +10,17 @@ import com.coradec.coradeck.bus.trouble.NodeNotAttachedException
 import com.coradec.coradeck.bus.trouble.StateUnreachableException
 import com.coradec.coradeck.bus.view.BusContext
 import com.coradec.coradeck.bus.view.MemberView
-import com.coradec.coradeck.com.model.Recipient
 import com.coradec.coradeck.com.model.Request
 import com.coradec.coradeck.core.model.Origin
 import com.coradec.coradeck.core.model.Timespan
 import com.coradec.coradeck.core.util.caller
+import com.coradec.coradeck.ctrl.ctrl.Agent
 import com.coradec.coradeck.dir.model.Path
 import com.coradec.coradeck.session.model.Session
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
-interface BusNode : Origin, Recipient {
+interface BusNode : Agent {
     /** The state of the node. */
     val state: BusNodeState
     /** The states the bus node already had and has. */

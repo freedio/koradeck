@@ -9,19 +9,13 @@
     <parent>
         <artifactId>coradeck</artifactId>
         <groupId>com.coradec.coradeck</groupId>
-        <version>0.2</version>
+        <version>0.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>int-test</artifactId>
 
     <dependencies>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>5.5.1</version>
-        </dependency>
-
         <dependency>
             <groupId>com.coradec.coradeck</groupId>
             <artifactId>dir</artifactId>

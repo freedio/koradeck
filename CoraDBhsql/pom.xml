@@ -9,7 +9,7 @@
     <parent>
         <artifactId>coradeck</artifactId>
         <groupId>com.coradec.coradeck</groupId>
-        <version>0.2</version>
+        <version>0.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -23,12 +23,12 @@
         <dependency>
             <groupId>org.hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
-            <version>2.5.0</version>
+            <version>2.6.1</version>
         </dependency>
         <dependency>
             <groupId>com.coradec.coradeck</groupId>
             <artifactId>db-basic</artifactId>
-            <version>0.2</version>
+            <version>0.3</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

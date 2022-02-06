@@ -59,15 +59,6 @@ open class BusHubImpl(
         route(UnlinkMemberRequest::class, ::unlinkMember)
     }
 
-    protected open fun onLoading() {}
-    protected open fun onLoaded(): Boolean = true
-    protected open fun onUnloading() {}
-    protected open fun onUnloaded(): Boolean = true
-    protected open fun onJoining(name: String, node: MemberView) {}
-    protected open fun onJoined(name: String, node: MemberView): Boolean = true
-    protected open fun onLeaving(name: String, node: MemberView) {}
-    protected open fun onLeft(name: String, node: MemberView): Boolean = true
-
     private fun lookupMember(voucher: LookupMemberVoucher) {
         val memberName = voucher.name
         myMembers[memberName]?.apply {
@@ -99,7 +90,7 @@ open class BusHubImpl(
             ?: throw IllegalStateException("Expected exactly one candidate with name ‹$name›, but got $candidates")
         val candidate = candEntry.value
         val session = request.session
-        candidate.attach(InternalBusContext(session, name, InternalBusHubView(session))).whenFinished {
+        candidate.attach(InternalBusContext(session, name, createBusHubView(session))).whenFinished {
             when (this.state) {
                 SUCCESSFUL -> {
                     debug("Candidate «%s» attached.", name)
@@ -139,7 +130,7 @@ open class BusHubImpl(
             if (loading) {
                 debug("Hub already attached -> attaching member «%s» directly.", name)
                 val session = request.session
-                node.attach(InternalBusContext(session, name, InternalBusHubView(session))).propagateTo(request) andThen {
+                node.attach(InternalBusContext(session, name, createBusHubView(session))).propagateTo(request) andThen {
                     debug("Attached member ‹%s› as «%s».", node, name)
                 }
             } else {
@@ -377,10 +368,14 @@ open class BusHubImpl(
     override fun replace(name: String, substitute: MemberView): Voucher<MemberView> =
         accept(ReplaceMemberVoucher(this, name, substitute)).content
 
-    protected open fun onJoining(node: MemberView) {}
-    protected open fun onJoined(node: MemberView): Boolean = true
-    protected open fun onLeaving(member: MemberView) {}
-    protected open fun onLeft(member: MemberView): Boolean = true
+    protected open fun onLoading() {}
+    protected open fun onLoaded(): Boolean = true
+    protected open fun onUnloading() {}
+    protected open fun onUnloaded(): Boolean = true
+    protected open fun onJoining(name: String, node: MemberView) {}
+    protected open fun onJoined(name: String, node: MemberView): Boolean = true
+    protected open fun onLeaving(name: String, node: MemberView) {}
+    protected open fun onLeft(name: String, node: MemberView): Boolean = true
     protected open fun onReady(member: MemberView) {}
     protected open fun onBusy(member: MemberView) {}
     protected open fun onCrashed(member: MemberView) {
@@ -412,16 +407,18 @@ open class BusHubImpl(
     internal class UnlinkMemberRequest(origin: Origin, val name: String) : BasicRequest(origin)
     private class NamesVoucher(origin: Origin) : BasicVoucher<Set<String>>(origin)
 
-    private inner class InternalBusHubView(override val session: Session) : BusHubView {
-        private val my = this@BusHubImpl
+    protected open fun createBusHubView(session: Session) = InternalBusHubView(session)
+
+    protected open inner class InternalBusHubView(override val session: Session) : BusHubView {
+        protected open val my = this@BusHubImpl
 
         override fun pathOf(name: String): Path = my.path.let { if (it == null) name else namespace.concat(it, name) }
         override fun get(type: Class<*>): MemberView? = my.delegator?.node
         override fun get(type: KClass<*>): MemberView? = my.delegator?.node
-        override fun onLeaving(member: MemberView) = my.onLeaving(member)
-        override fun onLeft(member: MemberView): Boolean = my.onLeft(member)
-        override fun onJoining(node: MemberView) = my.onJoining(node)
-        override fun onJoined(node: MemberView): Boolean = my.onJoined(node)
+        override fun onLeaving(name: String, member: MemberView) = my.onLeaving(name, member)
+        override fun onLeft(name: String, member: MemberView): Boolean = my.onLeft(name, member)
+        override fun onJoining(name: String, node: MemberView) = my.onJoining(name, node)
+        override fun onJoined(name: String, node: MemberView): Boolean = my.onJoined(name, node)
         override fun onReady(member: MemberView) = my.onReady(member)
         override fun onBusy(member: MemberView) = my.onBusy(member)
         override fun onCrashed(member: MemberView) = my.onCrashed(member)

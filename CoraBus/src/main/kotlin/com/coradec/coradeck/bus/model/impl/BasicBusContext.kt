@@ -21,22 +21,22 @@ open class BasicBusContext(val session: Session, override var name: String, over
     override fun <V : View> get(type: Class<*>, viewType: KClass<V>): V? = get(type)?.getView(session, viewType)
     override fun <V : View> get(type: KClass<*>, viewType: KClass<V>): V? = get(type)?.getView(session, viewType)
 
-    override fun leaving() = hub.onLeaving(member ?: throw IllegalStateException("There is no member that could leave!"))
+    override fun leaving() = hub.onLeaving(name, member ?: throw IllegalStateException("There is no member that could leave!"))
     override fun left(): Boolean {
         hub.unlink(name)
-        return hub.onLeft(member ?: throw IllegalStateException("There is no member that could have left!"))
+        return hub.onLeft(name, member ?: throw IllegalStateException("There is no member that could have left!"))
             .also { member = null }
     }
     override fun joining(node: MemberView) {
         if (member != null || candidate != null) throw IllegalStateException("The context is occupied!")
-        hub.onJoining(node)
+        hub.onJoining(name, node)
         candidate = node
     }
     override fun joined(node: MemberView): Boolean {
         if (node !== candidate) throw IllegalStateException("Candidate $node never announced itself!")
         member = node
         candidate = null
-        return hub.onJoined(node)
+        return hub.onJoined(name, node)
     }
     override fun ready() = member?.let {
         hub.onReady(it)

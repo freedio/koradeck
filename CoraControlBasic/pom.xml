@@ -9,7 +9,7 @@
     <parent>
         <artifactId>coradeck</artifactId>
         <groupId>com.coradec.coradeck</groupId>
-        <version>0.2</version>
+        <version>0.3</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -50,12 +50,6 @@
         <dependency>
             <groupId>com.coradec.coradeck</groupId>
             <artifactId>text-basic</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>5.5.1</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

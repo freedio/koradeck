@@ -15,16 +15,14 @@ interface BusHubView : View {
     operator fun get(type: Class<*>): MemberView?
     /** Looks up the superior with the specified type, if there is any. */
     operator fun get(type: KClass<*>): MemberView?
-    /** Invoked when the specified member is leaving the context. */
-    fun onLeaving(member: MemberView)
-    /** Invoked when the specified member left the context. */
-    fun onLeft(member: MemberView): Boolean
-
-    /** Invoked when the specified candidate is about to join the context. */
-    fun onJoining(node: MemberView)
-    /** Invoked when the specified member joined the context. */
-    fun onJoined(node: MemberView): Boolean
-
+    /** Invoked when the specified member with the specified name  is leaving the context. */
+    fun onLeaving(name: String, member: MemberView)
+    /** Invoked when the specified member with the specified name left the context. */
+    fun onLeft(name: String, member: MemberView): Boolean
+    /** Invoked when the specified candidate is about to join the context under the specified name. */
+    fun onJoining(name: String, node: MemberView)
+    /** Invoked when the specified member joined the context under the specified name. */
+    fun onJoined(name: String, node: MemberView): Boolean
     /** Invoked when the member becomes ready. */
     fun onReady(member: MemberView)
     /** Invoked when the member becomes busy. */

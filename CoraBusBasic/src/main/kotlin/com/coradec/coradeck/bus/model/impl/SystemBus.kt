@@ -95,10 +95,10 @@ object SystemBus : BasicBusHub(CoraDir.rootNamespace) {
         override fun pathOf(name: String): Path = name
         override fun get(type: Class<*>): MemberView? = null
         override fun get(type: KClass<*>): MemberView? = null
-        override fun onLeaving(member: MemberView) = relax()
-        override fun onLeft(member: MemberView): Boolean = true
-        override fun onJoining(node: MemberView) = relax()
-        override fun onJoined(node: MemberView): Boolean = true
+        override fun onLeaving(name: String, member: MemberView) = relax()
+        override fun onLeft(name: String, member: MemberView): Boolean = true
+        override fun onJoining(name: String, node: MemberView) = relax()
+        override fun onJoined(name: String, node: MemberView): Boolean = true
         override fun onReady(member: MemberView) = relax()
         override fun onBusy(member: MemberView) = relax()
         override fun onCrashed(member: MemberView) = relax()
