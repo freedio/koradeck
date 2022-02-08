@@ -6,4 +6,4 @@ package com.coradec.coradeck.gui.trouble
 
 import com.coradec.coradeck.core.trouble.BasicException
 
-open class GUIException: BasicException()
+open class BasicGUIException(message: String? = null, problem: Throwable? = null) : BasicException(message, problem)

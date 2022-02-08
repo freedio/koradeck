@@ -4,11 +4,12 @@
 
 package com.coradec.coradeck.gui.model
 
-import com.coradec.coradeck.bus.view.MemberView
-import com.coradec.coradeck.com.model.Request
-import com.coradec.coradeck.com.model.Voucher
+import com.coradec.coradeck.gui.ctrl.Layout
 
 interface Section {
-    fun add(name: String, component: MemberView): Request
-    fun contains(name: String): Voucher<Boolean>
+    /** The section layout. */
+    val layout: Layout
+
+    /** Adds the specified component to the section under the specified name. */
+    fun add(component: Component)
 }

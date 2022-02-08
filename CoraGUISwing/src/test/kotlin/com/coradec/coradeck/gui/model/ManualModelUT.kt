@@ -12,6 +12,8 @@ import com.coradec.coradeck.conf.module.CoraConfImpl
 import com.coradec.coradeck.ctrl.module.CoraControlImpl
 import com.coradec.coradeck.dir.module.CoraDirImpl
 import com.coradec.coradeck.gui.ctrl.impl.ApplicationLayout
+import com.coradec.coradeck.gui.ctrl.impl.ApplicationLayout.ApplicationSections.CONTENT_PLANE
+import com.coradec.coradeck.gui.ctrl.impl.ApplicationLayout.ApplicationSections.CONTROL_PLANE
 import com.coradec.coradeck.gui.model.bus.ButtonImpl
 import com.coradec.coradeck.gui.model.bus.FrameImpl
 import com.coradec.coradeck.gui.model.bus.LabelImpl
@@ -33,19 +35,16 @@ class ManualModelUT {
         val label = LabelImpl()
         val button = ButtonImpl()
         // when:
-        frame.layout = ApplicationLayout(frame)
-        frame[ApplicationLayout.ApplicationSectionIndex.CONTENT_PLANE].add(labelName, label.memberView)
-        frame[ApplicationLayout.ApplicationSectionIndex.CONTROL_PLANE].add(buttonName, button.memberView)
+        val layout = ApplicationLayout()
+        frame.layout = layout
+        layout[CONTENT_PLANE].add(label)
+        layout[CONTROL_PLANE].add(button)
         Thread.sleep(20)
         frame.standby()
         // then:
         assertThat(gui.members).containsValue(frame)
-        assertThat(frame.sections).containsExactlyInAnyOrder(
-            ApplicationLayout.ApplicationSectionIndex.CONTROL_PLANE,
-            ApplicationLayout.ApplicationSectionIndex.CONTENT_PLANE
-        )
-        assertThat(frame[ApplicationLayout.ApplicationSectionIndex.CONTENT_PLANE].contains(labelName).value).isTrue()
-        assertThat(frame[ApplicationLayout.ApplicationSectionIndex.CONTROL_PLANE].contains(buttonName).value).isTrue()
+//        assertThat(layout[CONTENT_PLANE].contains(labelName)).isTrue()
+//        assertThat(layout[CONTROL_PLANE].contains(buttonName)).isTrue()
         assertThat(frame.contains(labelName).value).isTrue()
         assertThat(frame.contains(buttonName).value).isTrue()
         assertThat(frame.visible).isFalse()
@@ -63,9 +62,10 @@ class ManualModelUT {
         val frame = FrameImpl().apply { gui["Main"] = this }
         val label = LabelImpl()
         val button = ButtonImpl()
-        frame.layout = ApplicationLayout(frame)
-        frame[ApplicationLayout.ApplicationSectionIndex.CONTENT_PLANE].add(labelName, label.memberView)
-        frame[ApplicationLayout.ApplicationSectionIndex.CONTROL_PLANE].add(buttonName, button.memberView)
+        val layout = ApplicationLayout()
+        frame.layout = layout
+        layout[CONTENT_PLANE].add(label)
+        layout[CONTROL_PLANE].add(button)
         Thread.sleep(20)
         frame.standby()
         // when:
@@ -73,6 +73,8 @@ class ManualModelUT {
         Thread.sleep(100)
         // then:
         assertThat(frame.visible).isTrue()
+        assertThat(label.visible).isTrue()
+        assertThat(button.visible).isTrue()
     }
 
     companion object {

@@ -9,8 +9,6 @@ import com.coradec.coradeck.gui.com.*
 import com.coradec.coradeck.gui.ctrl.Layout
 import com.coradec.coradeck.gui.ctrl.impl.NoLayout
 import com.coradec.coradeck.gui.model.ContainerProperties
-import com.coradec.coradeck.gui.model.Section
-import com.coradec.coradeck.gui.model.SectionIndex
 import com.coradec.coradeck.gui.model.delegation.ContainerDelegate
 import com.coradec.coradeck.gui.model.delegation.ContainerDelegator
 import com.coradec.coradeck.gui.model.impl.BasicContainerProperties
@@ -19,7 +17,6 @@ import com.coradec.coradeck.gui.view.ContainerView
 import com.coradec.coradeck.session.model.Session
 import com.coradec.coradeck.text.model.LocalText
 import java.awt.Container
-
 abstract class ContainerImpl(
     override val delegator: ContainerDelegator? = null
 ) : BusHubImpl(delegator), ContainerDelegate {
@@ -33,8 +30,8 @@ abstract class ContainerImpl(
         get() = myLayout
         set(value) {
             myLayout = value
+            peer.layout = value
         }
-    val sections: Collection<SectionIndex> get() = myLayout.sections.keys
     var visible: Boolean
         get() = properties.visible
         set(value) { properties.visible = value }
@@ -81,22 +78,19 @@ abstract class ContainerImpl(
         voucher.succeed()
     }
 
-    private fun setVisibility(request: SetVisibilityRequest) {
+    protected open fun setVisibility(request: SetVisibilityRequest) {
         peer.isVisible = request.visible
         request.succeed()
     }
 
-    private fun setAbility(request: SetAbilityRequest) {
+    protected open fun setAbility(request: SetAbilityRequest) {
         peer.isEnabled = request.enabled
     }
 
-    protected fun setMutability(request: SetMutabilityRequest) {
+    protected open fun setMutability(request: SetMutabilityRequest) {
         warn(TEXT_MUTABILITY_REQUEST_IGNORED)
         request.succeed()
     }
-
-    operator fun get(section: SectionIndex): Section = layout[section]
-        ?: throw IllegalArgumentException("Section ‹$section› not found")
 
     protected inner class InternalContainerView(override val session: Session) : ContainerView {
         override var visible: Boolean

@@ -4,12 +4,6 @@
 
 package com.coradec.coradeck.gui.ctrl
 
-import com.coradec.coradeck.gui.model.Section
-import com.coradec.coradeck.gui.model.SectionIndex
+import java.awt.LayoutManager2
 
-interface Layout {
-    val sections: Map<SectionIndex, Section>
-
-    operator fun contains(section: SectionIndex): Boolean
-    operator fun get(section: SectionIndex): Section?
-}
+interface Layout : LayoutManager2

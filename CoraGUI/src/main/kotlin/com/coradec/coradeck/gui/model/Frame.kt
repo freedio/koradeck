@@ -4,4 +4,8 @@
 
 package com.coradec.coradeck.gui.model
 
-interface Frame: Window
+import com.coradec.coradeck.text.model.Text
+
+interface Frame: Window {
+    val title: Text
+}

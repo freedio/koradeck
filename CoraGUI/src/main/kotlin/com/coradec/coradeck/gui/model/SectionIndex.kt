@@ -4,7 +4,8 @@
 
 package com.coradec.coradeck.gui.model
 
+import com.coradec.coradeck.gui.ctrl.Layout
+
 interface SectionIndex {
-    val ordinal: Int
-    val name: String
+    val defaultLayout: Layout
 }

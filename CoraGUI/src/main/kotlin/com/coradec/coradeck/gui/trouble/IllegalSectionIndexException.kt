@@ -6,6 +6,4 @@ package com.coradec.coradeck.gui.trouble
 
 import com.coradec.coradeck.gui.model.SectionIndex
 
-class SectionNotFoundException(val section: SectionIndex) : GUIException() {
-
-}
+class IllegalSectionIndexException(val section: SectionIndex) : BasicGUIException()

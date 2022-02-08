@@ -6,11 +6,12 @@ package com.coradec.coradeck.gui.model.delegation
 
 import com.coradec.coradeck.gui.model.HorizontalAlignment
 import com.coradec.coradeck.gui.model.LabelProperties
+import com.coradec.coradeck.text.model.Text
 import javax.swing.Icon
 
 interface LabelDelegator: ComponentDelegator {
     override val properties: LabelProperties
     val labelAlignment: HorizontalAlignment
     val labelIcon: Icon?
-    val labelText: String?
+    val labelText: Text?
 }

@@ -9,8 +9,6 @@ import com.coradec.coradeck.gui.com.*
 import com.coradec.coradeck.gui.ctrl.Layout
 import com.coradec.coradeck.gui.ctrl.impl.NoLayout
 import com.coradec.coradeck.gui.model.ContainerProperties
-import com.coradec.coradeck.gui.model.Section
-import com.coradec.coradeck.gui.model.SectionIndex
 import com.coradec.coradeck.gui.model.delegation.ContainerDelegate
 import com.coradec.coradeck.gui.model.delegation.ContainerDelegator
 import com.coradec.coradeck.gui.model.impl.BasicContainerProperties

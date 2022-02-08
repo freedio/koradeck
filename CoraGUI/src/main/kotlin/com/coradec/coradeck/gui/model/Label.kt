@@ -4,4 +4,8 @@
 
 package com.coradec.coradeck.gui.model
 
-interface Label: Component
+import com.coradec.coradeck.text.model.Text
+
+interface Label: Component {
+    val labelText: Text
+}
